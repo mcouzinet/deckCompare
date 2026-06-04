@@ -26,14 +26,9 @@
       border-bottom: 1px solid var(--line); background: linear-gradient(180deg,var(--ink-2),var(--ink-1));
     }
     .brand { display: flex; align-items: center; gap: 11px; }
-    .brand-mark {
-      width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center;
-      background: linear-gradient(150deg,var(--brand-hi),var(--brand));
-      box-shadow: 0 3px 10px -3px rgba(217,72,94,0.6),inset 0 1px 0 rgba(255,255,255,0.25);
-    }
-    .brand-mark svg { width: 14px; height: 14px; display: block; }
-    .brand-name { font-family: var(--font-display); font-weight: 700; font-size: 15px; color: var(--tx-hi); }
-    .brand-name b { color: var(--brand-hi); font-weight: 800; }
+    .brand-mark { width: 26px; height: 26px; border-radius: 7px; }
+    .brand-name { font-family: var(--font-display); font-weight: 700; font-size: 15px; color: #edb567; }
+    .brand-name b { color: #6fc6d8; font-weight: 800; }
     .bmc {
       display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px 5px 8px;
       border-radius: 999px; font-size: 11px; font-weight: 600; text-decoration: none;
@@ -79,9 +74,62 @@
     .detected .dsub { font-size: 11.5px; color: var(--tx-mut); margin-top: 2px; display: flex; align-items: center; gap: 6px; }
     .detected .live { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 600; color: var(--match); }
     .detected .live .blink { width: 6px; height: 6px; border-radius: 50%; background: var(--match); box-shadow: 0 0 8px var(--match); }
-    .detected.none { opacity: 0.6; }
+    .detected.none { opacity: 1; }
     .detected.none::before { background: var(--tx-faint); }
     .detected.none .ico { background: var(--ink-3); color: var(--tx-faint); }
+
+    /* No deck detected — onboarding state */
+    .onboarding { display: none; }
+    .detected.none ~ .onboarding { display: block; }
+    .onboarding-box {
+      margin-top: 10px; padding: 12px 14px; background: var(--ink-2);
+      border: 1px dashed var(--line-strong); border-radius: 10px;
+    }
+    .onboarding-title { font-size: 12px; font-weight: 600; color: var(--tx-hi); margin-bottom: 8px; }
+    .onboarding-steps { list-style: none; font-size: 11.5px; color: var(--tx-mut); }
+    .onboarding-steps li { padding: 3px 0; display: flex; align-items: baseline; gap: 8px; }
+    .onboarding-steps .num {
+      width: 18px; height: 18px; border-radius: 50%; background: var(--ink-4);
+      color: var(--tx-hi); font-size: 10px; font-weight: 700; flex-shrink: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .onboarding-sites { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+    .onboarding-sites .chip {
+      font-size: 10px; font-weight: 600; color: var(--tx);
+      background: var(--ink-3); border: 1px solid var(--line);
+      padding: 2px 7px; border-radius: 5px;
+    }
+
+    /* Deck search dropdown */
+    .deck-search-wrap { position: relative; flex: 1; min-width: 0; }
+    .deck-search-wrap .inp { width: 100%; }
+    .deck-dropdown {
+      display: none; position: absolute; top: 100%; left: 0; right: 0;
+      margin-top: 4px; max-height: 200px; overflow-y: auto;
+      background: var(--ink-2); border: 1px solid var(--line-strong);
+      border-radius: 9px; z-index: 50; box-shadow: 0 12px 32px -8px rgba(0,0,0,0.6);
+    }
+    .deck-dropdown.open { display: block; }
+    .deck-option {
+      padding: 8px 12px; cursor: pointer; font-size: 12.5px;
+      color: var(--tx); display: flex; justify-content: space-between;
+      align-items: center; gap: 8px; transition: background 0.1s;
+    }
+    .deck-option:first-child { border-radius: 8px 8px 0 0; }
+    .deck-option:last-child { border-radius: 0 0 8px 8px; }
+    .deck-option:hover, .deck-option.active { background: var(--ink-4); color: var(--tx-hi); }
+    .deck-option .fmt { font-size: 10px; color: var(--tx-faint); font-weight: 600; flex-shrink: 0; }
+    .deck-option .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .deck-dropdown-empty { padding: 12px; text-align: center; font-size: 12px; color: var(--tx-faint); }
+
+    /* "Configure your account" notice */
+    .hint-configure {
+      padding: 10px 12px; background: var(--warn-soft, rgba(230,181,78,0.14));
+      border: 1px dashed var(--warn, #e6b54e); border-radius: 8px;
+      color: var(--warn, #e6b54e); font-size: 12px; font-weight: 600;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .hint-configure svg { width: 16px; height: 16px; flex-shrink: 0; }
     .src-chip {
       font-size: 10.5px; font-weight: 600; padding: 2px 7px; border-radius: 5px;
       background: var(--ink-3); border: 1px solid var(--line); color: var(--tx);
@@ -155,23 +203,74 @@
       background: var(--ink-2); border: 1px solid var(--line);
       padding: 3px 8px; border-radius: 6px; white-space: nowrap;
     }
+
+    /* Settings button */
+    .settings-btn {
+      width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 8px;
+      background: var(--ink-2); color: var(--tx-mut); cursor: pointer;
+      display: grid; place-items: center; transition: all 0.14s; flex-shrink: 0;
+    }
+    .settings-btn svg { width: 16px; height: 16px; }
+    .settings-btn:hover { color: var(--tx-hi); background: var(--ink-3); }
+
+    /* Settings panel */
+    .settings-panel {
+      border-bottom: 1px solid var(--line); background: var(--ink-0);
+    }
+    .settings-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 18px; font-size: 11px; text-transform: uppercase;
+      letter-spacing: 0.1em; font-weight: 600; color: var(--tx-mut);
+    }
+    .settings-close {
+      border: 0; background: none; color: var(--tx-mut); font-size: 18px;
+      cursor: pointer; padding: 0 4px; line-height: 1;
+    }
+    .settings-close:hover { color: var(--tx-hi); }
+    .settings-body { padding: 0 18px 14px; display: flex; flex-direction: column; gap: 10px; }
+    .settings-field { display: flex; flex-direction: column; gap: 4px; }
+    .settings-label { font-size: 11px; color: var(--tx-faint); font-weight: 600; }
   </style>
 </head>
 <body>
   <div class="p-head">
     <div class="brand">
-      <div class="brand-mark">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="4" width="7" height="16" rx="1.5"></rect>
-          <rect x="14" y="4" width="7" height="16" rx="1.5"></rect>
-        </svg>
-      </div>
+      <img class="brand-mark" src="icons/icon48.png" alt="">
       <span class="brand-name">Deck<b>Compare</b></span>
     </div>
     <a href="https://www.buymeacoffee.com/mcouzineth" target="_blank" rel="noopener" class="bmc">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h11v5a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4V8Z"/><path d="M16 9h2a2.5 2.5 0 0 1 0 5h-2"/><path d="M7 3v2M10.5 3v2M14 3v2"/></svg>
       <span id="bmc-text"></span>
     </a>
+    <button class="settings-btn" id="settings-toggle" title="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+    </button>
+  </div>
+
+  <!-- Settings panel -->
+  <div class="settings-panel" id="settings-panel" style="display:none">
+    <div class="settings-head">
+      <span id="settings-title"></span>
+      <button class="settings-close" id="settings-close">&times;</button>
+    </div>
+    <div class="settings-body">
+      <div class="settings-field">
+        <label class="settings-label" id="settings-source-label"></label>
+        <select class="inp" id="deck-source">
+          <option value="moxfield">Moxfield</option>
+          <option value="archidekt">Archidekt</option>
+          <option value="magicville">Magic-Ville</option>
+        </select>
+      </div>
+      <div class="settings-field">
+        <label class="settings-label" id="settings-user-label"></label>
+        <div class="input-row">
+          <input class="inp" id="settings-user" type="text">
+          <button class="btn btn-ghost" id="settings-save"><span id="settings-save-text"></span></button>
+        </div>
+      </div>
+      <div class="hint" id="settings-hint"></div>
+    </div>
   </div>
 
   <div class="p-body">
@@ -187,11 +286,29 @@
         </div>
         <span class="live" id="detected-live" style="display:none"><span class="blink"></span><span id="detected-badge"></span></span>
       </div>
+      <div class="onboarding" id="onboarding">
+        <div class="onboarding-box">
+          <div class="onboarding-title" id="onboarding-title"></div>
+          <ol class="onboarding-steps">
+            <li><span class="num">1</span><span id="onboarding-step1"></span></li>
+            <li><span class="num">2</span><span id="onboarding-step2"></span></li>
+            <li><span class="num">3</span><span id="onboarding-step3"></span></li>
+          </ol>
+          <div class="onboarding-sites">
+            <span class="chip">Moxfield</span>
+            <span class="chip">MTGGoldfish</span>
+            <span class="chip">Archidekt</span>
+            <span class="chip">mtgtop8</span>
+            <span class="chip">Magic-Ville</span>
+            <span class="chip">mtgdecks</span>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="vsline"><span id="vs-text"></span></div>
+    <div class="vsline deck2-section"><span id="vs-text"></span></div>
 
-    <div>
+    <div class="deck2-section">
       <div class="field-label b"><span class="pip"></span><span id="lbl-deck2"></span></div>
       <div class="src-toggle">
         <button class="active" data-pane="url">
@@ -217,13 +334,10 @@
 
       <div class="pane" id="pane-mox">
         <div class="input-row">
-          <input class="inp" id="moxfield-user" type="text" id-placeholder="moxfieldUsername">
-          <button class="btn btn-ghost" id="load-decks-btn"><span id="load-text"></span></button>
-        </div>
-        <div class="input-row">
-          <select class="inp" id="deck-select" disabled>
-            <option value="" id="select-default"></option>
-          </select>
+          <div class="deck-search-wrap">
+            <input class="inp" id="deck-search" type="text" disabled autocomplete="off">
+            <div class="deck-dropdown" id="deck-dropdown"></div>
+          </div>
           <button class="btn btn-primary" id="compare-moxfield-btn" disabled>
             <span id="cmp-mox-text"></span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>

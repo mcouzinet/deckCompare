@@ -15,6 +15,20 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return true;
   }
 
+  if (msg.type === 'LIST_ARCHIDEKT_DECKS') {
+    listArchidektDecks(msg.username)
+      .then(decks => sendResponse({ decks }))
+      .catch(err => sendResponse({ error: err.message }));
+    return true;
+  }
+
+  if (msg.type === 'LIST_MAGICVILLE_DECKS') {
+    listMagicVilleDecks(msg.username)
+      .then(decks => sendResponse({ decks }))
+      .catch(err => sendResponse({ error: err.message }));
+    return true;
+  }
+
   if (msg.type === 'FETCH_IMAGE') {
     fetchImage(msg.url)
       .then(dataUrl => sendResponse({ dataUrl }))
@@ -94,6 +108,77 @@ async function listMoxfieldDecks(username) {
     page++;
   } while (page <= totalPages);
 
+  return allDecks;
+}
+
+// --- Archidekt: list user's public decks ---
+
+const ARCHIDEKT_FORMATS = { 1: 'Standard', 2: 'Modern', 3: 'Commander', 4: 'Vintage', 5: 'Pauper', 6: 'Legacy', 7: 'Frontier', 8: 'Future Standard', 9: 'Penny Dreadful', 10: 'Commander 1v1', 11: 'Brawl', 12: 'Oathbreaker', 13: 'Pioneer', 14: 'Historic', 15: 'Premodern', 16: 'Alchemy', 17: 'Explorer' };
+
+async function listArchidektDecks(username) {
+  const allDecks = [];
+  let page = 1;
+  let hasNext = true;
+
+  while (hasNext) {
+    const params = new URLSearchParams({
+      ownerUsername: username,
+      pageSize: '100',
+      orderBy: '-updatedAt',
+      page: String(page)
+    });
+
+    const res = await fetch(`https://archidekt.com/api/decks/v3/?${params}`);
+    if (!res.ok) throw new Error(`Erreur Archidekt: ${res.status}`);
+
+    const data = await res.json();
+
+    if (data.count === -1) throw new Error('Utilisateur Archidekt introuvable');
+
+    for (const d of (data.results || [])) {
+      if (d.private || d.unlisted) continue;
+      allDecks.push({
+        id: d.id,
+        name: d.name,
+        format: ARCHIDEKT_FORMATS[d.deckFormat] || '',
+        url: `https://archidekt.com/decks/${d.id}`
+      });
+    }
+
+    hasNext = !!data.next;
+    page++;
+  }
+
+  return allDecks;
+}
+
+// --- Magic-Ville: list user's decks by pseudo ---
+
+async function listMagicVilleDecks(username) {
+  const res = await fetch(`https://www.magic-ville.com/fr/decks/resultats?joueur=${encodeURIComponent(username)}`);
+  if (!res.ok) throw new Error(`Erreur Magic-Ville: ${res.status}`);
+
+  const buf = await res.arrayBuffer();
+  const html = new TextDecoder('iso-8859-1').decode(buf);
+
+  const allDecks = [];
+  // Pattern: <a ... href=showdeck?ref=NNNN ...>DECK NAME</a> within deck listing rows
+  const regex = /href=["']?(?:\.\.\/decks\/)?showdeck\?ref=(\d+)[^>]*>([^<]+)<\/a>/gi;
+  let match;
+  while ((match = regex.exec(html)) !== null) {
+    const ref = match[1];
+    const name = match[2].trim();
+    if (name && !allDecks.some(d => d.id === ref)) {
+      allDecks.push({
+        id: ref,
+        name,
+        format: '',
+        url: `https://www.magic-ville.com/fr/decks/showdeck?ref=${ref}`
+      });
+    }
+  }
+
+  if (!allDecks.length) throw new Error('Aucun deck trouvé pour cet utilisateur');
   return allDecks;
 }
 

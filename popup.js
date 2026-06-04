@@ -5,11 +5,15 @@ const detectedEl = document.getElementById('detected');
 const detectedName = document.getElementById('detected-name');
 const detectedSub = document.getElementById('detected-sub');
 const detectedLive = document.getElementById('detected-live');
-const moxfieldUserInput = document.getElementById('moxfield-user');
-const loadDecksBtn = document.getElementById('load-decks-btn');
-const deckSelect = document.getElementById('deck-select');
+const deckSearchInput = document.getElementById('deck-search');
+const deckDropdown = document.getElementById('deck-dropdown');
 const compareMoxfieldBtn = document.getElementById('compare-moxfield-btn');
 const moxHint = document.getElementById('mox-hint');
+const deckSourceSelect = document.getElementById('deck-source');
+const settingsPanel = document.getElementById('settings-panel');
+const settingsUser = document.getElementById('settings-user');
+const settingsSave = document.getElementById('settings-save');
+const settingsHint = document.getElementById('settings-hint');
 
 const SUPPORTED_SITES = [
   { pattern: 'mtggoldfish.com/deck/', label: 'MTGGoldfish' },
@@ -33,22 +37,32 @@ document.getElementById('tab-mox-text').textContent = t('myMoxfield');
 document.getElementById('cmp-url-text').textContent = t('compare');
 document.getElementById('cmp-mox-text').textContent = t('compare');
 document.getElementById('url-hint').textContent = t('worksWithAny');
-document.getElementById('load-text').textContent = t('load');
-document.getElementById('select-default').textContent = t('loadYourDecks');
-document.getElementById('mox-hint').textContent = t('enterUsername');
+deckSearchInput.placeholder = t('selectDeck');
 document.getElementById('supports-lbl').textContent = t('supports');
 document.getElementById('detected-badge').textContent = t('detected');
 document.getElementById('detected-name').textContent = t('scanning');
+document.getElementById('settings-title').textContent = t('settings');
+document.getElementById('settings-source-label').textContent = t('settingsSource');
+document.getElementById('settings-user-label').textContent = t('settingsUser');
+document.getElementById('settings-save-text').textContent = t('settingsSave');
 deckUrlInput.placeholder = t('pasteADeckUrl');
-moxfieldUserInput.placeholder = t('moxfieldUsername');
+document.getElementById('onboarding-title').textContent = t('onboardingTitle');
+document.getElementById('onboarding-step1').textContent = t('onboardingStep1');
+document.getElementById('onboarding-step2').textContent = t('onboardingStep2');
+document.getElementById('onboarding-step3').textContent = t('onboardingStep3');
 
-// --- Source toggle ---
+// --- Source toggle (persisted) ---
+function switchPane(pane) {
+  document.querySelectorAll('.src-toggle button').forEach(b =>
+    b.classList.toggle('active', b.dataset.pane === pane));
+  document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('pane-' + pane).classList.add('active');
+}
+
 document.querySelectorAll('.src-toggle button').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.src-toggle button').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
-    document.getElementById('pane-' + btn.dataset.pane).classList.add('active');
+    switchPane(btn.dataset.pane);
+    chrome.storage.local.set({ preferredPane: btn.dataset.pane });
   });
 });
 
@@ -65,14 +79,22 @@ document.querySelectorAll('.src-toggle button').forEach(btn => {
     detectedLive.style.display = '';
   } else {
     detectedName.textContent = t('noDetected');
-    detectedSub.textContent = t('openSupported');
+    detectedSub.textContent = '';
+    // Hide deck 2 section when no deck detected
+    document.querySelectorAll('.deck2-section').forEach(el => el.style.display = 'none');
   }
 
-  const { moxfieldUser, moxfieldDecks } = await chrome.storage.local.get(['moxfieldUser', 'moxfieldDecks']);
-  if (moxfieldUser) {
-    moxfieldUserInput.value = moxfieldUser;
-    if (moxfieldDecks?.length) populateSelect(moxfieldDecks);
-  }
+  const stored = await chrome.storage.local.get(['moxfieldUser', 'moxfieldDecks', 'archidektUser', 'archidektDecks', 'magicvilleUser', 'magicvilleDecks', 'preferredPane', 'deckSource']);
+  if (stored.preferredPane) switchPane(stored.preferredPane);
+
+  // Restore deck source and username
+  const source = stored.deckSource || 'moxfield';
+  deckSourceSelect.value = source;
+  const savedUser = stored[`${source}User`];
+  const savedDecks = stored[`${source}Decks`];
+  if (savedUser) settingsUser.value = savedUser;
+  if (savedDecks?.length) populateSelect(savedDecks);
+  updateMoxHint(source, savedUser || '');
 })();
 
 // --- URL comparison ---
@@ -81,50 +103,134 @@ deckUrlInput.addEventListener('keydown', e => {
   if (e.key === 'Enter') runComparison(deckUrlInput.value.trim());
 });
 
-// --- Moxfield deck list ---
-loadDecksBtn.addEventListener('click', loadMoxfieldDecks);
-moxfieldUserInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter') loadMoxfieldDecks();
-});
+// --- My Decks (searchable dropdown) ---
+let allDecks = [];
+let selectedDeckUrl = '';
+
 compareMoxfieldBtn.addEventListener('click', () => {
-  const url = deckSelect.value;
-  if (url) runComparison(url);
+  if (selectedDeckUrl) runComparison(selectedDeckUrl);
 });
 
-async function loadMoxfieldDecks() {
-  const username = moxfieldUserInput.value.trim();
+// --- Settings panel ---
+document.getElementById('settings-toggle').addEventListener('click', () => {
+  const visible = settingsPanel.style.display !== 'none';
+  settingsPanel.style.display = visible ? 'none' : 'block';
+});
+document.getElementById('settings-close').addEventListener('click', () => {
+  settingsPanel.style.display = 'none';
+});
+
+// When source changes in settings, restore saved username
+deckSourceSelect.addEventListener('change', async () => {
+  const source = deckSourceSelect.value;
+  const stored = await chrome.storage.local.get([`${source}User`]);
+  settingsUser.value = stored[`${source}User`] || '';
+});
+
+// Save & load
+settingsSave.addEventListener('click', loadUserDecks);
+settingsUser.addEventListener('keydown', e => {
+  if (e.key === 'Enter') loadUserDecks();
+});
+
+async function loadUserDecks() {
+  const username = settingsUser.value.trim();
+  const source = deckSourceSelect.value;
   if (!username) { setStatus(t('enterMoxUser'), true); return; }
 
-  loadDecksBtn.disabled = true;
+  settingsSave.disabled = true;
   setStatus(t('loadingMoxDecks'));
 
   try {
-    const resp = await sendToRuntime({ type: 'LIST_MOXFIELD_DECKS', username });
-    if (resp.error) { setStatus(`${t('error')}: ${resp.error}`, true); loadDecksBtn.disabled = false; return; }
-    if (!resp.decks?.length) { setStatus(t('noPublicDecks'), true); loadDecksBtn.disabled = false; return; }
+    const MSG_TYPES = { moxfield: 'LIST_MOXFIELD_DECKS', archidekt: 'LIST_ARCHIDEKT_DECKS', magicville: 'LIST_MAGICVILLE_DECKS' };
+    const msgType = MSG_TYPES[source] || 'LIST_MOXFIELD_DECKS';
+    const resp = await sendToRuntime({ type: msgType, username });
+    if (resp.error) { setStatus(`${t('error')}: ${resp.error}`, true); settingsSave.disabled = false; return; }
+    if (!resp.decks?.length) { setStatus(t('noPublicDecks'), true); settingsSave.disabled = false; return; }
 
-    await chrome.storage.local.set({ moxfieldUser: username, moxfieldDecks: resp.decks });
+    await chrome.storage.local.set({
+      deckSource: source,
+      [`${source}User`]: username,
+      [`${source}Decks`]: resp.decks
+    });
     populateSelect(resp.decks);
     setStatus('');
-    moxHint.innerHTML = `<b>${resp.decks.length}</b> ${t('decksLoaded')}`;
+    settingsHint.innerHTML = `<b>${resp.decks.length}</b> ${t('decksLoaded')}`;
+    updateMoxHint(source, username);
+    // Auto-close settings after success
+    settingsPanel.style.display = 'none';
   } catch (err) {
     setStatus(`${t('error')}: ${err.message}`, true);
   } finally {
-    loadDecksBtn.disabled = false;
+    settingsSave.disabled = false;
+  }
+}
+
+function updateMoxHint(source, username) {
+  if (username) {
+    moxHint.className = 'hint';
+    moxHint.innerHTML = `<b>${source}</b> · ${username} · ${t('settingsConfigured')}`;
+  } else {
+    moxHint.className = 'hint-configure';
+    moxHint.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>${t('settingsNotConfigured')}`;
   }
 }
 
 function populateSelect(decks) {
-  deckSelect.innerHTML = `<option value="">${t('selectDeck')}</option>`;
-  for (const d of decks) {
-    const opt = document.createElement('option');
-    opt.value = d.url;
-    opt.textContent = d.format ? `${d.name} [${d.format}]` : d.name;
-    deckSelect.appendChild(opt);
-  }
-  deckSelect.disabled = false;
-  compareMoxfieldBtn.disabled = false;
+  allDecks = decks;
+  selectedDeckUrl = '';
+  deckSearchInput.disabled = false;
+  deckSearchInput.value = '';
+  deckSearchInput.placeholder = t('selectDeck');
+  compareMoxfieldBtn.disabled = true;
+  renderDropdown(decks);
 }
+
+function renderDropdown(filtered) {
+  if (!filtered.length) {
+    deckDropdown.innerHTML = `<div class="deck-dropdown-empty">${t('noPublicDecks')}</div>`;
+    return;
+  }
+  deckDropdown.innerHTML = filtered.map(d => {
+    const fmt = d.format ? `<span class="fmt">${d.format}</span>` : '';
+    return `<div class="deck-option" data-url="${d.url}"><span class="nm">${d.name}</span>${fmt}</div>`;
+  }).join('');
+}
+
+// Search input: filter + show dropdown
+deckSearchInput.addEventListener('input', () => {
+  const q = deckSearchInput.value.toLowerCase();
+  const filtered = allDecks.filter(d => d.name.toLowerCase().includes(q) || (d.format && d.format.toLowerCase().includes(q)));
+  renderDropdown(filtered);
+  deckDropdown.classList.add('open');
+});
+
+deckSearchInput.addEventListener('focus', () => {
+  if (allDecks.length) {
+    const q = deckSearchInput.value.toLowerCase();
+    const filtered = q ? allDecks.filter(d => d.name.toLowerCase().includes(q) || (d.format && d.format.toLowerCase().includes(q))) : allDecks;
+    renderDropdown(filtered);
+    deckDropdown.classList.add('open');
+  }
+});
+
+// Click on a deck option
+deckDropdown.addEventListener('click', e => {
+  const opt = e.target.closest('.deck-option');
+  if (!opt) return;
+  selectedDeckUrl = opt.dataset.url;
+  const nameEl = opt.querySelector('.nm');
+  deckSearchInput.value = nameEl ? nameEl.textContent : '';
+  deckDropdown.classList.remove('open');
+  compareMoxfieldBtn.disabled = false;
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', e => {
+  if (!e.target.closest('.deck-search-wrap')) {
+    deckDropdown.classList.remove('open');
+  }
+});
 
 // --- Shared comparison logic ---
 async function runComparison(targetUrl) {

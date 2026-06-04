@@ -3,7 +3,7 @@
   "name": "Deck Compare – MTG",
   "short_name": "DeckCompare",
   "description": "Compare MTG decklists side by side across Moxfield, MTGGoldfish, Archidekt, mtgtop8, Magic-Ville & mtgdecks.net.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "permissions": ["activeTab", "storage"],
   "host_permissions": [
     "https://api2.moxfield.com/*",

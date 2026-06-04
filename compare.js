@@ -34,6 +34,10 @@
     document.getElementById("hover-hint").textContent = t("hoverHint");
     document.getElementById("stat-title").textContent = t("matchupBreakdown");
     document.getElementById("footnote").textContent = t("cardImages");
+    const rateLink = document.getElementById("rate-link");
+    rateLink.textContent = t("rateExtension");
+    rateLink.href = `https://chromewebstore.google.com/detail/${chrome.runtime.id}`;
+
     document.getElementById("lg-a-label").textContent = `${t("onlyIn")} ${deckA.name}`;
     document.getElementById("lg-s-label").textContent = t("sharedCardsLabel");
     document.getElementById("lg-b-label").textContent = `${t("onlyIn")} ${deckB.name}`;
@@ -72,8 +76,24 @@
     return merged;
   }
 
+  // Heuristic: in Commander/Duel Commander decks (~100 cards), if the sideboard
+  // has only 1-2 cards and no commanders section exists, treat sideboard as commanders.
+  function fixCommanderHeuristic(deck) {
+    const mainCount = Object.values(deck.mainboard || {}).reduce((s, q) => s + q, 0);
+    const sideCount = Object.values(deck.sideboard || {}).reduce((s, q) => s + q, 0);
+    const cmdrCount = Object.values(deck.commanders || {}).reduce((s, q) => s + q, 0);
+
+    if (cmdrCount === 0 && sideCount >= 1 && sideCount <= 2 && mainCount >= 90) {
+      deck.commanders = { ...(deck.commanders || {}), ...(deck.sideboard || {}) };
+      deck.sideboard = {};
+    }
+    return deck;
+  }
+
   // ===== comparison engine =====
   function buildComparison(deckA, deckB) {
+    fixCommanderHeuristic(deckA);
+    fixCommanderHeuristic(deckB);
     const result = { uniqueA: [], uniqueB: [], shared: [] };
     for (const board of ["commanders", "mainboard", "sideboard"]) {
       const aCards = normalizeBoard(deckA[board] || {});
@@ -96,12 +116,19 @@
     result.shared.sort(sorter);
 
     const distinctShared = result.shared.length;
-    const distinctTotal = result.uniqueA.length + result.uniqueB.length + distinctShared;
-    const similarity = distinctTotal ? Math.round((distinctShared / distinctTotal) * 100) : 0;
     const qtyDiffs = result.shared.filter(e => e.aQty !== e.bQty).length;
 
-    result.metrics = { similarity, distinctShared, distinctTotal,
-      uniqueACount: result.uniqueA.length, uniqueBCount: result.uniqueB.length, qtyDiffs };
+    // Count total cards (by quantity, not distinct names)
+    const uniqueAQty = result.uniqueA.reduce((s, e) => s + e.aQty, 0);
+    const uniqueBQty = result.uniqueB.reduce((s, e) => s + e.bQty, 0);
+    const sharedQty = result.shared.reduce((s, e) => s + Math.min(e.aQty, e.bQty), 0);
+    const totalA = uniqueAQty + result.shared.reduce((s, e) => s + e.aQty, 0);
+    const totalB = uniqueBQty + result.shared.reduce((s, e) => s + e.bQty, 0);
+    const deckSize = Math.max(totalA, totalB, 1);
+    const similarity = Math.round((sharedQty / deckSize) * 100);
+
+    result.metrics = { similarity, distinctShared,
+      uniqueACount: uniqueAQty, uniqueBCount: uniqueBQty, sharedQty, qtyDiffs };
     return result;
   }
 
@@ -132,13 +159,13 @@
       </svg>`);
     document.getElementById("ring-num").innerHTML = `${M.similarity}<span>%</span>`;
 
-    // overlap bar
-    const total = M.uniqueACount + M.distinctShared + M.uniqueBCount || 1;
+    // overlap bar (uses total card quantities, not distinct names)
+    const total = M.uniqueACount + M.sharedQty + M.uniqueBCount || 1;
     document.querySelector(".overlap-seg.a").style.flexBasis = (M.uniqueACount / total) * 100 + "%";
-    document.querySelector(".overlap-seg.s").style.flexBasis = (M.distinctShared / total) * 100 + "%";
+    document.querySelector(".overlap-seg.s").style.flexBasis = (M.sharedQty / total) * 100 + "%";
     document.querySelector(".overlap-seg.b").style.flexBasis = (M.uniqueBCount / total) * 100 + "%";
     document.getElementById("lg-a").textContent = M.uniqueACount;
-    document.getElementById("lg-s").textContent = M.distinctShared;
+    document.getElementById("lg-s").textContent = M.sharedQty;
     document.getElementById("lg-b").textContent = M.uniqueBCount;
   }
 
@@ -179,7 +206,7 @@
           <span class="qb">${e.bQty}×</span>
         </div>`;
     }).join("");
-    document.getElementById("shared-count").textContent = M.distinctShared;
+    document.getElementById("shared-count").textContent = M.sharedQty;
     document.getElementById("qty-diff-note").textContent =
       `${M.qtyDiffs} ${M.qtyDiffs === 1 ? t("qtyMismatch") : t("qtyMismatches")}`;
   }
@@ -188,7 +215,7 @@
   function renderStats(deckA, deckB, M) {
     const rows = [
       [t("matchScore"), M.similarity + "%", "accent-s", "var(--match)"],
-      [t("sharedCardsLabel"), M.distinctShared, "accent-s", "var(--match)"],
+      [t("sharedCardsLabel"), M.sharedQty, "accent-s", "var(--match)"],
       [`${t("onlyIn")} ${deckA.name}`, M.uniqueACount, "accent-a", "var(--a)"],
       [`${t("onlyIn")} ${deckB.name}`, M.uniqueBCount, "accent-b", "var(--b)"],
       [t("qtyMismatchesLabel"), M.qtyDiffs, "accent-w", "var(--warn)"],
@@ -239,7 +266,9 @@
     })();
   }
 
-  // ===== hover preview =====
+  // ===== hover preview (always loads "normal" version) =====
+  const previewCache = new Map();
+
   function initPreview(deckA, deckB) {
     const stage = document.getElementById("preview-stage");
     const img = document.getElementById("preview-img");
@@ -259,15 +288,18 @@
       qtyEl.innerHTML = parts.join("");
 
       stage.classList.remove("has-img");
-      const cached = imageCache.get(name);
+      const cached = previewCache.get(name);
       if (cached) {
         img.src = cached;
         stage.classList.add("has-img");
       } else {
         sendToBackground({ type: "FETCH_IMAGE", url: imgUrl(name, "normal") }).then(resp => {
-          if (resp?.dataUrl && current === name) {
-            img.src = resp.dataUrl;
-            stage.classList.add("has-img");
+          if (resp?.dataUrl) {
+            previewCache.set(name, resp.dataUrl);
+            if (current === name) {
+              img.src = resp.dataUrl;
+              stage.classList.add("has-img");
+            }
           }
         });
       }
