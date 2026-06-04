@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deck Compare — Privacy Policy</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0c0e13; color: #c4c9d6; font-size: 15px; line-height: 1.7;
+      min-height: 100vh; padding: 40px 20px;
+    }
+    .container { max-width: 640px; margin: 0 auto; }
+    h1 { color: #eef0f6; font-size: 28px; margin-bottom: 8px; }
+    .subtitle { color: #868da0; font-size: 13px; margin-bottom: 32px; }
+    h2 { color: #eef0f6; font-size: 18px; margin: 28px 0 10px; }
+    p { margin-bottom: 14px; }
+    ul { margin: 0 0 14px 20px; }
+    li { margin-bottom: 6px; }
+    a { color: #e76074; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.07); font-size: 12px; color: #5b6273; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Deck Compare — Privacy Policy</h1>
+    <p class="subtitle">Last updated: June 4, 2026</p>
+
+    <h2>Overview</h2>
+    <p>Deck Compare is a Chrome extension that compares Magic: The Gathering decklists across multiple websites. Your privacy matters — the extension is designed to work entirely on your device with no data collection.</p>
+
+    <h2>Data we collect</h2>
+    <p><strong>None.</strong> Deck Compare does not collect, store, or transmit any personal data to any server.</p>
+
+    <h2>What the extension does</h2>
+    <ul>
+      <li><strong>Reads decklist data</strong> from publicly available deck pages on supported sites (Moxfield, MTGGoldfish, Archidekt, mtgtop8, Magic-Ville, mtgdecks.net) — only card names and quantities.</li>
+      <li><strong>Fetches card images</strong> from the Scryfall API for display purposes.</li>
+      <li><strong>Fetches deck data</strong> from supported site APIs to retrieve decklists for comparison.</li>
+    </ul>
+
+    <h2>Local storage</h2>
+    <p>The extension uses Chrome's local storage (<code>chrome.storage.local</code>) to save:</p>
+    <ul>
+      <li>Comparison data (two parsed decklists) so the results page can display them.</li>
+      <li>Your Moxfield username and cached deck list, if you choose to enter it, to avoid re-fetching on every popup open.</li>
+    </ul>
+    <p>This data stays entirely on your device. It is never sent to any external server.</p>
+
+    <h2>Third-party services</h2>
+    <p>The extension makes requests to the following third-party services:</p>
+    <ul>
+      <li><strong>Scryfall</strong> (api.scryfall.com, cards.scryfall.io) — to fetch card images. Subject to <a href="https://scryfall.com/docs/api">Scryfall's terms</a>.</li>
+      <li><strong>Google Fonts</strong> (fonts.googleapis.com, fonts.gstatic.com) — to load display fonts.</li>
+      <li><strong>Supported deck sites</strong> — to fetch publicly available deck data via their APIs or pages.</li>
+    </ul>
+    <p>No user data is sent to these services. Only public deck identifiers and card names are used in requests.</p>
+
+    <h2>Analytics and tracking</h2>
+    <p>Deck Compare does not use any analytics, tracking, cookies, or telemetry of any kind.</p>
+
+    <h2>Permissions</h2>
+    <ul>
+      <li><strong>activeTab</strong> — to read the decklist from the currently open tab.</li>
+      <li><strong>storage</strong> — to save comparison data and Moxfield username locally.</li>
+      <li><strong>Host permissions</strong> — to fetch deck data and card images from supported sites and Scryfall.</li>
+    </ul>
+
+    <h2>Changes to this policy</h2>
+    <p>If this policy is updated, the changes will be reflected on this page with an updated date.</p>
+
+    <h2>Contact</h2>
+    <p>For questions about this privacy policy, you can reach out via <a href="https://www.buymeacoffee.com/mcouzineth">Buy Me a Coffee</a>.</p>
+
+    <div class="footer">
+      Deck Compare is an open-source Chrome extension. No data is collected. No accounts required.
+    </div>
+  </div>
+</body>
+</html>

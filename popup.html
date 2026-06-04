@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink-0: #0c0e13; --ink-1: #12151d; --ink-2: #181c26; --ink-3: #20252f; --ink-4: #2a3040;
+      --line: rgba(255,255,255,0.07); --line-strong: rgba(255,255,255,0.12);
+      --tx-hi: #eef0f6; --tx: #c4c9d6; --tx-mut: #868da0; --tx-faint: #5b6273;
+      --a: #e3a24f; --a-soft: rgba(227,162,79,0.14);
+      --b: #56b6c9; --b-soft: rgba(86,182,201,0.14);
+      --match: #74bd84;
+      --brand: #d9485e; --brand-hi: #e76074;
+      --font-display: "Bricolage Grotesque","Geist",system-ui,sans-serif;
+      --font-ui: "Geist",system-ui,-apple-system,sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { width: 400px; font-family: var(--font-ui); font-size: 13px; color: var(--tx); background: var(--ink-1); }
+
+    /* header */
+    .p-head {
+      display: flex; align-items: center; gap: 11px; padding: 15px 18px;
+      border-bottom: 1px solid var(--line); background: linear-gradient(180deg,var(--ink-2),var(--ink-1));
+    }
+    .brand { display: flex; align-items: center; gap: 11px; }
+    .brand-mark {
+      width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center;
+      background: linear-gradient(150deg,var(--brand-hi),var(--brand));
+      box-shadow: 0 3px 10px -3px rgba(217,72,94,0.6),inset 0 1px 0 rgba(255,255,255,0.25);
+    }
+    .brand-mark svg { width: 14px; height: 14px; display: block; }
+    .brand-name { font-family: var(--font-display); font-weight: 700; font-size: 15px; color: var(--tx-hi); }
+    .brand-name b { color: var(--brand-hi); font-weight: 800; }
+    .bmc {
+      display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px 5px 8px;
+      border-radius: 999px; font-size: 11px; font-weight: 600; text-decoration: none;
+      color: #2a2410; background: linear-gradient(180deg,#ffdd55,#ffc933);
+      border: 1px solid rgba(0,0,0,0.18); margin-left: auto;
+      box-shadow: 0 2px 8px -3px rgba(255,201,51,0.5),inset 0 1px 0 rgba(255,255,255,0.5);
+      transition: transform 0.14s; white-space: nowrap;
+    }
+    .bmc svg { width: 14px; height: 14px; }
+    .bmc:hover { transform: translateY(-1px); }
+
+    /* body */
+    .p-body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 14px; }
+
+    .field-label {
+      font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.11em;
+      font-weight: 600; color: var(--tx-mut); margin-bottom: 8px;
+      display: flex; align-items: center; gap: 7px;
+    }
+    .field-label .pip { width: 7px; height: 7px; border-radius: 50%; }
+    .field-label.a .pip { background: var(--a); box-shadow: 0 0 8px var(--a); }
+    .field-label.a { color: var(--a); }
+    .field-label.b .pip { background: var(--b); box-shadow: 0 0 8px var(--b); }
+    .field-label.b { color: var(--b); }
+
+    /* detected deck */
+    .detected {
+      display: flex; align-items: center; gap: 11px; padding: 12px 13px;
+      background: var(--ink-2); border: 1px solid var(--line); border-radius: 11px;
+      position: relative; overflow: hidden;
+    }
+    .detected::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--a); }
+    .detected .ico {
+      width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0;
+      display: grid; place-items: center; background: var(--a-soft); color: var(--a);
+    }
+    .detected .ico svg { width: 18px; height: 18px; }
+    .detected .meta { min-width: 0; flex: 1; }
+    .detected .dname {
+      font-family: var(--font-display); font-weight: 700; font-size: 14px; color: var(--tx-hi);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .detected .dsub { font-size: 11.5px; color: var(--tx-mut); margin-top: 2px; display: flex; align-items: center; gap: 6px; }
+    .detected .live { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 600; color: var(--match); }
+    .detected .live .blink { width: 6px; height: 6px; border-radius: 50%; background: var(--match); box-shadow: 0 0 8px var(--match); }
+    .detected.none { opacity: 0.6; }
+    .detected.none::before { background: var(--tx-faint); }
+    .detected.none .ico { background: var(--ink-3); color: var(--tx-faint); }
+    .src-chip {
+      font-size: 10.5px; font-weight: 600; padding: 2px 7px; border-radius: 5px;
+      background: var(--ink-3); border: 1px solid var(--line); color: var(--tx);
+    }
+
+    /* vs divider */
+    .vsline { display: flex; align-items: center; gap: 12px; }
+    .vsline::before,.vsline::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+    .vsline span { font-family: var(--font-display); font-weight: 800; font-size: 11px; letter-spacing: 0.18em; color: var(--tx-faint); text-transform: uppercase; }
+
+    /* source toggle */
+    .src-toggle {
+      display: flex; background: var(--ink-2); border: 1px solid var(--line);
+      border-radius: 9px; padding: 3px; gap: 2px; margin-bottom: 11px;
+    }
+    .src-toggle button {
+      flex: 1; border: 0; background: transparent; color: var(--tx-mut);
+      font-family: var(--font-ui); font-size: 12px; font-weight: 600;
+      padding: 7px; border-radius: 6px; cursor: pointer; transition: all .14s;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .src-toggle button svg { width: 14px; height: 14px; }
+    .src-toggle button.active { background: var(--ink-4); color: var(--tx-hi); }
+
+    .pane { display: none; flex-direction: column; gap: 9px; }
+    .pane.active { display: flex; }
+
+    .input-row { display: flex; gap: 8px; }
+    .inp {
+      flex: 1; min-width: 0; padding: 10px 12px; background: var(--ink-2);
+      border: 1px solid var(--line); border-radius: 9px; color: var(--tx-hi);
+      font-family: var(--font-ui); font-size: 13px; outline: none;
+      transition: border-color .14s,box-shadow .14s;
+    }
+    .inp::placeholder { color: var(--tx-faint); }
+    .inp:focus { border-color: var(--b); box-shadow: 0 0 0 3px var(--b-soft); }
+    select.inp {
+      cursor: pointer; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%23868da0' stroke-width='2'%3E%3Cpath d='M3 5l4 4 4-4'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 11px center; padding-right: 32px;
+    }
+    select.inp option { background: var(--ink-2); color: var(--tx-hi); }
+
+    .btn {
+      border: 0; border-radius: 9px; cursor: pointer; white-space: nowrap;
+      font-family: var(--font-ui); font-weight: 600; font-size: 13px;
+      padding: 10px 16px; transition: all .14s; display: inline-flex; align-items: center; gap: 7px;
+    }
+    .btn svg { width: 15px; height: 15px; }
+    .btn-primary { background: var(--brand); color: #fff; box-shadow: 0 3px 12px -4px rgba(217,72,94,0.6); }
+    .btn-primary:hover:not(:disabled) { background: var(--brand-hi); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-ghost { background: var(--ink-3); color: var(--tx); border: 1px solid var(--line); }
+    .btn-ghost:hover:not(:disabled) { background: var(--ink-4); color: var(--tx-hi); }
+    .btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .hint { font-size: 11px; color: var(--tx-faint); }
+    .hint b { color: var(--tx-mut); font-weight: 600; }
+
+    #status { padding: 0 18px 4px; font-size: 12px; color: var(--tx-mut); min-height: 20px; }
+    #status.error { color: var(--brand-hi); }
+
+    /* footer */
+    .p-foot {
+      padding: 12px 18px; border-top: 1px solid var(--line); background: var(--ink-0);
+      display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    }
+    .p-foot .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--tx-faint); margin-right: 2px; }
+    .p-foot .chip {
+      font-size: 10.5px; font-weight: 600; color: var(--tx-mut);
+      background: var(--ink-2); border: 1px solid var(--line);
+      padding: 3px 8px; border-radius: 6px; white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="p-head">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="7" height="16" rx="1.5"></rect>
+          <rect x="14" y="4" width="7" height="16" rx="1.5"></rect>
+        </svg>
+      </div>
+      <span class="brand-name">Deck<b>Compare</b></span>
+    </div>
+    <a href="https://www.buymeacoffee.com/mcouzineth" target="_blank" rel="noopener" class="bmc">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h11v5a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4V8Z"/><path d="M16 9h2a2.5 2.5 0 0 1 0 5h-2"/><path d="M7 3v2M10.5 3v2M14 3v2"/></svg>
+      <span id="bmc-text"></span>
+    </a>
+  </div>
+
+  <div class="p-body">
+    <div>
+      <div class="field-label a"><span class="pip"></span><span id="lbl-deck1"></span></div>
+      <div class="detected none" id="detected">
+        <div class="ico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 4v16"/></svg>
+        </div>
+        <div class="meta">
+          <div class="dname" id="detected-name"></div>
+          <div class="dsub" id="detected-sub"></div>
+        </div>
+        <span class="live" id="detected-live" style="display:none"><span class="blink"></span><span id="detected-badge"></span></span>
+      </div>
+    </div>
+
+    <div class="vsline"><span id="vs-text"></span></div>
+
+    <div>
+      <div class="field-label b"><span class="pip"></span><span id="lbl-deck2"></span></div>
+      <div class="src-toggle">
+        <button class="active" data-pane="url">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/><path d="M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/></svg>
+          <span id="tab-url-text"></span>
+        </button>
+        <button data-pane="mox">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7l-8-4-8 4 8 4 8-4z"/><path d="M4 12l8 4 8-4M4 17l8 4 8-4"/></svg>
+          <span id="tab-mox-text"></span>
+        </button>
+      </div>
+
+      <div class="pane active" id="pane-url">
+        <div class="input-row">
+          <input class="inp" id="deck-url" type="text" id-placeholder="pasteADeckUrl">
+          <button class="btn btn-primary" id="compare-btn">
+            <span id="cmp-url-text"></span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+        <div class="hint" id="url-hint"></div>
+      </div>
+
+      <div class="pane" id="pane-mox">
+        <div class="input-row">
+          <input class="inp" id="moxfield-user" type="text" id-placeholder="moxfieldUsername">
+          <button class="btn btn-ghost" id="load-decks-btn"><span id="load-text"></span></button>
+        </div>
+        <div class="input-row">
+          <select class="inp" id="deck-select" disabled>
+            <option value="" id="select-default"></option>
+          </select>
+          <button class="btn btn-primary" id="compare-moxfield-btn" disabled>
+            <span id="cmp-mox-text"></span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+        <div class="hint" id="mox-hint"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="status"></div>
+
+  <div class="p-foot">
+    <span class="lbl" id="supports-lbl"></span>
+    <span class="chip">Moxfield</span>
+    <span class="chip">Archidekt</span>
+    <span class="chip">MTGGoldfish</span>
+    <span class="chip">mtgtop8</span>
+    <span class="chip">Magic-Ville</span>
+    <span class="chip">mtgdecks</span>
+  </div>
+
+  <script src="i18n.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
