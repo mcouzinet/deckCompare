@@ -35,7 +35,44 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       .catch(() => sendResponse({ dataUrl: null }));
     return true;
   }
+
+  if (msg.type === 'FETCH_CARD_TYPES') {
+    fetchCardTypes(msg.names)
+      .then(types => sendResponse(types))
+      .catch(() => sendResponse({ lands: [], creatures: [] }));
+    return true;
+  }
 });
+
+// --- Scryfall card type batch fetch ---
+
+async function fetchCardTypes(names) {
+  const BATCH = 75;
+  const landNames = new Set();
+  const creatureNames = new Set();
+
+  for (let i = 0; i < names.length; i += BATCH) {
+    const batch = names.slice(i, i + BATCH);
+    const res = await fetch('https://api.scryfall.com/cards/collection', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifiers: batch.map(name => ({ name })) })
+    });
+    if (!res.ok) continue;
+    const data = await res.json();
+    for (const card of (data.data || [])) {
+      const faces = card.card_faces || [card];
+      for (const face of faces) {
+        const tl = face.type_line || card.type_line || '';
+        if (tl.includes('Land')) landNames.add(face.name || card.name);
+        if (tl.includes('Creature')) creatureNames.add(face.name || card.name);
+      }
+    }
+    if (i + BATCH < names.length) await new Promise(r => setTimeout(r, 100));
+  }
+
+  return { lands: [...landNames], creatures: [...creatureNames] };
+}
 
 // --- Image proxy (avoids CORS) with retry on 429 ---
 
@@ -70,7 +107,8 @@ async function fetchImage(url) {
 async function listMoxfieldDecks(username) {
   const headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Referer': 'https://www.moxfield.com/'
+    'Referer': 'https://www.moxfield.com/',
+    'Cache-Control': 'no-cache'
   };
 
   const allDecks = [];
@@ -83,10 +121,11 @@ async function listMoxfieldDecks(username) {
       pageNumber: page,
       pageSize: '100',
       sortType: 'Updated',
-      sortDirection: 'Descending'
+      sortDirection: 'Descending',
+      _t: Date.now()
     });
 
-    const res = await fetch(`https://api2.moxfield.com/v2/decks/search-sfw?${params}`, { headers });
+    const res = await fetch(`https://api2.moxfield.com/v2/decks/search?${params}`, { headers, cache: 'no-store' });
 
     if (!res.ok) {
       if (res.status === 404) throw new Error('Utilisateur Moxfield introuvable');
@@ -333,10 +372,6 @@ async function fetchMagicVilleDeck(url) {
   let currentSection = 'mainboard';
 
   // Find section headers (O14 class) and card rows (height=20)
-  const rowRegex = /<tr[^>]*height=["']?20["']?[^>]*>\s*<td[^>]*>(.*?)<\/td>\s*<td[^>]*>.*?<a[^>]*>(.*?)<\/a>/gi;
-  const headerRegex = /<td[^>]*class=["']?O14["']?[^>]*colspan[^>]*>(.*?)<\/td>/gi;
-
-  // Process line by line to track sections
   const lines = block.split('\n');
   for (const line of lines) {
     // Check for section header

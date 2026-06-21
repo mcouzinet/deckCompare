@@ -8,6 +8,7 @@ const detectedLive = document.getElementById('detected-live');
 const deckSearchInput = document.getElementById('deck-search');
 const deckDropdown = document.getElementById('deck-dropdown');
 const compareMoxfieldBtn = document.getElementById('compare-moxfield-btn');
+const refreshBtn = document.getElementById('refresh-btn');
 const moxHint = document.getElementById('mox-hint');
 const deckSourceSelect = document.getElementById('deck-source');
 const settingsPanel = document.getElementById('settings-panel');
@@ -111,6 +112,12 @@ compareMoxfieldBtn.addEventListener('click', () => {
   if (selectedDeckUrl) runComparison(selectedDeckUrl);
 });
 
+refreshBtn.addEventListener('click', async () => {
+  refreshBtn.disabled = true;
+  await loadUserDecks();
+  refreshBtn.disabled = false;
+});
+
 // --- Settings panel ---
 document.getElementById('settings-toggle').addEventListener('click', () => {
   const visible = settingsPanel.style.display !== 'none';
@@ -155,8 +162,10 @@ async function loadUserDecks() {
     });
     populateSelect(resp.decks);
     setStatus('');
+    const now = new Date().toLocaleTimeString();
     settingsHint.innerHTML = `<b>${resp.decks.length}</b> ${t('decksLoaded')}`;
-    updateMoxHint(source, username);
+    moxHint.className = 'hint';
+    moxHint.innerHTML = `<b>${source}</b> · ${username} · <b>${resp.decks.length}</b> decks · ${now}`;
     // Auto-close settings after success
     settingsPanel.style.display = 'none';
   } catch (err) {
@@ -183,6 +192,7 @@ function populateSelect(decks) {
   deckSearchInput.value = '';
   deckSearchInput.placeholder = t('selectDeck');
   compareMoxfieldBtn.disabled = true;
+  refreshBtn.style.display = '';
   renderDropdown(decks);
 }
 

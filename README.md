@@ -53,4 +53,4 @@ See the full [Privacy Policy](https://mcouzinet.github.io/deckCompare/privacy-po
 
 ## Support
 
-If you find this useful, consider [buying me a coffee](https://www.buymeacoffee.com/mcouzineth).
+If you find this useful, consider [buying me a coffee](https://buymeacoffee.com/mcouzinet).

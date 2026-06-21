@@ -23,6 +23,15 @@
     const cmp = buildComparison(deckA, deckB);
     const M = cmp.metrics;
 
+    const allNames = [...new Set([
+      ...cmp.uniqueA.map(e => e.name),
+      ...cmp.uniqueB.map(e => e.name),
+      ...cmp.shared.map(e => e.name)
+    ])];
+    const typeResp = await sendToBackground({ type: 'FETCH_CARD_TYPES', names: allNames });
+    const landSet = new Set(typeResp?.lands || []);
+    const creatureSet = new Set(typeResp?.creatures || []);
+
     // Translate static UI
     document.getElementById("ring-label").textContent = t("similar");
     document.getElementById("col-a-title").textContent = `${t("onlyIn")} ${deckA.name}`;
@@ -46,9 +55,9 @@
     document.getElementById("content").style.display = "block";
 
     renderMatchup(deckA, deckB, M);
-    renderColumn("col-a-body", cmp.uniqueA, "aQty");
-    renderColumn("col-b-body", cmp.uniqueB, "bQty");
-    renderShared(cmp.shared, M);
+    renderColumn("col-a-body", cmp.uniqueA, "aQty", landSet, creatureSet);
+    renderColumn("col-b-body", cmp.uniqueB, "bQty", landSet, creatureSet);
+    renderShared(cmp.shared, M, landSet, creatureSet);
     renderStats(deckA, deckB, M);
     document.getElementById("col-a-count").textContent = M.uniqueACount;
     document.getElementById("col-b-count").textContent = M.uniqueBCount;
@@ -58,10 +67,9 @@
     initControls();
   });
 
-  // ===== name normalization (DFC, split cards) =====
-  // "Brazen Borrower // Petty Theft" → "Brazen Borrower"
-  // "Wear // Tear" → "Wear // Tear" (split cards keep both halves)
-  // Also trims whitespace
+  // ===== name normalization =====
+  // Strips the back-face of DFCs so "Brazen Borrower // Petty Theft" → "Brazen Borrower",
+  // which matches the front-face name Scryfall returns in /cards/named and /cards/collection.
   function normalizeName(name) {
     return name.split(' // ')[0].trim();
   }
@@ -175,26 +183,44 @@
     const badge = qty > 1 ? `<span class="qty-badge">${qty}</span>` : "";
     const board = e.board !== "mainboard" ? `<span class="board-tag">${BOARD_LABEL[e.board]}</span>` : "";
     return `<div class="card-slot is-loading board-${e.board}"
-        data-name="${esc(e.name)}" data-a="${e.aQty}" data-b="${e.bQty}" data-board="${e.board}">
+        data-name="${esc(e.name)}" data-a="${e.aQty}" data-b="${e.bQty}" data-board="${e.board}" data-qty="${qty}">
         ${badge}${board}
         <span class="proxy-name">${esc(e.name)}</span>
         <img alt="${esc(e.name)}" data-src="${imgUrl(e.name, "small")}">
       </div>`;
   }
 
-  function renderColumn(elId, entries, qtyKey) {
+  function renderColumn(elId, entries, qtyKey, landSet, creatureSet) {
     const el = document.getElementById(elId);
     if (!entries.length) {
       el.innerHTML = `<div class="col-empty">${t("noExclusive")}</div>`;
       return;
     }
-    el.innerHTML = `<div class="card-grid">${entries.map(e => cardSlot(e, qtyKey)).join("")}</div>`;
+
+    const hasTypes = landSet.size || creatureSet.size;
+    if (!hasTypes) {
+      el.innerHTML = `<div class="card-grid">${entries.map(e => cardSlot(e, qtyKey)).join("")}</div>`;
+      return;
+    }
+
+    const sections = [
+      { key: "creatures", cards: entries.filter(e => !landSet.has(e.name) && creatureSet.has(e.name)) },
+      { key: "spells",    cards: entries.filter(e => !landSet.has(e.name) && !creatureSet.has(e.name)) },
+      { key: "lands",     cards: entries.filter(e => landSet.has(e.name)) },
+    ].filter(s => s.cards.length);
+
+    const multi = sections.length > 1;
+    el.innerHTML = sections.map(s =>
+      `${multi ? `<div class="type-divider"><span>${t(s.key)}</span></div>` : ""}
+      <div class="card-grid">${s.cards.map(e => cardSlot(e, qtyKey)).join("")}</div>`
+    ).join("");
   }
 
   // ===== shared list =====
-  function renderShared(shared, M) {
+  function renderShared(shared, M, landSet, creatureSet) {
     const body = document.getElementById("shared-body");
-    body.innerHTML = shared.map(e => {
+
+    const renderRow = (e) => {
       const diff = e.aQty !== e.bQty;
       const delta = e.diff > 0 ? `+${e.diff}` : e.diff < 0 ? `${e.diff}` : "=";
       const bt = e.board !== "mainboard" ? `<span class="bt">${BOARD_LABEL[e.board]}</span>` : "";
@@ -205,7 +231,25 @@
           <span class="delta">${delta}</span>
           <span class="qb">${e.bQty}×</span>
         </div>`;
-    }).join("");
+    };
+
+    const hasTypes = landSet.size || creatureSet.size;
+    if (!hasTypes) {
+      body.innerHTML = shared.map(renderRow).join("");
+    } else {
+      const sections = [
+        { key: "creatures", cards: shared.filter(e => !landSet.has(e.name) && creatureSet.has(e.name)) },
+        { key: "spells",    cards: shared.filter(e => !landSet.has(e.name) && !creatureSet.has(e.name)) },
+        { key: "lands",     cards: shared.filter(e => landSet.has(e.name)) },
+      ].filter(s => s.cards.length);
+
+      const multi = sections.length > 1;
+      body.innerHTML = sections.map(s =>
+        `${multi ? `<div class="srow-type-divider"><span>${t(s.key)}</span></div>` : ""}
+        ${s.cards.map(renderRow).join("")}`
+      ).join("");
+    }
+
     document.getElementById("shared-count").textContent = M.sharedQty;
     document.getElementById("qty-diff-note").textContent =
       `${M.qtyDiffs} ${M.qtyDiffs === 1 ? t("qtyMismatch") : t("qtyMismatches")}`;
@@ -257,7 +301,6 @@
       else settle(img, false);
     }
 
-    // Process in batches of BATCH
     (async () => {
       for (let i = 0; i < imgs.length; i += BATCH) {
         const batch = imgs.slice(i, i + BATCH);
@@ -337,8 +380,13 @@
         document.querySelectorAll("[data-view]").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
         const v = btn.dataset.view;
-        document.documentElement.style.setProperty("--card-w",
-          v === "large" ? "118px" : v === "small" ? "74px" : "92px");
+        if (v === "list") {
+          document.body.classList.add("view-list");
+        } else {
+          document.body.classList.remove("view-list");
+          document.documentElement.style.setProperty("--card-w",
+            v === "large" ? "180px" : v === "small" ? "96px" : "130px");
+        }
       });
     });
   }
