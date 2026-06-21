@@ -16,11 +16,11 @@
 
   // ===== boot =====
   document.addEventListener("DOMContentLoaded", async () => {
-    document.getElementById("loading").textContent = t("loading");
+    document.getElementById("loading").textContent = chrome.i18n.getMessage("loading");
 
     const { compareData } = await chrome.storage.local.get("compareData");
     if (!compareData) {
-      document.getElementById("loading").textContent = t("noData");
+      document.getElementById("loading").textContent = chrome.i18n.getMessage("noData");
       return;
     }
 
@@ -43,23 +43,23 @@
     const creatureSet = new Set(typeResp?.creatures || []);
 
     // Translate static UI
-    document.getElementById("ring-label").textContent = t("similar");
-    document.getElementById("col-a-title").textContent = `${t("onlyIn")} ${deckA.name}`;
-    document.getElementById("col-b-title").textContent = `${t("onlyIn")} ${deckB.name}`;
-    document.getElementById("shared-title").textContent = t("sharedCards");
+    document.getElementById("ring-label").textContent = chrome.i18n.getMessage("similar");
+    document.getElementById("col-a-title").textContent = `${chrome.i18n.getMessage("onlyIn")} ${deckA.name}`;
+    document.getElementById("col-b-title").textContent = `${chrome.i18n.getMessage("onlyIn")} ${deckB.name}`;
+    document.getElementById("shared-title").textContent = chrome.i18n.getMessage("sharedCards");
     document.getElementById("srow-head-a").textContent = deckA.name;
-    document.getElementById("srow-head-card").textContent = t("card");
+    document.getElementById("srow-head-card").textContent = chrome.i18n.getMessage("card");
     document.getElementById("srow-head-b").textContent = deckB.name;
-    document.getElementById("hover-hint").textContent = t("hoverHint");
-    document.getElementById("stat-title").textContent = t("matchupBreakdown");
-    document.getElementById("footnote").textContent = t("cardImages");
+    document.getElementById("hover-hint").textContent = chrome.i18n.getMessage("hoverHint");
+    document.getElementById("stat-title").textContent = chrome.i18n.getMessage("matchupBreakdown");
+    document.getElementById("footnote").textContent = chrome.i18n.getMessage("cardImages");
     const rateLink = document.getElementById("rate-link");
-    rateLink.textContent = t("rateExtension");
+    rateLink.textContent = chrome.i18n.getMessage("rateExtension");
     rateLink.href = `https://chromewebstore.google.com/detail/${chrome.runtime.id}`;
 
-    document.getElementById("lg-a-label").textContent = `${t("onlyIn")} ${deckA.name}`;
-    document.getElementById("lg-s-label").textContent = t("sharedCardsLabel");
-    document.getElementById("lg-b-label").textContent = `${t("onlyIn")} ${deckB.name}`;
+    document.getElementById("lg-a-label").textContent = `${chrome.i18n.getMessage("onlyIn")} ${deckA.name}`;
+    document.getElementById("lg-s-label").textContent = chrome.i18n.getMessage("sharedCardsLabel");
+    document.getElementById("lg-b-label").textContent = `${chrome.i18n.getMessage("onlyIn")} ${deckB.name}`;
 
     document.getElementById("loading").style.display = "none";
     document.getElementById("content").style.display = "block";
@@ -203,7 +203,7 @@
   function renderColumn(elId, entries, qtyKey, landSet, creatureSet) {
     const el = document.getElementById(elId);
     if (!entries.length) {
-      el.innerHTML = `<div class="col-empty">${t("noExclusive")}</div>`;
+      el.innerHTML = `<div class="col-empty">${chrome.i18n.getMessage("noExclusive")}</div>`;
       return;
     }
 
@@ -221,7 +221,7 @@
 
     const multi = sections.length > 1;
     el.innerHTML = sections.map(s =>
-      `${multi ? `<div class="type-divider"><span>${t(s.key)}</span></div>` : ""}
+      `${multi ? `<div class="type-divider"><span>${chrome.i18n.getMessage(s.key)}</span></div>` : ""}
       <div class="card-grid">${s.cards.map(e => cardSlot(e, qtyKey)).join("")}</div>`
     ).join("");
   }
@@ -255,24 +255,24 @@
 
       const multi = sections.length > 1;
       body.innerHTML = sections.map(s =>
-        `${multi ? `<div class="srow-type-divider"><span>${t(s.key)}</span></div>` : ""}
+        `${multi ? `<div class="srow-type-divider"><span>${chrome.i18n.getMessage(s.key)}</span></div>` : ""}
         ${s.cards.map(renderRow).join("")}`
       ).join("");
     }
 
     document.getElementById("shared-count").textContent = M.sharedQty;
     document.getElementById("qty-diff-note").textContent =
-      `${M.qtyDiffs} ${M.qtyDiffs === 1 ? t("qtyMismatch") : t("qtyMismatches")}`;
+      `${M.qtyDiffs} ${M.qtyDiffs === 1 ? chrome.i18n.getMessage("qtyMismatch") : chrome.i18n.getMessage("qtyMismatches")}`;
   }
 
   // ===== stat panel =====
   function renderStats(deckA, deckB, M) {
     const rows = [
-      [t("matchScore"), M.similarity + "%", "accent-s", "var(--match)"],
-      [t("sharedCardsLabel"), M.sharedQty, "accent-s", "var(--match)"],
-      [`${t("onlyIn")} ${deckA.name}`, M.uniqueACount, "accent-a", "var(--a)"],
-      [`${t("onlyIn")} ${deckB.name}`, M.uniqueBCount, "accent-b", "var(--b)"],
-      [t("qtyMismatchesLabel"), M.qtyDiffs, "accent-w", "var(--warn)"],
+      [chrome.i18n.getMessage("matchScore"), M.similarity + "%", "accent-s", "var(--match)"],
+      [chrome.i18n.getMessage("sharedCardsLabel"), M.sharedQty, "accent-s", "var(--match)"],
+      [`${chrome.i18n.getMessage("onlyIn")} ${deckA.name}`, M.uniqueACount, "accent-a", "var(--a)"],
+      [`${chrome.i18n.getMessage("onlyIn")} ${deckB.name}`, M.uniqueBCount, "accent-b", "var(--b)"],
+      [chrome.i18n.getMessage("qtyMismatchesLabel"), M.qtyDiffs, "accent-w", "var(--warn)"],
     ];
     document.getElementById("stat-rows").innerHTML = rows.map(
       ([k, v, cls, sw]) =>

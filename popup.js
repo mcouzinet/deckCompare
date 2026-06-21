@@ -29,28 +29,28 @@ let currentTab = null;
 let detectedSite = null;
 
 // --- Translate static UI ---
-document.getElementById('bmc-text').textContent = t('buyMeCoffee');
-document.getElementById('lbl-deck1').textContent = `Deck 1 · ${t('activeTab')}`;
-document.getElementById('lbl-deck2').textContent = `Deck 2 · ${t('compareAgainst')}`;
-document.getElementById('vs-text').textContent = t('versus');
-document.getElementById('tab-url-text').textContent = t('pasteUrl');
-document.getElementById('tab-mox-text').textContent = t('myMoxfield');
-document.getElementById('cmp-url-text').textContent = t('compare');
-document.getElementById('cmp-mox-text').textContent = t('compare');
-document.getElementById('url-hint').textContent = t('worksWithAny');
-deckSearchInput.placeholder = t('selectDeck');
-document.getElementById('supports-lbl').textContent = t('supports');
-document.getElementById('detected-badge').textContent = t('detected');
-document.getElementById('detected-name').textContent = t('scanning');
-document.getElementById('settings-title').textContent = t('settings');
-document.getElementById('settings-source-label').textContent = t('settingsSource');
-document.getElementById('settings-user-label').textContent = t('settingsUser');
-document.getElementById('settings-save-text').textContent = t('settingsSave');
-deckUrlInput.placeholder = t('pasteADeckUrl');
-document.getElementById('onboarding-title').textContent = t('onboardingTitle');
-document.getElementById('onboarding-step1').textContent = t('onboardingStep1');
-document.getElementById('onboarding-step2').textContent = t('onboardingStep2');
-document.getElementById('onboarding-step3').textContent = t('onboardingStep3');
+document.getElementById('bmc-text').textContent = chrome.i18n.getMessage('buyMeCoffee');
+document.getElementById('lbl-deck1').textContent = `Deck 1 · ${chrome.i18n.getMessage('activeTab')}`;
+document.getElementById('lbl-deck2').textContent = `Deck 2 · ${chrome.i18n.getMessage('compareAgainst')}`;
+document.getElementById('vs-text').textContent = chrome.i18n.getMessage('versus');
+document.getElementById('tab-url-text').textContent = chrome.i18n.getMessage('pasteUrl');
+document.getElementById('tab-mox-text').textContent = chrome.i18n.getMessage('myMoxfield');
+document.getElementById('cmp-url-text').textContent = chrome.i18n.getMessage('compare');
+document.getElementById('cmp-mox-text').textContent = chrome.i18n.getMessage('compare');
+document.getElementById('url-hint').textContent = chrome.i18n.getMessage('worksWithAny');
+deckSearchInput.placeholder = chrome.i18n.getMessage('selectDeck');
+document.getElementById('supports-lbl').textContent = chrome.i18n.getMessage('supports');
+document.getElementById('detected-badge').textContent = chrome.i18n.getMessage('detected');
+document.getElementById('detected-name').textContent = chrome.i18n.getMessage('scanning');
+document.getElementById('settings-title').textContent = chrome.i18n.getMessage('settings');
+document.getElementById('settings-source-label').textContent = chrome.i18n.getMessage('settingsSource');
+document.getElementById('settings-user-label').textContent = chrome.i18n.getMessage('settingsUser');
+document.getElementById('settings-save-text').textContent = chrome.i18n.getMessage('settingsSave');
+deckUrlInput.placeholder = chrome.i18n.getMessage('pasteADeckUrl');
+document.getElementById('onboarding-title').textContent = chrome.i18n.getMessage('onboardingTitle');
+document.getElementById('onboarding-step1').textContent = chrome.i18n.getMessage('onboardingStep1');
+document.getElementById('onboarding-step2').textContent = chrome.i18n.getMessage('onboardingStep2');
+document.getElementById('onboarding-step3').textContent = chrome.i18n.getMessage('onboardingStep3');
 
 // --- Source toggle (persisted) ---
 function switchPane(pane) {
@@ -75,11 +75,11 @@ document.querySelectorAll('.src-toggle button').forEach(btn => {
   detectedSite = SUPPORTED_SITES.find(s => tab?.url?.includes(s.pattern));
   if (detectedSite) {
     detectedEl.classList.remove('none');
-    detectedName.textContent = t('detected');
+    detectedName.textContent = chrome.i18n.getMessage('detected');
     detectedSub.innerHTML = `<span class="src-chip">${detectedSite.label}</span>`;
     detectedLive.style.display = '';
   } else {
-    detectedName.textContent = t('noDetected');
+    detectedName.textContent = chrome.i18n.getMessage('noDetected');
     detectedSub.textContent = '';
     // Hide deck 2 section when no deck detected
     document.querySelectorAll('.deck2-section').forEach(el => el.style.display = 'none');
@@ -143,17 +143,17 @@ settingsUser.addEventListener('keydown', e => {
 async function loadUserDecks() {
   const username = settingsUser.value.trim();
   const source = deckSourceSelect.value;
-  if (!username) { setStatus(t('enterMoxUser'), true); return; }
+  if (!username) { setStatus(chrome.i18n.getMessage('enterMoxUser'), true); return; }
 
   settingsSave.disabled = true;
-  setStatus(t('loadingMoxDecks'));
+  setStatus(chrome.i18n.getMessage('loadingMoxDecks'));
 
   try {
     const MSG_TYPES = { moxfield: 'LIST_MOXFIELD_DECKS', archidekt: 'LIST_ARCHIDEKT_DECKS', magicville: 'LIST_MAGICVILLE_DECKS' };
     const msgType = MSG_TYPES[source] || 'LIST_MOXFIELD_DECKS';
     const resp = await sendToRuntime({ type: msgType, username });
-    if (resp.error) { setStatus(`${t('error')}: ${resp.error}`, true); settingsSave.disabled = false; return; }
-    if (!resp.decks?.length) { setStatus(t('noPublicDecks'), true); settingsSave.disabled = false; return; }
+    if (resp.error) { setStatus(`${chrome.i18n.getMessage('error')}: ${resp.error}`, true); settingsSave.disabled = false; return; }
+    if (!resp.decks?.length) { setStatus(chrome.i18n.getMessage('noPublicDecks'), true); settingsSave.disabled = false; return; }
 
     await chrome.storage.local.set({
       deckSource: source,
@@ -163,13 +163,13 @@ async function loadUserDecks() {
     populateSelect(resp.decks);
     setStatus('');
     const now = new Date().toLocaleTimeString();
-    settingsHint.innerHTML = `<b>${resp.decks.length}</b> ${t('decksLoaded')}`;
+    settingsHint.innerHTML = `<b>${resp.decks.length}</b> ${chrome.i18n.getMessage('decksLoaded')}`;
     moxHint.className = 'hint';
     moxHint.innerHTML = `<b>${source}</b> · ${username} · <b>${resp.decks.length}</b> decks · ${now}`;
     // Auto-close settings after success
     settingsPanel.style.display = 'none';
   } catch (err) {
-    setStatus(`${t('error')}: ${err.message}`, true);
+    setStatus(`${chrome.i18n.getMessage('error')}: ${err.message}`, true);
   } finally {
     settingsSave.disabled = false;
   }
@@ -178,10 +178,10 @@ async function loadUserDecks() {
 function updateMoxHint(source, username) {
   if (username) {
     moxHint.className = 'hint';
-    moxHint.innerHTML = `<b>${source}</b> · ${username} · ${t('settingsConfigured')}`;
+    moxHint.innerHTML = `<b>${source}</b> · ${username} · ${chrome.i18n.getMessage('settingsConfigured')}`;
   } else {
     moxHint.className = 'hint-configure';
-    moxHint.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>${t('settingsNotConfigured')}`;
+    moxHint.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>${chrome.i18n.getMessage('settingsNotConfigured')}`;
   }
 }
 
@@ -190,7 +190,7 @@ function populateSelect(decks) {
   selectedDeckUrl = '';
   deckSearchInput.disabled = false;
   deckSearchInput.value = '';
-  deckSearchInput.placeholder = t('selectDeck');
+  deckSearchInput.placeholder = chrome.i18n.getMessage('selectDeck');
   compareMoxfieldBtn.disabled = true;
   refreshBtn.style.display = '';
   renderDropdown(decks);
@@ -198,7 +198,7 @@ function populateSelect(decks) {
 
 function renderDropdown(filtered) {
   if (!filtered.length) {
-    deckDropdown.innerHTML = `<div class="deck-dropdown-empty">${t('noPublicDecks')}</div>`;
+    deckDropdown.innerHTML = `<div class="deck-dropdown-empty">${chrome.i18n.getMessage('noPublicDecks')}</div>`;
     return;
   }
   deckDropdown.innerHTML = filtered.map(d => {
@@ -244,14 +244,14 @@ document.addEventListener('click', e => {
 
 // --- Shared comparison logic ---
 async function runComparison(targetUrl) {
-  if (!targetUrl) { setStatus(t('pasteOrSelect'), true); return; }
-  if (!detectedSite) { setStatus(t('openSupportedFirst'), true); return; }
+  if (!targetUrl) { setStatus(chrome.i18n.getMessage('pasteOrSelect'), true); return; }
+  if (!detectedSite) { setStatus(chrome.i18n.getMessage('openSupportedFirst'), true); return; }
 
   compareBtn.disabled = true;
   compareMoxfieldBtn.disabled = true;
 
   try {
-    setStatus(`${t('readingDeck')} ${detectedSite.label}…`);
+    setStatus(`${chrome.i18n.getMessage('readingDeck')} ${detectedSite.label}…`);
     let sourceDeck;
 
     try {
@@ -264,28 +264,28 @@ async function runComparison(targetUrl) {
       || (!Object.keys(sourceDeck.mainboard || {}).length && !Object.keys(sourceDeck.commanders || {}).length);
 
     if (deckIsEmpty) {
-      setStatus(t('fetchingApi'));
+      setStatus(chrome.i18n.getMessage('fetchingApi'));
       const apiResp = await sendToRuntime({ type: 'FETCH_DECK', url: currentTab.url });
-      if (apiResp.error) { setStatus(`${t('error')}: ${apiResp.error}`, true); resetButtons(); return; }
+      if (apiResp.error) { setStatus(`${chrome.i18n.getMessage('error')}: ${apiResp.error}`, true); resetButtons(); return; }
       sourceDeck = apiResp.deck;
     }
 
     if (!sourceDeck || (!Object.keys(sourceDeck.mainboard || {}).length && !Object.keys(sourceDeck.commanders || {}).length)) {
-      setStatus(t('unableToRead'), true); resetButtons(); return;
+      setStatus(chrome.i18n.getMessage('unableToRead'), true); resetButtons(); return;
     }
 
-    setStatus(t('fetchingSecond'));
+    setStatus(chrome.i18n.getMessage('fetchingSecond'));
     const targetResp = await sendToRuntime({ type: 'FETCH_DECK', url: targetUrl });
-    if (targetResp.error) { setStatus(`${t('error')}: ${targetResp.error}`, true); resetButtons(); return; }
+    if (targetResp.error) { setStatus(`${chrome.i18n.getMessage('error')}: ${targetResp.error}`, true); resetButtons(); return; }
 
-    setStatus(t('openingResults'));
+    setStatus(chrome.i18n.getMessage('openingResults'));
     sourceDeck.url = currentTab.url;
     targetResp.deck.url = targetUrl;
     await chrome.storage.local.set({ compareData: { deckA: sourceDeck, deckB: targetResp.deck } });
     chrome.tabs.create({ url: chrome.runtime.getURL('compare.html') });
     window.close();
   } catch (err) {
-    setStatus(`${t('error')}: ${err.message}`, true);
+    setStatus(`${chrome.i18n.getMessage('error')}: ${err.message}`, true);
     resetButtons();
   }
 }

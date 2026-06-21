@@ -1,9 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "Deck Compare – MTG",
-  "short_name": "DeckCompare",
-  "description": "Instantly compare two Magic: The Gathering decklists side by side with a visual diff and similarity score.",
+  "name": "__MSG_appName__",
+  "short_name": "__MSG_appShortName__",
+  "description": "__MSG_appDescription__",
   "version": "0.4.0",
+  "default_locale": "en",
   "permissions": ["activeTab", "storage"],
   "host_permissions": [
     "https://api2.moxfield.com/*",
