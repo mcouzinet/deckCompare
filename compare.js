@@ -6,7 +6,12 @@
   const esc = (s) => { const d = document.createElement("span"); d.textContent = s; return d.innerHTML; };
 
   function sendToBackground(msg) {
-    return new Promise(resolve => chrome.runtime.sendMessage(msg, resolve));
+    return new Promise(resolve => {
+      chrome.runtime.sendMessage(msg, resp => {
+        if (chrome.runtime.lastError) resolve(null);
+        else resolve(resp);
+      });
+    });
   }
 
   // ===== boot =====
@@ -28,7 +33,12 @@
       ...cmp.uniqueB.map(e => e.name),
       ...cmp.shared.map(e => e.name)
     ])];
-    const typeResp = await sendToBackground({ type: 'FETCH_CARD_TYPES', names: allNames });
+    // Service worker may be sleeping on first load — retry once if no response
+    let typeResp = await sendToBackground({ type: 'FETCH_CARD_TYPES', names: allNames });
+    if (!typeResp?.lands && allNames.length) {
+      await new Promise(r => setTimeout(r, 700));
+      typeResp = await sendToBackground({ type: 'FETCH_CARD_TYPES', names: allNames });
+    }
     const landSet = new Set(typeResp?.lands || []);
     const creatureSet = new Set(typeResp?.creatures || []);
 
