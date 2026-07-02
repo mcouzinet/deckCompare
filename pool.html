@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deck Compare — Analyse de pool</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink-0:#0c0e13; --ink-1:#12151d; --ink-2:#181c26; --ink-3:#20252f; --ink-4:#2a3040;
+      --line:rgba(255,255,255,0.07); --line-strong:rgba(255,255,255,0.12);
+      --tx-hi:#eef0f6; --tx:#c4c9d6; --tx-mut:#868da0; --tx-faint:#5b6273;
+      --a:#e3a24f; --b:#56b6c9; --match:#74bd84; --match-soft:rgba(116,189,132,0.13);
+      --warn:#e6b54e; --warn-soft:rgba(230,181,78,0.14); --brand:#d9485e; --brand-hi:#e76074;
+      --radius:14px; --radius-sm:9px;
+      --shadow-1:0 1px 0 rgba(255,255,255,0.04) inset,0 2px 8px rgba(0,0,0,0.3);
+      --font-display:"Bricolage Grotesque","Geist",system-ui,sans-serif;
+      --font-ui:"Geist",system-ui,-apple-system,sans-serif;
+      --font-mono:"Geist Mono",ui-monospace,monospace;
+      --W:#f6f0d2; --U:#4a90d9; --K:#8270a8; --R:#d9534a; --G:#5aa469;
+    }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    html { scrollbar-color:var(--ink-4) transparent; }
+    body {
+      font-family:var(--font-ui);
+      background:radial-gradient(1200px 600px at 75% -10%,rgba(86,182,201,0.05),transparent 60%),
+        radial-gradient(1000px 500px at 10% -5%,rgba(227,162,79,0.05),transparent 55%),var(--ink-0);
+      color:var(--tx); font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased; min-height:100vh;
+    }
+    ::selection { background:rgba(217,72,94,0.3); }
+    a { color:inherit; }
+
+    .topbar { position:sticky; top:0; z-index:40; display:flex; align-items:center; gap:16px;
+      padding:14px 28px; background:rgba(12,14,19,0.82); backdrop-filter:blur(14px); border-bottom:1px solid var(--line); }
+    .brand { display:flex; align-items:center; gap:11px; }
+    .brand-mark { width:30px; height:30px; border-radius:8px; }
+    .brand-name { font-family:var(--font-display); font-weight:700; font-size:16px; letter-spacing:-0.01em; color:#edb567; }
+    .brand-name b { color:#6fc6d8; font-weight:800; }
+    .topbar-spacer { flex:1; }
+    .topbar-meta { font-size:12px; color:var(--tx-faint); }
+
+    .shell { display:grid; grid-template-columns:minmax(0,1fr) 320px; gap:28px; max-width:1320px; margin:0 auto; padding:28px; align-items:start; }
+    @media (max-width:1000px){ .shell{ grid-template-columns:minmax(0,1fr);} .rail{ display:none !important;} }
+
+    .panel { background:linear-gradient(180deg,var(--ink-2),var(--ink-1)); border:1px solid var(--line);
+      border-radius:var(--radius); padding:20px 22px; box-shadow:var(--shadow-1); margin-bottom:20px; }
+    h1 { font-family:var(--font-display); font-weight:700; font-size:22px; color:var(--tx-hi); letter-spacing:-0.015em; }
+    .sub { color:var(--tx-mut); font-size:13px; margin-top:4px; }
+
+    label.fld { display:block; font-size:11px; text-transform:uppercase; letter-spacing:0.1em; font-weight:600; color:var(--tx-faint); margin:14px 0 6px; }
+    textarea { width:100%; background:var(--ink-0); border:1px solid var(--line); border-radius:var(--radius-sm);
+      padding:11px 12px; color:var(--tx); font-family:var(--font-mono); font-size:12.5px; resize:vertical; }
+    textarea:focus { outline:none; border-color:var(--a); }
+    .or { display:flex; align-items:center; gap:12px; margin:14px 0; color:var(--tx-faint); font-size:12px; }
+    .or::before,.or::after { content:""; flex:1; height:1px; background:var(--line); }
+    .run-row { display:flex; align-items:center; justify-content:space-between; margin-top:14px; }
+    .count { font-size:12px; color:var(--tx-mut); }
+    .btn { border:0; border-radius:var(--radius-sm); padding:9px 18px; font-family:var(--font-ui); font-weight:600;
+      font-size:13px; cursor:pointer; color:#2a2410; background:linear-gradient(180deg,#f0c987,#e3a24f); transition:transform .14s,filter .14s; }
+    .btn:hover:not(:disabled){ transform:translateY(-1px); filter:brightness(1.05); }
+    .btn:disabled { opacity:.5; cursor:not-allowed; }
+    .err { color:var(--brand-hi); font-size:13px; margin-top:10px; }
+    .add-toggle { width:100%; padding:10px; border:1px dashed var(--line-strong); background:none; color:var(--tx-mut);
+      border-radius:var(--radius-sm); cursor:pointer; font-family:var(--font-ui); font-weight:600; font-size:13px; transition:all 0.14s; }
+    .add-toggle:hover { border-color:var(--a); color:var(--a); }
+    #input-panel { position:relative; }
+    .fields-close { position:absolute; top:12px; right:12px; z-index:2; border:0; background:var(--ink-3); color:var(--tx-mut);
+      width:26px; height:26px; border-radius:7px; cursor:pointer; font-size:18px; line-height:1; transition:all 0.14s; }
+    .fields-close:hover { color:var(--brand-hi); background:rgba(217,72,94,0.15); }
+
+    /* hero */
+    .hero { display:flex; gap:18px; align-items:flex-start; }
+    .hero-art { width:150px; aspect-ratio:488/680; border-radius:9px; flex-shrink:0; overflow:hidden;
+      background:repeating-linear-gradient(45deg,var(--ink-2) 0 10px,var(--ink-1) 10px 20px); }
+    .hero-art img { width:100%; height:100%; object-fit:cover; display:none; }
+    .hero-art.has img { display:block; }
+    .eyebrow { font-size:10.5px; text-transform:uppercase; letter-spacing:0.13em; font-weight:600; color:var(--a); margin-bottom:6px; }
+    .hero h2 { font-family:var(--font-display); font-weight:700; font-size:clamp(20px,2.2vw,26px); color:var(--tx-hi); letter-spacing:-0.015em; line-height:1.15; }
+    .cpips { display:inline-flex; gap:4px; margin-top:8px; }
+    .cpip { width:16px; height:16px; border-radius:50%; border:1px solid rgba(0,0,0,0.35); box-shadow:inset 0 1px 1px rgba(255,255,255,0.4); }
+    .cpip.W{background:var(--W);} .cpip.U{background:var(--U);} .cpip.B{background:var(--K);} .cpip.R{background:var(--R);} .cpip.G{background:var(--G);} .cpip.C{background:var(--ink-4);}
+    .stats { display:flex; gap:26px; margin-top:16px; flex-wrap:wrap; }
+    .stat .n { font-family:var(--font-display); font-weight:800; font-size:24px; color:var(--tx-hi); line-height:1; }
+    .stat .n.accent { color:var(--a); }
+    .stat .l { font-size:11px; color:var(--tx-mut); margin-top:3px; }
+    .legend { margin-top:16px; display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+    .legend .lbl { font-size:11px; color:var(--tx-faint); margin-right:2px; }
+    .chip { display:inline-flex; align-items:center; gap:4px; font-size:11px; padding:2px 4px 2px 9px; border-radius:999px;
+      background:var(--ink-3); border:1px solid var(--line); color:var(--tx); max-width:280px; }
+    .chip-link { text-decoration:none; color:inherit; max-width:210px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    a.chip-link:hover { color:var(--a); }
+    .chip .hsh { color:var(--tx-faint); }
+    .chip-x { border:0; background:none; color:var(--tx-faint); cursor:pointer; font-size:15px; line-height:1; padding:0 4px; border-radius:50%; }
+    .chip-x:hover { color:var(--brand-hi); background:rgba(217,72,94,0.15); }
+    .errbox { margin-top:12px; font-size:11.5px; color:var(--tx-mut); background:var(--warn-soft); border:1px solid var(--warn); border-radius:9px; padding:8px 11px; line-height:1.6; }
+    .errbox b { color:var(--warn); font-weight:600; }
+
+    /* decks-in-pool panel (right rail) */
+    .deckpanel { background:var(--ink-1); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; }
+    .dp-head { display:flex; align-items:center; gap:8px; padding:12px 14px; border-bottom:1px solid var(--line);
+      font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:var(--tx-mut); font-weight:600; }
+    .dp-c { margin-left:auto; font-family:var(--font-mono); background:var(--ink-3); color:var(--tx-mut); padding:1px 8px; border-radius:999px; font-size:11px; }
+    .dp-item { display:flex; align-items:center; gap:6px; padding:8px 10px 8px 12px; border-bottom:1px solid rgba(255,255,255,0.03); }
+    .dp-item:last-child { border-bottom:0; }
+    .dp-item:hover { background:rgba(255,255,255,0.025); }
+    .dp-link { flex:1; min-width:0; text-decoration:none; color:var(--tx); display:flex; align-items:baseline; gap:7px; }
+    a.dp-link:hover .dp-n { color:var(--a); }
+    .dp-n { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px; }
+    .dp-hash { color:var(--tx-faint); font-family:var(--font-mono); font-size:11px; flex-shrink:0; }
+    .dp-src { font-size:9.5px; text-transform:uppercase; letter-spacing:0.04em; color:var(--tx-faint); margin-left:auto; flex-shrink:0; }
+    .dp-x { border:0; background:none; color:var(--tx-faint); cursor:pointer; font-size:17px; line-height:1; padding:0 5px; border-radius:5px; flex-shrink:0; }
+    .dp-x:hover { color:var(--brand-hi); background:rgba(217,72,94,0.15); }
+    .dp-errs { padding:9px 12px; border-top:1px solid var(--line); font-size:11px; color:var(--tx-mut); background:var(--warn-soft); line-height:1.5; }
+    .dp-errs b { display:block; color:var(--warn); margin-bottom:3px; font-weight:600; }
+    .dp-err { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+    /* controls */
+    .controls { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:16px; }
+    .segmented { display:inline-flex; background:var(--ink-2); border:1px solid var(--line); border-radius:var(--radius-sm); padding:3px; gap:2px; }
+    .seg-btn { border:0; background:transparent; color:var(--tx-mut); font-family:var(--font-ui); font-size:12.5px; font-weight:600;
+      padding:6px 13px; border-radius:6px; cursor:pointer; transition:all .14s; white-space:nowrap; }
+    .seg-btn:hover { color:var(--tx); }
+    .seg-btn.active { background:var(--ink-4); color:var(--tx-hi); }
+    .pills { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+    .pill { border:1px solid var(--line); background:var(--ink-2); color:var(--tx-mut); font-size:12px; padding:5px 11px;
+      border-radius:999px; cursor:pointer; transition:all .14s; }
+    .pill:hover { color:var(--tx); }
+    .pill.active { background:var(--a); color:#2a2410; border-color:transparent; font-weight:600; }
+
+    /* sections */
+    .sect { background:var(--ink-1); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; margin-bottom:18px; }
+    .sect-head { display:flex; align-items:center; gap:10px; padding:12px 16px; border-bottom:1px solid var(--line); }
+    .sect-title { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--tx-hi); }
+    .sect-title .c { color:var(--tx-faint); font-weight:600; }
+    .sect-note { font-size:11px; color:var(--tx-faint); text-transform:none; letter-spacing:0; font-weight:500; }
+    .sect-actions { margin-left:auto; display:flex; gap:14px; }
+    .lnk { background:none; border:0; color:var(--tx-mut); font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:5px; font-family:var(--font-ui); }
+    .lnk:hover { color:var(--tx-hi); }
+    .lnk svg { width:13px; height:13px; }
+
+    .prow { display:flex; align-items:center; gap:10px; padding:7px 14px; border-bottom:1px solid rgba(255,255,255,0.03); }
+    .prow:last-child { border-bottom:0; }
+    .prow:hover { background:rgba(255,255,255,0.025); }
+    .prow input[type=checkbox] { accent-color:var(--a); cursor:pointer; flex-shrink:0; }
+    .prow .nm { flex:1; min-width:0; font-size:13.5px; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:default; }
+    .prow .xq { font-size:10px; color:var(--tx-faint); margin-left:5px; }
+    .prow .cp { background:none; border:0; color:var(--tx-faint); cursor:pointer; flex-shrink:0; display:inline-flex; }
+    .prow .cp:hover { color:var(--tx-hi); }
+    .prow .cp svg { width:14px; height:14px; }
+    .prow .pct { font-family:var(--font-mono); font-size:13px; font-weight:600; color:var(--tx-hi); width:46px; text-align:right; flex-shrink:0; }
+    .prow .frac { font-family:var(--font-mono); font-size:11px; color:var(--tx-faint); width:42px; text-align:right; flex-shrink:0; }
+    .pbadges { display:flex; flex-wrap:wrap; gap:3px; padding:0 14px 8px 38px; }
+    .pbadge { font-family:var(--font-mono); font-size:9.5px; padding:1px 5px; border-radius:4px; background:var(--ink-3); color:var(--tx-mut); text-decoration:none; }
+    a.pbadge:hover { background:var(--ink-4); color:var(--tx-hi); }
+    .bar { flex:1; height:6px; border-radius:3px; background:var(--ink-3); overflow:hidden; max-width:120px; }
+    .bar > i { display:block; height:100%; background:linear-gradient(90deg,var(--a),#f0c987); border-radius:3px; }
+    .type-divider { display:flex; align-items:center; gap:10px; padding:10px 14px 4px; }
+    .type-divider span { font-size:10px; text-transform:uppercase; letter-spacing:0.12em; font-weight:600; color:var(--tx-faint); }
+    .empty { padding:28px; text-align:center; color:var(--tx-faint); }
+
+    /* mana curve */
+    .curve { background:var(--ink-1); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; }
+    .curve h3 { font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:var(--tx-mut); font-weight:600; margin-bottom:12px; }
+    .bars { display:flex; align-items:flex-end; gap:6px; height:110px; }
+    .bars .col { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; gap:4px; }
+    .bars .col .v { font-size:10px; color:var(--tx-faint); }
+    .bars .col .b { width:100%; background:rgba(227,162,79,0.7); border-radius:4px 4px 0 0; min-height:2px; }
+    .bars .col .x { font-size:10px; color:var(--tx-mut); }
+    .curve .cap { font-size:10.5px; color:var(--tx-faint); text-align:center; margin-top:10px; }
+
+    /* right rail preview */
+    .rail { position:sticky; top:84px; display:flex; flex-direction:column; gap:16px; }
+    .preview-card { background:var(--ink-1); border:1px solid var(--line); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow-1); }
+    .preview-stage { aspect-ratio:488/680; border-radius:11px; background:repeating-linear-gradient(45deg,var(--ink-2) 0 10px,var(--ink-1) 10px 20px);
+      display:grid; place-items:center; overflow:hidden; }
+    .preview-stage img { width:100%; height:100%; object-fit:contain; display:none; filter:drop-shadow(0 12px 30px rgba(0,0,0,0.6)); }
+    .preview-stage.has img { display:block; }
+    .preview-hint { color:var(--tx-faint); font-size:12px; text-align:center; padding:0 20px; }
+    .preview-stage.has .preview-hint { display:none; }
+    .preview-name { font-family:var(--font-display); font-weight:700; font-size:15px; color:var(--tx-hi); margin-top:12px; min-height:20px; }
+
+    /* selection bar */
+    .selbar { position:fixed; left:50%; bottom:18px; transform:translateX(-50%); z-index:50; display:none;
+      align-items:center; gap:16px; background:var(--ink-2); border:1px solid var(--line-strong); border-radius:999px;
+      padding:9px 10px 9px 18px; box-shadow:0 10px 30px rgba(0,0,0,0.5); }
+    .selbar.show { display:flex; }
+    .selbar .n { font-size:13px; color:var(--tx-hi); }
+    .footnote { max-width:1320px; margin:0 auto; padding:4px 28px 40px; font-size:11.5px; color:var(--tx-faint); }
+    #loading { text-align:center; padding:50px; color:var(--tx-mut); }
+    .hide { display:none !important; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand"><img class="brand-mark" src="icons/icon48.png" alt=""><span class="brand-name">Deck<b>Compare</b></span></div>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-meta" id="topbar-meta"></div>
+  </div>
+
+  <div class="shell">
+    <main>
+      <!-- input -->
+      <section class="panel" id="input-panel">
+        <button class="fields-close hide" id="fields-close">×</button>
+        <div id="intro">
+          <h1 id="intro-title"></h1>
+          <p class="sub" id="intro-sub"></p>
+        </div>
+        <button class="add-toggle hide" id="add-toggle"></button>
+        <div id="input-fields">
+          <label class="fld" id="links-label"></label>
+          <textarea id="urls" rows="5" spellcheck="false" placeholder="https://www.moxfield.com/decks/...&#10;https://archidekt.com/decks/...&#10;https://www.mtgtop8.com/event?e=...&d=..."></textarea>
+          <div class="or" id="or-paste-text"></div>
+          <textarea id="texts" rows="4" spellcheck="false" placeholder="Commander&#10;1 Krenko, Mob Boss&#10;&#10;Deck&#10;1 Lightning Bolt&#10;..."></textarea>
+          <div class="run-row">
+            <span class="count" id="count">0</span>
+            <button class="btn" id="run" disabled></button>
+          </div>
+          <p class="err hide" id="err"></p>
+        </div>
+      </section>
+
+      <div id="loading" class="hide"></div>
+
+      <!-- results -->
+      <div id="results" class="hide">
+        <section class="panel hero" id="hero">
+          <div class="hero-art" id="hero-art"><img id="hero-img" alt=""></div>
+          <div style="flex:1; min-width:0">
+            <div class="eyebrow" id="hero-eyebrow"></div>
+            <h2 id="hero-name">—</h2>
+            <div class="cpips" id="hero-pips"></div>
+            <div class="stats" id="hero-stats"></div>
+          </div>
+        </section>
+
+        <div class="controls">
+          <div class="segmented" id="view-seg">
+            <button class="seg-btn active" data-view="usage"><span id="view-usage-text"></span></button>
+            <button class="seg-btn" data-view="average"><span id="view-average-text"></span></button>
+          </div>
+        </div>
+
+        <div id="usage-view">
+          <div class="pills" id="cat-pills"></div>
+          <div id="sections"></div>
+        </div>
+
+        <div id="average-view" class="hide"></div>
+      </div>
+    </main>
+
+    <aside class="rail">
+      <div class="deckpanel" id="deck-panel"></div>
+      <div class="preview-card">
+        <div class="preview-stage" id="pv-stage">
+          <img id="pv-img" alt="">
+          <div class="preview-hint" id="preview-hint"></div>
+        </div>
+        <div class="preview-name" id="pv-name"></div>
+      </div>
+      <div id="curve-slot"></div>
+      <div id="side-slot"></div>
+    </aside>
+  </div>
+
+  <div class="selbar" id="selbar">
+    <span class="n" id="sel-n">0</span>
+    <button class="lnk" id="sel-copy" style="color:var(--a)"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="7" y="7" width="9" height="9" rx="1.5"/><path d="M4 13V4.5A1.5 1.5 0 0 1 5.5 3H13"/></svg> <span id="sel-copy-text"></span></button>
+    <button class="lnk" id="sel-clear"></button>
+  </div>
+
+  <div class="footnote" id="pool-footnote"></div>
+
+  <script src="shared.js"></script>
+  <script src="enrich.js"></script>
+  <script src="pool-analyze.js"></script>
+  <script src="pool.js"></script>
+</body>
+</html>

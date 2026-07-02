@@ -28,6 +28,9 @@ const SUPPORTED_SITES = [
 let currentTab = null;
 let detectedSite = null;
 
+// Deck names/formats come from external APIs and are injected into innerHTML
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
 // --- Translate static UI ---
 document.getElementById('bmc-text').textContent = chrome.i18n.getMessage('buyMeCoffee');
 document.getElementById('lbl-deck1').textContent = `Deck 1 · ${chrome.i18n.getMessage('activeTab')}`;
@@ -51,6 +54,9 @@ document.getElementById('onboarding-title').textContent = chrome.i18n.getMessage
 document.getElementById('onboarding-step1').textContent = chrome.i18n.getMessage('onboardingStep1');
 document.getElementById('onboarding-step2').textContent = chrome.i18n.getMessage('onboardingStep2');
 document.getElementById('onboarding-step3').textContent = chrome.i18n.getMessage('onboardingStep3');
+document.getElementById('pool-btn').title = chrome.i18n.getMessage('poolEntryTitle');
+document.getElementById('pool-entry-text').textContent = chrome.i18n.getMessage('poolAnalysis');
+document.getElementById('pool-entry-sub').textContent = chrome.i18n.getMessage('poolEntrySub');
 
 // --- Source toggle (persisted) ---
 function switchPane(pane) {
@@ -127,6 +133,12 @@ document.getElementById('settings-close').addEventListener('click', () => {
   settingsPanel.style.display = 'none';
 });
 
+// --- Pool analyzer entry ---
+document.getElementById('pool-btn').addEventListener('click', () => {
+  chrome.tabs.create({ url: chrome.runtime.getURL('pool.html') });
+  window.close();
+});
+
 // When source changes in settings, restore saved username
 deckSourceSelect.addEventListener('change', async () => {
   const source = deckSourceSelect.value;
@@ -165,7 +177,7 @@ async function loadUserDecks() {
     const now = new Date().toLocaleTimeString();
     settingsHint.innerHTML = `<b>${resp.decks.length}</b> ${chrome.i18n.getMessage('decksLoaded')}`;
     moxHint.className = 'hint';
-    moxHint.innerHTML = `<b>${source}</b> · ${username} · <b>${resp.decks.length}</b> decks · ${now}`;
+    moxHint.innerHTML = `<b>${source}</b> · ${esc(username)} · <b>${resp.decks.length}</b> decks · ${now}`;
     // Auto-close settings after success
     settingsPanel.style.display = 'none';
   } catch (err) {
@@ -178,7 +190,7 @@ async function loadUserDecks() {
 function updateMoxHint(source, username) {
   if (username) {
     moxHint.className = 'hint';
-    moxHint.innerHTML = `<b>${source}</b> · ${username} · ${chrome.i18n.getMessage('settingsConfigured')}`;
+    moxHint.innerHTML = `<b>${source}</b> · ${esc(username)} · ${chrome.i18n.getMessage('settingsConfigured')}`;
   } else {
     moxHint.className = 'hint-configure';
     moxHint.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>${chrome.i18n.getMessage('settingsNotConfigured')}`;
@@ -202,8 +214,8 @@ function renderDropdown(filtered) {
     return;
   }
   deckDropdown.innerHTML = filtered.map(d => {
-    const fmt = d.format ? `<span class="fmt">${d.format}</span>` : '';
-    return `<div class="deck-option" data-url="${d.url}"><span class="nm">${d.name}</span>${fmt}</div>`;
+    const fmt = d.format ? `<span class="fmt">${esc(d.format)}</span>` : '';
+    return `<div class="deck-option" data-url="${esc(d.url)}"><span class="nm">${esc(d.name)}</span>${fmt}</div>`;
   }).join('');
 }
 

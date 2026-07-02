@@ -3,7 +3,8 @@
   const BOARD_LABEL = { commanders: "CMD", mainboard: "MAIN", sideboard: "SIDE" };
   const imgUrl = (name, version) =>
     `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(name)}&format=image&version=${version}`;
-  const esc = (s) => { const d = document.createElement("span"); d.textContent = s; return d.innerHTML; };
+  // Escapes quotes too — esc() output is used inside HTML attributes (data-name, alt)
+  const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 
   function sendToBackground(msg) {
     return new Promise(resolve => {
@@ -61,6 +62,17 @@
     document.getElementById("lg-s-label").textContent = chrome.i18n.getMessage("sharedCardsLabel");
     document.getElementById("lg-b-label").textContent = `${chrome.i18n.getMessage("onlyIn")} ${deckB.name}`;
 
+    document.getElementById("bmc-text-compare").textContent = chrome.i18n.getMessage("buyMeCoffee");
+    document.getElementById("bmc-link").title = chrome.i18n.getMessage("buyMeCoffee");
+    document.getElementById("filter-all").textContent = chrome.i18n.getMessage("filterAll");
+    document.getElementById("filter-commanders").textContent = chrome.i18n.getMessage("filterCommanders");
+    document.getElementById("filter-mainboard").textContent = chrome.i18n.getMessage("filterMainboard");
+    document.getElementById("filter-sideboard").textContent = chrome.i18n.getMessage("poolSideboardTitle");
+    document.getElementById("view-small").title = chrome.i18n.getMessage("viewCompact");
+    document.getElementById("view-medium").title = chrome.i18n.getMessage("viewComfortable");
+    document.getElementById("view-large").title = chrome.i18n.getMessage("viewLarge");
+    document.getElementById("view-list").title = chrome.i18n.getMessage("viewList");
+
     document.getElementById("loading").style.display = "none";
     document.getElementById("content").style.display = "block";
 
@@ -94,24 +106,10 @@
     return merged;
   }
 
-  // Heuristic: in Commander/Duel Commander decks (~100 cards), if the sideboard
-  // has only 1-2 cards and no commanders section exists, treat sideboard as commanders.
-  function fixCommanderHeuristic(deck) {
-    const mainCount = Object.values(deck.mainboard || {}).reduce((s, q) => s + q, 0);
-    const sideCount = Object.values(deck.sideboard || {}).reduce((s, q) => s + q, 0);
-    const cmdrCount = Object.values(deck.commanders || {}).reduce((s, q) => s + q, 0);
-
-    if (cmdrCount === 0 && sideCount >= 1 && sideCount <= 2 && mainCount >= 90) {
-      deck.commanders = { ...(deck.commanders || {}), ...(deck.sideboard || {}) };
-      deck.sideboard = {};
-    }
-    return deck;
-  }
-
   // ===== comparison engine =====
   function buildComparison(deckA, deckB) {
-    fixCommanderHeuristic(deckA);
-    fixCommanderHeuristic(deckB);
+    Shared.fixCommanderHeuristic(deckA);
+    Shared.fixCommanderHeuristic(deckB);
     const result = { uniqueA: [], uniqueB: [], shared: [] };
     for (const board of ["commanders", "mainboard", "sideboard"]) {
       const aCards = normalizeBoard(deckA[board] || {});

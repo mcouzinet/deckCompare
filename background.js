@@ -1,10 +1,18 @@
 // Service worker – handles deck fetching from APIs (avoids CORS)
+importScripts('shared.js');
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === 'FETCH_DECK') {
     fetchDeckByUrl(msg.url)
       .then(deck => sendResponse({ deck }))
       .catch(err => sendResponse({ error: err.message }));
+    return true;
+  }
+
+  if (msg.type === 'FETCH_DECKS') {
+    fetchDecks(msg.urls || [])
+      .then(result => sendResponse(result))
+      .catch(err => sendResponse({ decks: [], errors: [{ url: '', error: (err && err.message) || String(err) }] }));
     return true;
   }
 
@@ -106,7 +114,6 @@ async function fetchImage(url) {
 
 async function listMoxfieldDecks(username) {
   const headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     'Referer': 'https://www.moxfield.com/',
     'Cache-Control': 'no-cache'
   };
@@ -128,8 +135,8 @@ async function listMoxfieldDecks(username) {
     const res = await fetch(`https://api2.moxfield.com/v2/decks/search?${params}`, { headers, cache: 'no-store' });
 
     if (!res.ok) {
-      if (res.status === 404) throw new Error('Utilisateur Moxfield introuvable');
-      throw new Error(`Erreur Moxfield: ${res.status}`);
+      if (res.status === 404) throw new Error(chrome.i18n.getMessage('errMoxfieldUserNotFound'));
+      throw new Error(`${chrome.i18n.getMessage('errMoxfieldStatus')} ${res.status}`);
     }
 
     const data = await res.json();
@@ -168,11 +175,11 @@ async function listArchidektDecks(username) {
     });
 
     const res = await fetch(`https://archidekt.com/api/decks/v3/?${params}`);
-    if (!res.ok) throw new Error(`Erreur Archidekt: ${res.status}`);
+    if (!res.ok) throw new Error(`${chrome.i18n.getMessage('errArchidektStatus')} ${res.status}`);
 
     const data = await res.json();
 
-    if (data.count === -1) throw new Error('Utilisateur Archidekt introuvable');
+    if (data.count === -1) throw new Error(chrome.i18n.getMessage('errArchidektUserNotFound'));
 
     for (const d of (data.results || [])) {
       if (d.private || d.unlisted) continue;
@@ -195,7 +202,7 @@ async function listArchidektDecks(username) {
 
 async function listMagicVilleDecks(username) {
   const res = await fetch(`https://www.magic-ville.com/fr/decks/resultats?joueur=${encodeURIComponent(username)}`);
-  if (!res.ok) throw new Error(`Erreur Magic-Ville: ${res.status}`);
+  if (!res.ok) throw new Error(`${chrome.i18n.getMessage('errMagicVilleStatus')} ${res.status}`);
 
   const buf = await res.arrayBuffer();
   const html = new TextDecoder('iso-8859-1').decode(buf);
@@ -217,7 +224,7 @@ async function listMagicVilleDecks(username) {
     }
   }
 
-  if (!allDecks.length) throw new Error('Aucun deck trouvé pour cet utilisateur');
+  if (!allDecks.length) throw new Error(chrome.i18n.getMessage('errMagicVilleNoDeckFound'));
   return allDecks;
 }
 
@@ -237,7 +244,7 @@ async function fetchDeckByUrl(url) {
     const parsed = new URL(url);
     if (!ALLOWED_DECK_HOSTS.includes(parsed.hostname)) throw new Error();
   } catch {
-    throw new Error('Source non supportée.');
+    throw new Error(chrome.i18n.getMessage('errUnsupportedSource'));
   }
   if (url.includes('moxfield.com')) return fetchMoxfieldDeck(url);
   if (url.includes('archidekt.com')) return fetchArchidektDeck(url);
@@ -245,7 +252,7 @@ async function fetchDeckByUrl(url) {
   if (url.includes('mtggoldfish.com')) return fetchMtgGoldfishDeck(url);
   if (url.includes('magic-ville.com')) return fetchMagicVilleDeck(url);
   if (url.includes('mtgdecks.net')) return fetchMtgDecksDeck(url);
-  throw new Error('Source non supportée.');
+  throw new Error(chrome.i18n.getMessage('errUnsupportedSource'));
 }
 
 // --- Moxfield ---
@@ -259,8 +266,8 @@ async function fetchMoxfieldDeck(urlOrId) {
 
   const res = await fetch(`https://api2.moxfield.com/v3/decks/all/${deckId}`);
   if (!res.ok) {
-    if (res.status === 404) throw new Error('Deck Moxfield introuvable');
-    throw new Error(`Erreur Moxfield: ${res.status}`);
+    if (res.status === 404) throw new Error(chrome.i18n.getMessage('errMoxfieldDeckNotFound'));
+    throw new Error(`${chrome.i18n.getMessage('errMoxfieldStatus')} ${res.status}`);
   }
 
   const data = await res.json();
@@ -284,12 +291,12 @@ async function fetchMoxfieldDeck(urlOrId) {
 
 async function fetchArchidektDeck(url) {
   const match = url.match(/archidekt\.com\/decks\/(\d+)/);
-  if (!match) throw new Error('URL Archidekt invalide');
+  if (!match) throw new Error(chrome.i18n.getMessage('errArchidektInvalidUrl'));
 
   const res = await fetch(`https://archidekt.com/api/decks/${match[1]}/`);
   if (!res.ok) {
-    if (res.status === 404) throw new Error('Deck Archidekt introuvable');
-    throw new Error(`Erreur Archidekt: ${res.status}`);
+    if (res.status === 404) throw new Error(chrome.i18n.getMessage('errArchidektDeckNotFound'));
+    throw new Error(`${chrome.i18n.getMessage('errArchidektStatus')} ${res.status}`);
   }
 
   const data = await res.json();
@@ -318,11 +325,11 @@ async function fetchArchidektDeck(url) {
 
 async function fetchMtgTop8Deck(url) {
   const match = url.match(/[?&]d=(\d+)/);
-  if (!match) throw new Error('URL mtgtop8 invalide (paramètre d= manquant)');
+  if (!match) throw new Error(chrome.i18n.getMessage('errMtgtop8InvalidUrl'));
 
   const deckId = match[1];
   const res = await fetch(`https://www.mtgtop8.com/mtgo?d=${deckId}`);
-  if (!res.ok) throw new Error(`Erreur mtgtop8: ${res.status}`);
+  if (!res.ok) throw new Error(`${chrome.i18n.getMessage('errMtgtop8Status')} ${res.status}`);
 
   const text = await res.text();
   const lines = text.split('\n').filter(l => l.trim() !== '');
@@ -350,10 +357,10 @@ async function fetchMtgTop8Deck(url) {
 
 async function fetchMagicVilleDeck(url) {
   const match = url.match(/ref=(\d+)/);
-  if (!match) throw new Error('URL Magic-Ville invalide (paramètre ref= manquant)');
+  if (!match) throw new Error(chrome.i18n.getMessage('errMagicVilleInvalidUrl'));
 
   const res = await fetch(`https://www.magic-ville.com/fr/decks/showdeck?ref=${match[1]}&decklanglocal=eng`);
-  if (!res.ok) throw new Error(`Erreur Magic-Ville: ${res.status}`);
+  if (!res.ok) throw new Error(`${chrome.i18n.getMessage('errMagicVilleStatus')} ${res.status}`);
 
   const buf = await res.arrayBuffer();
   const html = new TextDecoder('iso-8859-1').decode(buf);
@@ -366,7 +373,7 @@ async function fetchMagicVilleDeck(url) {
 
   // Extract from aff_texte div
   const textBlock = html.match(/id="aff_texte"([\s\S]*?)(?=<\/div>\s*<div\s+id="aff_graphique"|$)/i);
-  if (!textBlock) throw new Error('Impossible de parser la page Magic-Ville');
+  if (!textBlock) throw new Error(chrome.i18n.getMessage('errMagicVilleParseFailed'));
 
   const block = textBlock[1];
   let currentSection = 'mainboard';
@@ -406,9 +413,9 @@ async function fetchMagicVilleDeck(url) {
 
 async function fetchMtgDecksDeck(url) {
   const parsed = new URL(url);
-  if (!['mtgdecks.net', 'www.mtgdecks.net'].includes(parsed.hostname)) throw new Error('URL mtgdecks invalide');
+  if (!['mtgdecks.net', 'www.mtgdecks.net'].includes(parsed.hostname)) throw new Error(chrome.i18n.getMessage('errMtgdecksInvalidUrl'));
   const res = await fetch(`https://mtgdecks.net${parsed.pathname}`);
-  if (!res.ok) throw new Error(`Erreur mtgdecks: ${res.status}`);
+  if (!res.ok) throw new Error(`${chrome.i18n.getMessage('errMtgdecksStatus')} ${res.status}`);
 
   const html = await res.text();
   const deck = { name: 'mtgdecks Deck', mainboard: {}, sideboard: {}, commanders: {}, source: 'mtgdecks' };
@@ -446,10 +453,10 @@ async function fetchMtgDecksDeck(url) {
 
 async function fetchMtgGoldfishDeck(url) {
   const match = url.match(/mtggoldfish\.com\/deck\/(\d+)/);
-  if (!match) throw new Error('URL MTGGoldfish invalide');
+  if (!match) throw new Error(chrome.i18n.getMessage('errMtggoldfishInvalidUrl'));
 
   const res = await fetch(`https://www.mtggoldfish.com/deck/download/${match[1]}`);
-  if (!res.ok) throw new Error(`Erreur MTGGoldfish: ${res.status}`);
+  if (!res.ok) throw new Error(`${chrome.i18n.getMessage('errMtggoldfishStatus')} ${res.status}`);
 
   const text = await res.text();
   const lines = text.split('\n').filter(l => l.trim() !== '');
@@ -472,4 +479,32 @@ async function fetchMtgGoldfishDeck(url) {
     }
   }
   return deck;
+}
+
+// --- Pool batch fetch (for the pool analyzer page) ---
+
+// Fetch many deck URLs (concurrency-limited), normalized for the pool analyzer.
+async function fetchDecks(urls) {
+  const decks = [];
+  const errors = [];
+  let i = 0;
+  const worker = async () => {
+    while (i < urls.length) {
+      const url = urls[i++];
+      try {
+        const deck = await fetchDeckByUrl(url);
+        deck.url = url;
+        Shared.fixCommanderHeuristic(deck);
+        if (Shared.sumBoard(deck.mainboard) + Shared.sumBoard(deck.commanders) === 0) {
+          errors.push({ url, error: chrome.i18n.getMessage('emptyDeck') });
+        } else {
+          decks.push(deck);
+        }
+      } catch (e) {
+        errors.push({ url, error: (e && e.message) || chrome.i18n.getMessage('fetchFailed') });
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(4, urls.length || 1) }, worker));
+  return { decks, errors };
 }

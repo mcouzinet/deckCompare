@@ -369,9 +369,9 @@
       <span class="brand-name">Deck<b>Compare</b></span>
     </div>
     <div class="topbar-spacer"></div>
-    <a href="https://buymeacoffee.com/mcouzinet" target="_blank" rel="noopener" class="bmc" title="Buy me a coffee">
+    <a href="https://buymeacoffee.com/mcouzinet" target="_blank" rel="noopener" class="bmc" id="bmc-link">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h11v5a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4V8Z"/><path d="M16 9h2a2.5 2.5 0 0 1 0 5h-2"/><path d="M7 3v2M10.5 3v2M14 3v2"/></svg>
-      <span>Buy me a coffee</span>
+      <span id="bmc-text-compare"></span>
     </a>
     <div class="topbar-meta">
       <span>Magic: The Gathering</span>
@@ -419,23 +419,23 @@
         <!-- controls -->
         <div class="controls">
           <div class="segmented">
-            <button class="seg-btn active" data-board-filter="all">All</button>
-            <button class="seg-btn" data-board-filter="commanders">Commanders</button>
-            <button class="seg-btn" data-board-filter="mainboard">Mainboard</button>
-            <button class="seg-btn" data-board-filter="sideboard">Sideboard</button>
+            <button class="seg-btn active" data-board-filter="all" id="filter-all"></button>
+            <button class="seg-btn" data-board-filter="commanders" id="filter-commanders"></button>
+            <button class="seg-btn" data-board-filter="mainboard" id="filter-mainboard"></button>
+            <button class="seg-btn" data-board-filter="sideboard" id="filter-sideboard"></button>
           </div>
           <div class="controls-spacer"></div>
           <div class="icon-toggle">
-            <button class="icon-btn" data-view="small" title="Compact">
+            <button class="icon-btn" data-view="small" id="view-small">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="3" y="11" width="6" height="6" rx="1"/><rect x="11" y="3" width="6" height="6" rx="1"/><rect x="11" y="11" width="6" height="6" rx="1"/><rect x="19" y="3" width="2" height="6" rx="1"/><rect x="19" y="11" width="2" height="6" rx="1"/></svg>
             </button>
-            <button class="icon-btn active" data-view="medium" title="Comfortable">
+            <button class="icon-btn active" data-view="medium" id="view-medium">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>
             </button>
-            <button class="icon-btn" data-view="large" title="Large">
+            <button class="icon-btn" data-view="large" id="view-large">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="8" rx="1"/><rect x="3" y="13" width="18" height="8" rx="1"/></svg>
             </button>
-            <button class="icon-btn" data-view="list" title="Liste">
+            <button class="icon-btn" data-view="list" id="view-list">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="1" fill="currentColor" stroke="none"/><circle cx="4" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="4" cy="18" r="1" fill="currentColor" stroke="none"/></svg>
             </button>
           </div>
@@ -500,6 +500,7 @@
     <a id="rate-link" target="_blank" rel="noopener"></a>
   </div>
 
+  <script src="shared.js"></script>
   <script src="compare.js"></script>
 </body>
 </html>
