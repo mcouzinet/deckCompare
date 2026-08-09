@@ -52,33 +52,67 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   }
 });
 
-// --- Scryfall card type batch fetch ---
+// --- Scryfall card type batch fetch (persistent cache + retry) ---
+
+const CARD_TYPE_TTL = 30 * 24 * 60 * 60 * 1000; // 30 days — card types are stable
+
+// POST one /cards/collection batch, retrying transient errors (429/5xx).
+async function scryfallCollection(identifiers) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    let res;
+    try {
+      res = await fetch('https://api.scryfall.com/cards/collection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifiers })
+      });
+    } catch { await new Promise(r => setTimeout(r, 500 * (attempt + 1))); continue; }
+    if (res.ok) return res.json();
+    if (res.status === 429 || res.status >= 500) { await new Promise(r => setTimeout(r, 800 * (attempt + 1))); continue; }
+    return null; // other 4xx — don't retry
+  }
+  return null;
+}
 
 async function fetchCardTypes(names) {
   const BATCH = 75;
   const landNames = new Set();
   const creatureNames = new Set();
 
-  for (let i = 0; i < names.length; i += BATCH) {
-    const batch = names.slice(i, i + BATCH);
-    const res = await fetch('https://api.scryfall.com/cards/collection', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ identifiers: batch.map(name => ({ name })) })
-    });
-    if (!res.ok) continue;
-    const data = await res.json();
+  // Serve what we can from the persistent cache; only miss names hit Scryfall.
+  const cached = await Shared.cacheRead('cardTypeCache', CARD_TYPE_TTL);
+  const misses = [];
+  for (const name of names) {
+    const hit = cached[name.toLowerCase()];
+    if (hit) {
+      if (hit.l) landNames.add(name);
+      if (hit.c) creatureNames.add(name);
+    } else {
+      misses.push(name);
+    }
+  }
+
+  const fresh = {}; // canonical face name -> { l, c }
+  for (let i = 0; i < misses.length; i += BATCH) {
+    const batch = misses.slice(i, i + BATCH);
+    const data = await scryfallCollection(batch.map(name => ({ name })));
+    if (!data) continue; // transient failure — cached hits still render, miss retries next time
     for (const card of (data.data || [])) {
       const faces = card.card_faces || [card];
       for (const face of faces) {
         const tl = face.type_line || card.type_line || '';
-        if (tl.includes('Land')) landNames.add(face.name || card.name);
-        if (tl.includes('Creature')) creatureNames.add(face.name || card.name);
+        const nm = face.name || card.name;
+        const isLand = tl.includes('Land');
+        const isCreature = tl.includes('Creature');
+        if (isLand) landNames.add(nm);
+        if (isCreature) creatureNames.add(nm);
+        fresh[nm] = { l: isLand, c: isCreature };
       }
     }
-    if (i + BATCH < names.length) await new Promise(r => setTimeout(r, 100));
+    if (i + BATCH < misses.length) await new Promise(r => setTimeout(r, 100));
   }
 
+  await Shared.cacheMerge('cardTypeCache', fresh, CARD_TYPE_TTL);
   return { lands: [...landNames], creatures: [...creatureNames] };
 }
 
@@ -414,8 +448,14 @@ async function fetchMagicVilleDeck(url) {
 async function fetchMtgDecksDeck(url) {
   const parsed = new URL(url);
   if (!['mtgdecks.net', 'www.mtgdecks.net'].includes(parsed.hostname)) throw new Error(chrome.i18n.getMessage('errMtgdecksInvalidUrl'));
-  const res = await fetch(`https://mtgdecks.net${parsed.pathname}`);
-  if (!res.ok) throw new Error(`${chrome.i18n.getMessage('errMtgdecksStatus')} ${res.status}`);
+  // mtgdecks is Cloudflare-fronted like MTGGoldfish — send the user's clearance
+  // cookie so a cookie-less server fetch isn't 403'd (applied by analogy; the
+  // extension's host permission lets the SW read the cross-origin response).
+  const res = await fetch(`https://mtgdecks.net${parsed.pathname}`, { credentials: 'include' });
+  if (!res.ok) {
+    if (res.status === 403) throw new Error(chrome.i18n.getMessage('errMtgdecksBlocked'));
+    throw new Error(`${chrome.i18n.getMessage('errMtgdecksStatus')} ${res.status}`);
+  }
 
   const html = await res.text();
   const deck = { name: 'mtgdecks Deck', mainboard: {}, sideboard: {}, commanders: {}, source: 'mtgdecks' };
@@ -455,8 +495,18 @@ async function fetchMtgGoldfishDeck(url) {
   const match = url.match(/mtggoldfish\.com\/deck\/(\d+)/);
   if (!match) throw new Error(chrome.i18n.getMessage('errMtggoldfishInvalidUrl'));
 
-  const res = await fetch(`https://www.mtggoldfish.com/deck/download/${match[1]}`);
-  if (!res.ok) throw new Error(`${chrome.i18n.getMessage('errMtggoldfishStatus')} ${res.status}`);
+  // MTGGoldfish's Cloudflare returns 403 to cookie-less requests on this endpoint.
+  // credentials:'include' attaches the user's cf_clearance cookie (set once they've
+  // opened mtggoldfish in this browser); with our host permission the service worker
+  // can send it cross-origin and read the response without CORS headers. Verified:
+  // same request is 200 with the cookie, 403 without.
+  const res = await fetch(`https://www.mtggoldfish.com/deck/download/${match[1]}`, { credentials: 'include' });
+  if (!res.ok) {
+    // 403 despite credentials:'include' means no valid cf_clearance cookie (user
+    // hasn't opened mtggoldfish in this browser lately) — give an actionable message.
+    if (res.status === 403) throw new Error(chrome.i18n.getMessage('errMtggoldfishBlocked'));
+    throw new Error(`${chrome.i18n.getMessage('errMtggoldfishStatus')} ${res.status}`);
+  }
 
   const text = await res.text();
   const lines = text.split('\n').filter(l => l.trim() !== '');

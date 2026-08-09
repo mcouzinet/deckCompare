@@ -77,8 +77,10 @@
   "errMagicVilleParseFailed":  { "message": "Impossible de parser la page Magic-Ville" },
   "errMtgdecksInvalidUrl":     { "message": "URL mtgdecks invalide" },
   "errMtgdecksStatus":         { "message": "Erreur mtgdecks:" },
+  "errMtgdecksBlocked":        { "message": "mtgdecks bloque la récupération automatique. Ouvre une page mtgdecks.net dans ton navigateur, puis réessaie — ou colle le texte du deck." },
   "errMtggoldfishInvalidUrl":  { "message": "URL MTGGoldfish invalide" },
   "errMtggoldfishStatus":      { "message": "Erreur MTGGoldfish:" },
+  "errMtggoldfishBlocked":     { "message": "MTGGoldfish bloque la récupération automatique. Ouvre une page MTGGoldfish dans ton navigateur, puis réessaie — ou colle le texte du deck." },
   "emptyDeck":                 { "message": "Deck vide ou illisible" },
   "fetchFailed":               { "message": "Échec du fetch" },
 

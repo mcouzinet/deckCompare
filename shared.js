@@ -21,7 +21,36 @@
     return deck;
   }
 
-  const api = { fixCommanderHeuristic, sumBoard };
+  // ---- persistent card cache (chrome.storage.local) ----
+  // Blob per cache key: { lowerName: { ...value, ts } }. Per-entry TTL; stale
+  // entries are pruned on write, so the blob stays bounded. No-ops outside the
+  // extension (e.g. Node tests) where chrome.storage is absent.
+  const hasStorage = () => typeof chrome !== "undefined" && chrome.storage && chrome.storage.local;
+
+  async function cacheRead(key, ttlMs) {
+    if (!hasStorage()) return {};
+    let store;
+    try { store = await chrome.storage.local.get(key); } catch { return {}; }
+    const blob = store[key] || {};
+    const now = Date.now();
+    const out = {};
+    for (const k in blob) if (now - (blob[k].ts || 0) < ttlMs) out[k] = blob[k];
+    return out;
+  }
+
+  // entries: { name: valueObj } — merged in, stamped with now, stale pruned.
+  async function cacheMerge(key, entries, ttlMs) {
+    if (!hasStorage() || !entries || !Object.keys(entries).length) return;
+    let store;
+    try { store = await chrome.storage.local.get(key); } catch { store = {}; }
+    const blob = store[key] || {};
+    const now = Date.now();
+    for (const k in blob) if (now - (blob[k].ts || 0) >= ttlMs) delete blob[k];
+    for (const k in entries) blob[String(k).toLowerCase()] = Object.assign({}, entries[k], { ts: now });
+    try { await chrome.storage.local.set({ [key]: blob }); } catch { /* quota — ignore */ }
+  }
+
+  const api = { fixCommanderHeuristic, sumBoard, cacheRead, cacheMerge };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else global.Shared = api;
 })(typeof self !== "undefined" ? self : globalThis);

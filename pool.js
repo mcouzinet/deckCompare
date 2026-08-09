@@ -26,6 +26,8 @@
   const enrichMap = new Map(); // persists across adds; only new names are fetched
   let poolErrors = [];
   let inputExpanded = true; // once a pool exists, the input collapses to a "+ Ajouter" bar
+  const POOL_KEY = "poolDecks";                 // persisted pool (survives tab close / restart)
+  const ENRICH_TTL = 30 * 24 * 60 * 60 * 1000;  // 30 days — Scryfall card data is stable
 
   // Collapse the big input once a pool exists; keep it open while empty / when expanded.
   function applyInputState() {
@@ -156,6 +158,7 @@
     }
 
     pooledDecks.push(...newDecks);
+    savePool();
     $("urls").value = "";
     $("texts").value = "";
     inputExpanded = false;
@@ -179,10 +182,22 @@
     $("loading").textContent = M("poolEnriching");
     const names = new Set();
     for (const d of pooledDecks) for (const b of ["mainboard", "sideboard", "commanders"]) for (const n of Object.keys(d[b])) names.add(n);
-    const missing = [...names].filter((n) => !window.Enrich.enrichmentFor(enrichMap, n));
+    let missing = [...names].filter((n) => !window.Enrich.enrichmentFor(enrichMap, n));
     if (missing.length) {
-      const m2 = await window.Enrich.enrichCards(missing);
-      for (const [k, v] of m2) if (!enrichMap.has(k)) enrichMap.set(k, v);
+      // 1) seed from the persistent cross-session cache before hitting Scryfall
+      const cached = await Shared.cacheRead("poolEnrichCache", ENRICH_TTL);
+      for (const n of missing) {
+        const hit = cached[n.toLowerCase()];
+        if (hit) for (const k of window.Enrich.nameKeys(hit.name || n)) if (!enrichMap.has(k)) enrichMap.set(k, hit);
+      }
+      // 2) fetch only what's still unknown, then persist the new entries
+      missing = [...names].filter((n) => !window.Enrich.enrichmentFor(enrichMap, n));
+      if (missing.length) {
+        const m2 = await window.Enrich.enrichCards(missing);
+        const toCache = {};
+        for (const [k, v] of m2) { if (!enrichMap.has(k)) enrichMap.set(k, v); toCache[k] = v; }
+        await Shared.cacheMerge("poolEnrichCache", toCache, ENRICH_TTL);
+      }
     }
     analysis = window.PoolAnalyze.analyzePool(pooledDecks, enrichMap, poolErrors.slice());
 
@@ -199,8 +214,27 @@
     if (idx >= 0 && idx < pooledDecks.length) {
       const [removed] = pooledDecks.splice(idx, 1);
       if (removed && removed._rawText) pastedTextsSeen.delete(removed._rawText);
+      savePool();
       reanalyze();
     }
+  }
+
+  // ---- pool persistence (chrome.storage.local) ----
+  // Decks carry their parsed boards, so a restored pool needs no site refetch —
+  // only Scryfall enrichment, which the poolEnrichCache serves from disk.
+  function savePool() {
+    try { chrome.storage.local.set({ [POOL_KEY]: pooledDecks }); } catch (e) { /* quota — ignore */ }
+  }
+
+  async function restorePool() {
+    let stored;
+    try { stored = await chrome.storage.local.get(POOL_KEY); } catch (e) { return false; }
+    const saved = stored && stored[POOL_KEY];
+    if (!Array.isArray(saved) || !saved.length) return false;
+    pooledDecks.push(...saved);
+    for (const d of saved) if (d._rawText) pastedTextsSeen.add(d._rawText);
+    inputExpanded = false;
+    return true;
   }
 
   // ---- render ----
@@ -470,6 +504,11 @@
       selected.clear();
       document.querySelectorAll("[data-sel]").forEach((cb) => (cb.checked = false));
       updateSelbar();
+    });
+
+    // Restore a previously saved pool, then re-analyze (enrichment served from cache).
+    restorePool().then((restored) => {
+      if (restored) { updateCount(); applyInputState(); reanalyze(); }
     });
   }
 
