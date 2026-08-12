@@ -75,6 +75,7 @@
   "errMtgtop8Status":          { "message": "Erreur mtgtop8:" },
   "errMagicVilleInvalidUrl":   { "message": "URL Magic-Ville invalide (paramètre ref= manquant)" },
   "errMagicVilleParseFailed":  { "message": "Impossible de parser la page Magic-Ville" },
+  "errMagicVilleDeckNotFound": { "message": "Deck Magic-Ville introuvable" },
   "errMtgdecksInvalidUrl":     { "message": "URL mtgdecks invalide" },
   "errMtgdecksStatus":         { "message": "Erreur mtgdecks:" },
   "errMtgdecksBlocked":        { "message": "mtgdecks bloque la récupération automatique. Ouvre une page mtgdecks.net dans ton navigateur, puis réessaie — ou colle le texte du deck." },

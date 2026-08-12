@@ -3,9 +3,12 @@
   "name": "__MSG_appName__",
   "short_name": "__MSG_appShortName__",
   "description": "__MSG_appDescription__",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "default_locale": "en",
-  "permissions": ["activeTab", "storage"],
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
   "host_permissions": [
     "https://api2.moxfield.com/*",
     "https://www.mtggoldfish.com/*",
@@ -18,28 +21,53 @@
   ],
   "content_scripts": [
     {
-      "matches": ["https://www.mtggoldfish.com/deck/*"],
-      "js": ["content.js"],
+      "matches": [
+        "https://www.mtggoldfish.com/deck/*"
+      ],
+      "js": [
+        "dom-parsers.js",
+        "content.js"
+      ],
       "run_at": "document_idle"
     },
     {
-      "matches": ["https://www.mtgtop8.com/event*"],
-      "js": ["content.js"],
+      "matches": [
+        "https://www.mtgtop8.com/event*"
+      ],
+      "js": [
+        "dom-parsers.js",
+        "content.js"
+      ],
       "run_at": "document_idle"
     },
     {
-      "matches": ["https://archidekt.com/decks/*"],
-      "js": ["content.js"],
+      "matches": [
+        "https://archidekt.com/decks/*"
+      ],
+      "js": [
+        "dom-parsers.js",
+        "content.js"
+      ],
       "run_at": "document_idle"
     },
     {
-      "matches": ["https://www.magic-ville.com/fr/decks/showdeck*"],
-      "js": ["content.js"],
+      "matches": [
+        "https://www.magic-ville.com/fr/decks/showdeck*"
+      ],
+      "js": [
+        "dom-parsers.js",
+        "content.js"
+      ],
       "run_at": "document_idle"
     },
     {
-      "matches": ["https://mtgdecks.net/*"],
-      "js": ["content.js"],
+      "matches": [
+        "https://mtgdecks.net/*"
+      ],
+      "js": [
+        "dom-parsers.js",
+        "content.js"
+      ],
       "run_at": "document_idle"
     }
   ],

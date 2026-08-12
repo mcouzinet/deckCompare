@@ -1,0 +1,867 @@
+
+<!  : DeckDoc :  : >
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Séphiroth, Soldat Légendaire (Duel commander) NS par DeckDoc - magic-ville.com</title>
+  <link rel="shortcut icon" type="image/png" href="https://www.magic-ville.com/favicon.png">
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1">
+<meta http-equiv="content-language" content="fr">
+<meta name="keywords" lang="fr" content="magic,gathering,assemblee,carte,achat,vente,echange,tournoi">
+<meta name="description" content="Toutes les cartes de Magic : l'assemblee, vente, echange, forums, decks, combos">
+  <link href="/fr/styles.css" rel="stylesheet" type="text/css">
+  
+  
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-FMSVMQXHY3"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-FMSVMQXHY3');
+</script>
+<script>
+
+var hoverprefs=1;
+var touchprefs=0;
+var x
+var y
+
+function MAJCoords(evt){
+	x=evt.clientX
+	y=evt.clientY
+	return false;	
+}
+
+
+	function initElement(){
+		document.getElementById("MV_content").onmouseover = TreatOver;
+		document.getElementById("MV_content").onmouseout = TreatOut;
+	}
+
+	function TreatOver(event){
+		event = event || window.event;
+		elem = event.target || event.srcElement;
+		id = elem.id;
+
+		if (hoverprefs && id.substring(0,4)=="c_t_") {CardOver(id.substring(4));}
+	}
+
+	function TreatOut(event){
+		event = event || window.event;
+		elem = event.target || event.srcElement;
+		id = elem.id;
+
+		if (hoverprefs && id.substring(0,4)=="c_t_") {CardOut(id.substring(4));}
+	}
+
+function MM_preloadImages() { //v3.0
+  var d=document; if(d.images){ if(!d.MM_p) d.MM_p=new Array();
+    var i,j=d.MM_p.length,a=MM_preloadImages.arguments; for(i=0; i<a.length; i++)
+    if (a[i].indexOf("#")!=0){ d.MM_p[j]=new Image; d.MM_p[j++].src=a[i];}}
+}
+
+user_id="";
+idcur="decks";
+idchg="";
+//document.getElementById("mainrub_"+idcur).className = "fakelink";
+
+
+
+
+	function rubdetails(idchg) {
+    	document.getElementById("rub"+idcur).style.display = "none";
+		document.getElementById("rub"+idchg).style.display = "block";
+		if (idchg=="perso" && user_id=="") {document.login_form.pseudo.focus();}
+		if (idchg==idcur) { p=3;}
+		else {idcur=idchg;}
+	}
+
+function ShowSpoiler(ref) {
+    document.getElementById(ref).style.visibility = "visible";
+}
+
+function ShowSpoiler2(ref) {
+    document.getElementById(ref).style.display = "block";
+}
+
+
+function ChangePrefs(pref){
+	OnTheFlyContent("/fr/prefs_light?p="+pref,"prefs_tooltip_content");
+	if (pref=="") {
+ 	if (document.documentElement && document.documentElement.scrollTop) {
+		theTop = document.documentElement.scrollTop
+	}
+	else if (document.body) {
+		theTop = document.body.scrollTop
+	}
+
+	document.getElementById("prefs_tooltip").style.left=(x-250)+"px";
+	document.getElementById("prefs_tooltip").style.top=(theTop+y+10)+"px";
+	document.getElementById("prefs_tooltip").style.visibility="visible";
+	}
+}
+
+function EffPrefs(){document.getElementById("prefs_tooltip").style.visibility="hidden";}
+
+function OnTheFlyContent(src,dst) {
+	var xhr_object = null;
+
+	if(window.XMLHttpRequest) // Firefox
+	   xhr_object = new XMLHttpRequest();
+	else if(window.ActiveXObject) // Internet Explorer
+	   xhr_object = new ActiveXObject('Microsoft.XMLHTTP');
+
+
+	xhr_object.open("POST", src, true);
+
+	xhr_object.onreadystatechange = function() {
+	   if(xhr_object.readyState == 4) document.getElementById(dst).innerHTML=xhr_object.responseText;
+	}
+
+	xhr_object.send(null);
+}
+
+var Mkeystrokes = 0;
+function MKeyUp() {
+    ++Mkeystrokes;
+    setTimeout(MCardSearch, 500);
+}
+
+function MCardSearch(){
+	--Mkeystrokes;
+	csi=document.getElementById("main_card_search_input");
+	Mch=csi.value;
+	if (Mkeystrokes == 0 && (Mch.length>2 || Mch.toLowerCase()=="ow" || Mch.toLowerCase()=="x")) {
+		document.getElementById("main_card_search_results").innerHTML="<div align=center><img src=/fr/graph/divers/loadingGIF.gif></div>";
+		OnTheFlyContent("/fr/upn_search?n="+encodeURI(Mch),"main_card_search_results");
+
+		if (document.documentElement && document.documentElement.scrollTop) {theTop = document.documentElement.scrollTop;}
+		else if (document.body) {theTop = document.body.scrollTop;}
+
+  		var r = csi.getBoundingClientRect();
+
+		document.getElementById("main_card_search_results").style.left=(r.left-20)+"px";
+		document.getElementById("main_card_search_results").style.top=(theTop+r.top+30)+"px";
+		document.getElementById("main_card_search_results").style.visibility="visible";
+	}
+}
+
+function MClose(){
+	document.getElementById("main_card_search_results").style.visibility="hidden";
+	document.getElementById("main_card_search_results").innerHTML="<img src=/fr/graph/divers/loadingGIF.gif>";
+}
+</script>
+</head>
+
+
+<body onmousemove="MAJCoords(event)" onload="initElement();" >
+<a name="haut_de_page"></a>
+<div align=center>
+<div style="width:100%;min-width: 750px;max-width: 1280px;" align=center id=MV_content>
+<table style="width:99%;background:url(/fr/graph/header_bk/2026/33.jpg);" border=0 cellspacing=0 cellpadding=0><tr><td>
+<table width=100% height=150 border=0 cellspacing=0 cellpadding=0 align=center>
+  <tr> 
+	<td valign=bottom align=center rowspan=2>
+		<a href=/fr/MVbanners?year=2026&week=33><div style="width:100%;height:90px;"></div></a>
+		<a href=/fr/index.php target=_top><img src=/fr/graph/head/MVlogo.png border=0 ></a>
+	</td>
+	<td width=730 align=right height=120><a href=/fr/MVbanners?year=2026&week=33><div style="width:100%;height:110px;"></div></a></td>
+  </tr>
+  <tr> 
+	<td width=730 align=right valign=bottom> 
+<table width=730 border=0 height=30 cellspacing=0 cellpadding=0 align=right>
+  <tr>
+    <td align=center width=25%><a href=/fr/rech_avancee><img src=/fr/graph/head/rech_avancee.png border=0></a></td>
+    <td align=center width=13%><a href=/fr/rech_art><img src=/fr/graph/head/artistes.png border=0></a></td>
+    <td align=center width=13%><a href=/fr/rech_set><img src=/fr/graph/head/editions.png border=0></a></td>
+    <td align=center width=13%><a href=/fr/carte><img src=/fr/graph/head/carte_hasard.png border=0></a></td>
+    <td valign=middle align=center width=36%>  
+      <table cellspacing=0 cellpadding=0 width=100% border=0>
+      <form method=post action=/fr/resultats?zbob=1>
+        <tr>
+          <td align=center><input id=main_card_search_input type=text name=recherche_titre style="width:200px;" onkeyup="MKeyUp()" class=search_input  placeholder="Rechercher une carte" autofocus></td>
+          <td align=left><input type=image src=/fr/graph/head/go.png border=0></td>
+        </tr>
+        </form>
+      </table>
+    </td>
+  </tr>
+</table></td>
+  </tr>
+</table></td></tr></table>
+<div style="background: url(/fr/graph/wm/fond.jpg);margin-bottom:5px;">
+<div style="background:repeat-x top url(/fr/graph/wm/u.png);">
+<div style="background:repeat-x bottom url(/fr/graph/wm/d.png);padding:2px;">
+  <div style="margin:2px;">
+	<table  width=98% border=0 cellspacing=0 cellpadding=0 align=center>
+	  <tr>
+		<td align=center width=7%><div id=mainrub_accueil style="cursor:pointer;"><a onmouseover="rubdetails('accueil')" class=und href=../index>Accueil</a></div></td>
+		<td align=center width=7%><div id=mainrub_decks style="cursor:pointer;"><a onmouseover="rubdetails('decks')" class=und href=../decks>Decks</a></div></td>
+		<td align=center width=7%><div id=mainrub_combos style="cursor:pointer;"><a onmouseover="rubdetails('combos')" class=und href=../combos>Combos</a></div></td>
+		<td align=center width=7%><div id=mainrub_regles style="cursor:pointer;"><a onmouseover="rubdetails('regles')" class=und href=../regles>R&egrave;gles</a></div></td>
+		<td align=center width=7%><div id=mainrub_forum style="cursor:pointer;"><a onmouseover="rubdetails('forum')" class=und href=../forum/index2.php>Forum</a></div></td>
+		<td align=center width=9%><div style="display:inline-block;"><a class=und href=/fr/mvshop/boutique>MV Shop</a></div></td>
+		<td align=center width=11%><div id=mainrub_vente style="cursor:pointer;"><a onmouseover="rubdetails('vente')" class=und href=../register/magicville_sale>Achat/Vente</a></td>
+		<td align=center width=12%><div id=mainrub_comm style="cursor:pointer;"><a onmouseover="rubdetails('comm')" style="cursor:pointer;" class=und href=#>Communaut&eacute;</a></td>
+		 
+	<td align=center width=14%><a style="cursor:pointer;" href=../inscription.php>Inscrivez-vous</a></td>
+	<td align=center width=12%><div id=mainrub_perso onmouseover="rubdetails('perso')"><a style="cursor:pointer;" href=../connexion.php>connexion</a></div></td>
+	
+	  </tr>
+	</table></div>
+  <div style="margin:1px;"><img src=/fr/graph/wm/sep.png style="display:block;width:98%;height:2px;"></div>
+  <div align=left style="width:98%;height:24px;padding-top:5px;">
+    <div id=rubaccueil style="display:none;" class=menu>
+      <a href=../gazette>Archive des News/Articles</a> |
+      <a href=../forum/index.php?themecode=gaz>Forum Gazette</a> |
+      <a href=../artgame>Artgame</a> |
+      <a href=../gazette/show_article?ref=60>MWS</a> |
+      <a href=../wiki>MV wiki</a> |
+      <a href=../divers/contacts>Contact</a> | 
+      <a href=../storyline>Storyline</a> |
+      <a href=/fr/lsv>Anecdotes</a>
+    </div>
+    <div id=rubdecks style="display:block;">
+      <a href=../decks/resultats>Rechercher un deck</a> | 
+      <a href=../decks/submit>Saisir un deck</a> | 
+      <a href=../decks/decklists>Listes TOP 8</a> | 
+      <a href=../decks/showdeck>Deck au hasard</a> | 
+      <a href=../register/perso.php?rub=decks>Mes decks</a> |
+      <a href=../proxy>Proxies</a>
+    </div>
+    <div id=rubcombos style="display:none;">
+      <a href=../combos/moteur>Rechercher une combo</a> | 
+      <a href=../combos/submit>Saisir une combo</a> | 
+      <a href=../combos/showcombo>Combo au hasard</a> | 
+      <a href=../register/perso.php?rub=combos>Mes combos</a> | 
+      <a href=../combos/classification>Classification</a>
+    </div>
+    <div id=rubregles style="display:none;">
+      <a href=../regles/>Recherche</a> |
+      <a href=../regles/reglesoff.php>R&egrave;gles officielles</a> |
+      <a href=../regles/glossaire.php>Glossaire</a> |
+      <a href=../regles/faq.php>F.A.Q.</a> |
+      <a href=../forum/index.php?themecode=reg>Forum R&egrave;gles</a>
+    </div>
+    <div id=rubforum style="display:none;" class=S11>
+	  <a href=/fr/forum/index.php?themecode=gen>G&eacute;n&eacute;ral</a> | 
+	  <a href=/fr/forum/index.php?themecode=oik>OIK</a> | 
+	  <a href=/fr/forum/index.php?themecode=ech>&Eacute;changes</a> | 
+	  <a href=/fr/forum/index.php?themecode=reg>R&egrave;gles</a> | 
+	  <a href=/fr/forum/index.php?themecode=tou>Tournois</a> | 
+	  <a href=/fr/forum/index.php?themecode=rum>Rumeurs</a> | 
+	  <a href=/fr/forum/index.php?themecode=dec>Decks</a> | 
+	  <a href=/fr/forum/index.php?themecode=vin>Vintage</a> | 
+	  <a href=/fr/forum/index.php?themecode=leg>Legacy</a> | 
+	  <a href=/fr/forum/index.php?themecode=pre>Premodern</a> | 
+	  <a href=/fr/forum/index.php?themecode=mod>Modern</a> |
+	  <a href=/fr/forum/index.php?themecode=pio>Pioneer</a> |
+	  <a href=/fr/forum/index.php?themecode=T2>Standard</a> | 
+	  <a href=/fr/forum/index.php?themecode=pea>Peasant</a> |
+	  <a href=/fr/forum/index.php?themecode=edh>Commander</a> |
+	  <a href=/fr/forum/index.php?themecode=tl>Tiny Leaders</a> |
+	  <a href=/fr/forum/index.php?themecode=ma>MTG Arena</a>
+	</div>
+    <div id=rubmvshop style="display:none;" align=center>
+      <div align=center>
+      <a href=../mvshop/caddie_checkout>Caddie</a> |
+      <a href=../mvshop/boutique>Boutique</a>
+      
+      </div>
+	</div>
+    <div id=rubvente style="display:none;">
+      <a href=../register/magicville_sale.php>Achetez &agrave; un magicvillois</a> |
+      <a href=../register/vendre>Vendez vos cartes</a>
+	</div>
+    <div id=rubcomm style="display:none;">
+      <a href=../register/habitants>Tous les magicvillois</a> | 
+      <a href=../trombi>Trombinoscope</a> | 
+      Forums :
+      <a href=../forum/index.php?themecode=con>Contacts</a> | 
+      <a href=../forum/index.php?themecode=clt>MV Culture</a>
+	</div>
+    <div id=rubperso style="display:none;">
+		
+	<table width=100% cellspacing=0 cellpadding=0 border=0>
+	<form name=login_form method=post action=../connexion.php>
+	<input type=hidden name=return_url value="www.magic-ville.com/fr/decks/showdeck?ref=1138736&decklanglocal=eng">
+	
+	  <tr>
+	    <td align=right><input type=hidden name=data value=1> login <input type=text name=pseudo maxlength=15 style="font-family: verdana;border:1px gray solid;font-size: 10px; width: 80px;"> pass <input type=password name=pass maxlength=15 style="font-family: verdana;border:1px gray solid;font-size: 10px; width: 80px;"> <input type=submit style="font-family: verdana;font-size: 10px;" value=GO></td>
+	  </tr>
+	</form>
+	</table>
+	</div></div>
+</div></div></div>
+<div id=prefs_tooltip style="visibility:hidden;z-index:10;position: absolute;">
+  <div style="box-shadow: 0px 10px 20px 5px #333333;padding:2px;background:#fffff2;border-radius:6px;border:2px #666666 solid;">
+	<div id=prefs_tooltip_content style="width:500px;padding:3px;"></div>
+  </div>
+</div><div id=main_card_search_results style="visibility:hidden;z-index:10;width:240px;position:absolute;background:#fffff2;box-shadow: 0px 10px 20px 5px #333333;padding:2px;border-radius:6px;border:2px #666666 solid;"></div>
+ <script type="text/javascript" language="javascript"> 
+function details(id) {
+  if (document.getElementById('num'+id).style.display == "none") {
+	document.getElementById('num'+id).style.display = "block";
+	document['img'+id].src="../graph/divers/deck_det2.gif";
+  }
+  else {
+	document.getElementById('num'+id).style.display = "none";
+	document['img'+id].src="../graph/divers/deck_det.gif";
+  }
+}
+
+function SwitchAff() {
+  if (document.getElementById('aff_graphique').style.display == "none") {
+	document.getElementById('aff_texte').style.display = "none";
+	document.getElementById('aff_graphique').style.display = "block";
+	document.getElementById('aff_mode_title').innerHTML = "Visualiser en mode texte";
+  }
+  else {
+	document.getElementById('aff_graphique').style.display = "none";
+	document.getElementById('aff_texte').style.display = "block";
+	document.getElementById('aff_mode_title').innerHTML = "Visualiser en mode graphique";
+  }
+}
+
+function AffArena(d,mt8){
+	omtga=document.getElementById("MTGA_button_div");
+	var r = omtga.getBoundingClientRect();
+
+	if (document.documentElement && document.documentElement.scrollTop) {theTop = document.documentElement.scrollTop;}
+	else if (document.body) {theTop = document.body.scrollTop;}
+	
+	document.getElementById("MTGA_tooltip").style.width=(r.right-r.left+160)+"px";
+	document.getElementById("MTGA_tooltip").style.left=(r.left-80)+"px";
+	document.getElementById("MTGA_tooltip").style.top=(theTop+r.top+22)+"px";
+	document.getElementById("MTGA_tooltip").style.visibility="visible";
+	document.getElementById("MTGA_deck").innerHTML="<iframe style=\"display:none;width:140px;height:50px;\" src=mtgarena?d="+d+"&mt8="+mt8+">";
+
+	
+}
+
+function EffArena(){
+	document.getElementById("MTGA_tooltip").style.visibility="hidden";
+	document.getElementById("MTGAOK").style.visibility="hidden";
+}
+
+function CopyMTGA(lang){
+	document.getElementById("MTGAdecklist").innerHTML=document.getElementById("MTGAdecklist"+lang).value;
+	copyText = document.getElementById("MTGAdecklist");
+	copyText.select();
+	document.execCommand("copy");
+	document.getElementById("MTGAOK").style.visibility="visible";
+}
+</script>
+<script> 
+
+var ref
+var timereff=0
+
+
+
+function CardOver(passedref){
+	if (timereff) {effTool()}
+	ref=passedref
+	OnTheFlyContent("/fr/ttcard?ref="+ref,"tooltip_content") ;
+	timeraff=setTimeout("affTool()",500);
+}
+
+function CardOut(passedref){
+	ref=passedref
+	clearTimeout(timeraff)
+	timereff=setTimeout("effTool()",200);
+}
+
+function delayAff(passedref){
+	
+	if (timereff) {effTool()}
+	ref=passedref
+	OnTheFlyContent("/fr/ttcard?ref="+ref,"tooltip_content") ;
+	timeraff=setTimeout("affTool()",500);
+	
+}
+
+function affTool(){
+
+ 	if (document.documentElement && document.documentElement.scrollTop) {
+		theTop = document.documentElement.scrollTop
+	}
+	else if (document.body) {
+		theTop = document.body.scrollTop
+	}
+	
+	if (x>700) {
+		document.getElementById("tooltip").style.left=(x-345)+"px";
+		document.getElementById("close_tooltip").style.left="319px";
+	}
+	else {
+		document.getElementById("tooltip").style.left=(x+15)+"px";
+		document.getElementById("close_tooltip").style.left="-5px";
+	}
+	document.getElementById("tooltip").style.top=(theTop+y+10)+"px";
+	document.getElementById("tooltip").style.visibility="visible";
+}
+
+function delayEff(passedref){
+	ref=passedref
+	clearTimeout(timeraff)
+	timereff=setTimeout("effTool()",200);
+}
+
+function effTool(){document.getElementById("tooltip").style.visibility="hidden";}
+
+
+</script>
+<script> 
+
+var deco=new Array("","/");var img=new Array("","2"); var st=new Array; var plus=0;
+
+
+function add_tags() { 
+	if (plus == 0){
+		document.getElementById("moremanas").style.display = "block";
+		document.getElementById("plusimg").src ="/forum/graph/tags/moins.gif";
+	}
+	else {
+		document.getElementById("moremanas").style.display = "none";
+		document.getElementById("plusimg").src ="/forum/graph/tags/plus.gif";
+	}
+	plus=Math.abs(plus-1);
+}
+
+function AddTag(tag,bracket) {
+	var newfred=document.getElementById("newfred");
+	if (typeof(newfred.selectionStart) != "undefined") {var moz=1;} else {var moz=0;}
+	
+	// SET START END
+	if (moz==1) {// Everybody excepet IE
+		var selStart=newfred.selectionStart;
+		var selEnd=newfred.selectionEnd;
+	}
+	else {// IE
+		var range = document.selection.createRange();
+		if (range.text != "") {
+			var stored_range = range.duplicate();
+			stored_range.moveToElementText(newfred);
+			stored_range.setEndPoint( 'EndToEnd',range);
+			var selStart = stored_range.text.length - range.text.length;
+			var selEnd = selStart + range.text.length;
+		}
+		else {
+			var selStart=IECursorPos();
+			var selEnd=selStart;
+		}
+
+	}
+	
+	// REPLACE
+	var begin = newfred.value.substr(0, selStart);
+	var selection_ch = newfred.value.substr(selStart, selEnd - selStart);
+	var end = newfred.value.substr(selEnd);
+	var begin_CR=Get_NbrCR(begin);
+	var sel_CR=Get_NbrCR(selection_ch);
+
+	
+	if (bracket==1) {
+		newfred.value = begin + "[" + tag + "]" + selection_ch +  "[/" + tag + "]" + end;
+	}
+	else {
+		newfred.value = begin +  tag + end;
+	}
+	
+	var total_CR=Get_NbrCR(newfred.value);
+	
+	//PLACE CURSOR OR RANGE
+	newfred.focus();
+	if (moz==1) {// Everybody except IE
+		if (bracket==1) {newfred.setSelectionRange(selStart+tag.length+2,selEnd+tag.length+2);}
+		else {newfred.setSelectionRange(selStart+tag.length,selStart+tag.length);}
+	}
+	else {
+		var Chaine = newfred.createTextRange();
+		if (bracket==1) {
+			Chaine.moveStart("character",selStart+tag.length+2-begin_CR);
+			Chaine.moveEnd("character",-newfred.value.length+selEnd+tag.length+2+total_CR-begin_CR-sel_CR);
+		}
+		else {
+			Chaine.moveStart("character",selStart+tag.length-begin_CR);
+			Chaine.moveEnd("character",-newfred.value.length+selStart+tag.length+total_CR-begin_CR);
+		}
+		Chaine.select();
+	}
+
+}
+
+
+
+function Get_NbrCR(txt_){
+	var NbrCR = 0;
+	var Pos = txt_.indexOf("\r\n");
+	while( Pos > -1){
+		Pos = txt_.indexOf("\r\n", Pos+2);
+		NbrCR ++;
+	}
+	return( NbrCR);
+}
+
+function IECursorPos() {
+	var Obj= document.getElementById('newfred');
+	Obj.focus();
+	var szMark = "~~";
+	var Chaine = Obj.value;
+	var szTmp = document.selection.createRange();
+	szTmp.text = szMark;
+	var PosDeb = Obj.value.search(szMark);
+	var szAvant  = Chaine.substring( 0 , PosDeb);
+	Obj.value = Chaine;
+	Chaine = Obj.createTextRange();
+	Chaine.moveStart('character', PosDeb);
+	Chaine.collapse();
+	Chaine.select();
+	return( PosDeb);
+}
+
+
+</script>
+	<div id=tooltip style="visibility:hidden;width:332px;z-index:10;position: absolute;">
+	  <div style="width:332px;background: no-repeat 0px 63px url(../graph/tooltip3/middle.png);">
+		<div style="width:332px;background: no-repeat url(../graph/tooltip3/top.png);"><br>
+		  <div id=tooltip_content class=S11 align=left style="width:270px;padding:3px;"></div>
+		  <div id=close_tooltip style="position:absolute;top:5px;left:17px;"></div>
+		</div>
+	  </div>
+	  <div><img src=../graph/tooltip3/bottom.png></div>
+	</div>
+	<div style="padding:2px;background:#ffffff;border-radius:10px;border:1px #999999 solid;">
+	<div style="padding:4px;background:url(/fr/graph/fond/Liquid_Armor_o.jpg);background-position: center top;border-radius:8px;">
+	
+	<div style="margin:1px;padding:2px;background:#fffff2;border-radius:6px;border:1px #cccccc solid;">
+	
+<div id=MTGA_tooltip style="visibility:hidden;z-index:10;position: absolute;">
+<div style="box-shadow: 0px 10px 20px 5px #333333;padding:3px;background:#fffff2;border-radius:6px;border:2px #666666 solid;">
+  
+	<div id=MTGA_tooltip_content align=center>
+	<div class=G10>Choisissez la langue que vous utilisez dans MTG Arena.</div>
+	<div style="padding:2px;"><a href=# onclick="CopyMTGA('EN')">Anglais</a> - <a href=# onclick="CopyMTGA('FR')">Fran&ccedil;ais</a></div>
+	<textarea id=MTGAdecklistEN style="display:none;width:200px;height:150px;"></textarea>
+	<textarea id=MTGAdecklistFR style="display:none;width:200px;height:150px;"></textarea>    
+ 	<textarea id=MTGAdecklist style="width:190px;height:100px;"></textarea>
+ 	<div id=MTGAOK class=V10 style="visibility:hidden;">Vous pouvez maintenant cliquer sur "Importer" dans MTG Arena.</div>
+	<div id=MTGA_deck style="padding:3px;" align=center></div>
+	
+	</div>
+	<div onclick="EffArena();" class=fakelink>fermer</div>
+</div>
+</div>
+<div class=win_title>
+<table border=0 width=100%>
+  <tr>
+	<td width=25%><div style="display:flex;align-items:baseline;"> <div style="margin-right:10px;"><img src=/fr/graph/auth/search/DC.png><img src=/fr/graph/auth/search/multi.png></div><div><img src=../graph/manas/png/B.png></div></div></td>
+	<td align=center width=50%><div class=title16>S&eacute;phiroth, Soldat L&eacute;gendaire (Duel commander) NS</div><div class=W10>modifi&eacute; &agrave; <span class=O11>12:07</span> par <div style="display:inline-block" class=S12><a class=white href=../register/perso?user=DeckDoc>DeckDoc</a></div></div></td>
+	<td align=center class=W12 width=25%>Maindeck : 99</td>			
+  </tr>
+</table>
+</div><div class=S12><div class=lil_menu><a href=showdeck?ref=1138736&decklanglocal=eng>Anglais</a></div>|<div class=lil_menu><a href=showdeck?ref=1138736&decklanglocal=fra>Fran&ccedil;ais</a></div>
+&bull;
+Acheter <div class=lil_menu><a href=buymvshop.php?ref=1138736>MV SHOP</a></div>|<div class=lil_menu><a href=buy_MV.php?ref=1138736>magicvillois</a></div>
+&bull;
+Export <div class=fakelink id=MTGA_button_div onclick="AffArena('1138736','');" style="display:inline-block;margin:2px;"><img style="vertical-align:-5%;height:12px;" src=../graph/decks/MTG_Arena.png> MTGArena</div>|<div class=lil_menu><a href=dl_appr?ref=1138736&f=Commander&file=Séphiroth,_Soldat_Légendaire_(Duel_commander)_NS_par_DeckDoc>Appr.</a></div>|<div class=lil_menu><a href=dl_mws?ref=1138736&f=Commander&file=Séphiroth,_Soldat_Légendaire_(Duel_commander)_NS_par_DeckDoc> MWS</a></div>
+&bull;
+<div class=lil_menu><a href=deck_combos?ref=1138736>Combos de ce deck</a></div> &bull;
+<div class=lil_menu><a href=submit.php?deck_ref=1138736>Copier ce deck</a></div>
+&bull;
+<div class=lil_menu><a href=same_decks.php?ref=1138736>Decks similaires</a></div>
+&bull;
+<div class=lil_menu><a href=history?ref=1138736>Historique</a></div>
+&bull;
+<div class=lil_menu><a href=../proxy/index?deck_ref=1138736>Proxies</a></div></div>
+<table border=0 width=100%>
+  <tr>
+    <td class=S12 width=33%>
+   		<span id=aff_mode_title onclick="SwitchAff();" style="cursor:pointer;font:#006699;">Visualiser en mode texte</span>
+   		(<a href=../register/prefs>mes prefs</a>)
+    </td>
+    <td class=S12 width=33%></td>
+    <td align=center width=34%></td>
+</table>
+<div id=aff_texte style="display:none;">
+ <table border=0 width=100% cellpadding=0 cellspacing=0>
+	  <tr><td valign=top width=33%><table border=0 width=100% cellspacing=0><tr ><td></td><td colspan=2 class=O14>Commander</td></tr><tr height=20>
+	  <td width=30 valign=top align=center></td>
+	  <td width=200 valign=top><a id=c_t_fin115 href=../carte?ref=fin115>Sephiroth, Fabled SOLDIER</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/2.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr ><td class=O14 height=25 valign=bottom align=center>38</td><td colspan=2 class=O14 height=25 valign=bottom>Lands</td></tr><tr height=20>
+	  <td width=30 valign=top align=center>34</td>
+	  <td width=200 valign=top><a id=c_t_sos269 href=../carte?ref=sos269>Swamp</a></td>
+	  <td width=90 valign=top></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_clb884 href=../carte?ref=clb884>Castle Locthwain</a></td>
+	  <td width=90 valign=top></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_mh3303 href=../carte?ref=mh3303>Phyrexian Tower</a></td>
+	  <td width=90 valign=top></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_tla276 href=../carte?ref=tla276>Realm of Koh</a></td>
+	  <td width=90 valign=top></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_mh3230 href=../carte?ref=mh3230>Spymaster&#039;s Vault</a></td>
+	  <td width=90 valign=top></td>
+	</tr><tr ><td class=O14 height=25 valign=bottom align=center>34</td><td colspan=2 class=O14 height=25 valign=bottom>Creatures</td></tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_akh091 href=../carte?ref=akh091>Festering Mummy</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_otj088 href=../carte?ref=otj088>Forsaken Miner</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_lci109 href=../carte?ref=lci109>Greedy Freebooter</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_hoc186 href=../carte?ref=hoc186>Haunt of the Dead Marshes</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_fdn064 href=../carte?ref=fdn064>Infestation Sage</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_otj096 href=../carte?ref=otj096>Nezumi Linkbreaker</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_j25473 href=../carte?ref=j25473>Persistent Specimen</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_cmm185 href=../carte?ref=cmm185>Serrated Scorpion</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_j25124 href=../carte?ref=j25124>Shambling Ghast</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_soc210 href=../carte?ref=soc210>Bloodghast</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/B.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_msh085 href=../carte?ref=msh085>Agents of HYDRA</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/1.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_soc209 href=../carte?ref=soc209>Blood Artist</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/1.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_soc217 href=../carte?ref=soc217>Jadar, Ghoulcaller of Nephalia</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/1.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_soc225 href=../carte?ref=soc225>Priest of Forgotten Gods</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/1.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_tmt071 href=../carte?ref=tmt071>Rat King, Verminister</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/1.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_blb116 href=../carte?ref=blb116>Starscape Cleric</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/1.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr></table></td><td valign=top width=33%><table border=0 width=100% cellspacing=0><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_tmt083 href=../carte?ref=tmt083>Super Shredder</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/1.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_fin123 href=../carte?ref=fin123>Undercity Dire Rat</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/1.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_fdn076 href=../carte?ref=fdn076>Vengeful Bloodwitch</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/1.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_j25012 href=../carte?ref=j25012>Wriggling Grub</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/1.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_soc233 href=../carte?ref=soc233>Zulaport Cutthroat</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/1.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_eld075 href=../carte?ref=eld075>Ayara, First of Locthwain</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/B.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_fdn066 href=../carte?ref=fdn066>Nine-Lives Familiar</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/1.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_fin088 href=../carte?ref=fin088>Al Bhed Salvagers</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/2.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_sos074 href=../carte?ref=sos074>Arnyn, Deathbloom Botanist</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/2.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_sos091 href=../carte?ref=sos091>Moseo, Vein&#039;s New Dean</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/2.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_eoe118 href=../carte?ref=eoe118>Susurian Voidborn</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/2.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_mh3110 href=../carte?ref=mh3110>Warren Soultrader</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/2.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_one105 href=../carte?ref=one105>Phyrexian Obliterator</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/B.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_dsk095 href=../carte?ref=dsk095>Enduring Tenacity</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/2.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_dmu107 href=../carte?ref=dmu107>Sheoldred, the Apocalypse</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/2.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_dmr110 href=../carte?ref=dmr110>Yawgmoth, Thran Physician</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/2.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_tmt078 href=../carte?ref=tmt078>South Wind Avatar</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/3.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_fdn058 href=../carte?ref=fdn058>Bloodthirsty Conqueror</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/3.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr ><td class=O14 height=25 valign=bottom align=center>4</td><td colspan=2 class=O14 height=25 valign=bottom>Artifacts</td></tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_spm066 href=../carte?ref=spm066>The Soul Stone</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/1.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_mh3292 href=../carte?ref=mh3292>Jet Medallion</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/2.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_drc124 href=../carte?ref=drc124>Bontu&#039;s Monument</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/3.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_fin096 href=../carte?ref=fin096>The Darkness Crystal</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/2.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr ><td class=O14 height=25 valign=bottom align=center>9</td><td colspan=2 class=O14 height=25 valign=bottom>Enchantments</td></tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_2x2069 href=../carte?ref=2x2069>Bitterblossom</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/1.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr></table></td><td valign=top width=33%><table border=0 width=100% cellspacing=0><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_drc091 href=../carte?ref=drc091>Dreadhorde Invasion</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/1.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_dsk111 href=../carte?ref=dsk111>Nowhere to Run</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/1.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_akh112 href=../carte?ref=akh112>Trespasser&#039;s Curse</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/1.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_inr122 href=../carte?ref=inr122>The Meathook Massacre</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/X.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_tdc171 href=../carte?ref=tdc171>Bastion of Remembrance</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/2.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_dsk100 href=../carte?ref=dsk100>Funeral Room / Awakening Hall</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/2.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_cmm165 href=../carte?ref=cmm165>Grave Pact</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/1.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_woe115 href=../carte?ref=woe115>Virtue of Persistence</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/5.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr ><td class=O14 height=25 valign=bottom align=center>6</td><td colspan=2 class=O14 height=25 valign=bottom>Instants</td></tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_dmu089 href=../carte?ref=dmu089>Cut Down</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_2xm093 href=../carte?ref=2xm093>Fatal Push</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_inr134 href=../carte?ref=inr134>Tragic Slip</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_j25447 href=../carte?ref=j25447>Go for the Throat</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/1.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_soc216 href=../carte?ref=soc216>Infernal Grasp</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/1.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_ms21057 href=../carte?ref=ms21057>Sheoldred&#039;s Edict</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/1.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr ><td class=O14 height=25 valign=bottom align=center>8</td><td colspan=2 class=O14 height=25 valign=bottom>Sorceries</td></tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_one080 href=../carte?ref=one080>Annihilating Glare</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_ms2906 href=../carte?ref=ms2906>Bone Shards</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_inr106 href=../carte?ref=inr106>Eaten Alive</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_dsc155 href=../carte?ref=dsc155>Reanimate</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_cmr150 href=../carte?ref=cmr150>Spark Harvest</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_ms21091 href=../carte?ref=ms21091>Unearth</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_blb095 href=../carte?ref=blb095>Fell</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/1.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr><tr height=20>
+	  <td width=30 valign=top align=center>1</td>
+	  <td width=200 valign=top><a id=c_t_soc120 href=../carte?ref=soc120>Toxic Deluge</a></td>
+	  <td width=90 valign=top><img style="height:16px;" src=/fr/graph/manas/big_png/2.png><img style="height:16px;" src=/fr/graph/manas/big_png/B.png></td>
+	</tr></table></td></tr>
+	</table>
+</div>
+<div id=aff_graphique style="display:block;">
+<table border=0 width=100% align=center>
+  <tr>
+    <td>
+			<div style="wi
+</div></body></html>

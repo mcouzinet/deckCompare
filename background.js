@@ -1,5 +1,5 @@
 // Service worker – handles deck fetching from APIs (avoids CORS)
-importScripts('shared.js');
+importScripts('shared.js', 'parsers.js');
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === 'FETCH_DECK') {
@@ -280,13 +280,22 @@ async function fetchDeckByUrl(url) {
   } catch {
     throw new Error(chrome.i18n.getMessage('errUnsupportedSource'));
   }
-  if (url.includes('moxfield.com')) return fetchMoxfieldDeck(url);
-  if (url.includes('archidekt.com')) return fetchArchidektDeck(url);
-  if (url.includes('mtgtop8.com')) return fetchMtgTop8Deck(url);
-  if (url.includes('mtggoldfish.com')) return fetchMtgGoldfishDeck(url);
-  if (url.includes('magic-ville.com')) return fetchMagicVilleDeck(url);
-  if (url.includes('mtgdecks.net')) return fetchMtgDecksDeck(url);
-  throw new Error(chrome.i18n.getMessage('errUnsupportedSource'));
+  let deck;
+  if (url.includes('moxfield.com')) deck = await fetchMoxfieldDeck(url);
+  else if (url.includes('archidekt.com')) deck = await fetchArchidektDeck(url);
+  else if (url.includes('mtgtop8.com')) deck = await fetchMtgTop8Deck(url);
+  else if (url.includes('mtggoldfish.com')) deck = await fetchMtgGoldfishDeck(url);
+  else if (url.includes('magic-ville.com')) deck = await fetchMagicVilleDeck(url);
+  else if (url.includes('mtgdecks.net')) deck = await fetchMtgDecksDeck(url);
+  else throw new Error(chrome.i18n.getMessage('errUnsupportedSource'));
+
+  // Guard: a page that yielded no cards (an archetype/listing page, or a parser
+  // that silently found nothing) surfaces a clear error instead of an empty deck
+  // that would produce a blank comparison.
+  if (Shared.sumBoard(deck.mainboard) + Shared.sumBoard(deck.commanders) === 0) {
+    throw new Error(chrome.i18n.getMessage('emptyDeck'));
+  }
+  return deck;
 }
 
 // --- Moxfield ---
@@ -305,20 +314,7 @@ async function fetchMoxfieldDeck(urlOrId) {
   }
 
   const data = await res.json();
-  const deck = { name: data.name || 'Moxfield Deck', mainboard: {}, sideboard: {}, commanders: {}, source: 'moxfield' };
-
-  for (const boardName of ['mainboard', 'sideboard', 'commanders']) {
-    const board = data.boards?.[boardName];
-    if (!board?.cards) continue;
-    for (const [, entry] of Object.entries(board.cards)) {
-      const name = entry.card?.name;
-      const qty = entry.quantity || 0;
-      if (name && qty > 0) {
-        deck[boardName][name] = (deck[boardName][name] || 0) + qty;
-      }
-    }
-  }
-  return deck;
+  return Parsers.parseMoxfield(data);
 }
 
 // --- Archidekt ---
@@ -334,25 +330,7 @@ async function fetchArchidektDeck(url) {
   }
 
   const data = await res.json();
-  const deck = { name: data.name || 'Archidekt Deck', mainboard: {}, sideboard: {}, commanders: {}, source: 'archidekt' };
-
-  for (const entry of (data.cards || [])) {
-    const name = entry.card?.oracleCard?.name;
-    const qty = entry.quantity || 1;
-    const cats = entry.categories || [];
-
-    if (!name) continue;
-    if (cats.includes('Maybeboard')) continue;
-
-    if (cats.includes('Commander')) {
-      deck.commanders[name] = (deck.commanders[name] || 0) + qty;
-    } else if (cats.includes('Sideboard')) {
-      deck.sideboard[name] = (deck.sideboard[name] || 0) + qty;
-    } else {
-      deck.mainboard[name] = (deck.mainboard[name] || 0) + qty;
-    }
-  }
-  return deck;
+  return Parsers.parseArchidekt(data);
 }
 
 // --- mtgtop8 ---
@@ -366,25 +344,7 @@ async function fetchMtgTop8Deck(url) {
   if (!res.ok) throw new Error(`${chrome.i18n.getMessage('errMtgtop8Status')} ${res.status}`);
 
   const text = await res.text();
-  const lines = text.split('\n').filter(l => l.trim() !== '');
-
-  const deck = { name: 'mtgtop8 Deck', mainboard: {}, sideboard: {}, source: 'mtgtop8' };
-  let currentBoard = 'mainboard';
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (trimmed.toLowerCase() === 'sideboard') {
-      currentBoard = 'sideboard';
-      continue;
-    }
-    const m = trimmed.match(/^(\d+)\s+(.+)$/);
-    if (m) {
-      const qty = parseInt(m[1], 10);
-      const name = m[2].trim();
-      deck[currentBoard][name] = (deck[currentBoard][name] || 0) + qty;
-    }
-  }
-  return deck;
+  return Parsers.parseMtgTop8(text);
 }
 
 // --- Magic-Ville (HTML scraping with forced English card names) ---
@@ -399,48 +359,12 @@ async function fetchMagicVilleDeck(url) {
   const buf = await res.arrayBuffer();
   const html = new TextDecoder('iso-8859-1').decode(buf);
 
-  const deck = { name: 'Magic-Ville Deck', mainboard: {}, sideboard: {}, commanders: {}, source: 'magic-ville' };
-
-  // Extract deck name from title16
-  const titleMatch = html.match(/<div\s+class=title16>([\s\S]*?)<\/div>/i);
-  if (titleMatch) deck.name = titleMatch[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
-
-  // Extract from aff_texte div
-  const textBlock = html.match(/id="aff_texte"([\s\S]*?)(?=<\/div>\s*<div\s+id="aff_graphique"|$)/i);
-  if (!textBlock) throw new Error(chrome.i18n.getMessage('errMagicVilleParseFailed'));
-
-  const block = textBlock[1];
-  let currentSection = 'mainboard';
-
-  // Find section headers (O14 class) and card rows (height=20)
-  const lines = block.split('\n');
-  for (const line of lines) {
-    // Check for section header
-    const hMatch = /class=["']?O14["']?[^>]*colspan[^>]*>(.*?)<\/td>/i.exec(line);
-    if (hMatch) {
-      const headerText = hMatch[1].replace(/<[^>]+>/g, '').trim().toLowerCase();
-      if (headerText.includes('commandant') || headerText.includes('commander')) {
-        currentSection = 'commanders';
-      } else if (headerText.includes('réserve') || headerText.includes('sideboard') || headerText.includes('reserve')) {
-        currentSection = 'sideboard';
-      } else {
-        if (currentSection === 'commanders') currentSection = 'mainboard';
-      }
-      continue;
-    }
-
-    // Check for card row
-    const cMatch = /height=["']?20["']?[^>]*>\s*<td[^>]*>\s*(\d*)\s*<\/td>\s*<td[^>]*>.*?<a[^>]*>(.*?)<\/a>/i.exec(line);
-    if (cMatch) {
-      const qty = parseInt(cMatch[1], 10) || 1;
-      const name = cMatch[2].replace(/<[^>]+>/g, '').trim();
-      if (name) {
-        deck[currentSection][name] = (deck[currentSection][name] || 0) + qty;
-      }
-    }
+  try {
+    return Parsers.parseMagicVille(html);
+  } catch (e) {
+    if (e.message === 'notFound') throw new Error(chrome.i18n.getMessage('errMagicVilleDeckNotFound'));
+    throw new Error(chrome.i18n.getMessage('errMagicVilleParseFailed'));
   }
-
-  return deck;
 }
 
 // --- mtgdecks.net (HTML scraping – behind Cloudflare, best via content script) ---
@@ -458,35 +382,7 @@ async function fetchMtgDecksDeck(url) {
   }
 
   const html = await res.text();
-  const deck = { name: 'mtgdecks Deck', mainboard: {}, sideboard: {}, commanders: {}, source: 'mtgdecks' };
-
-  // Try to find the arena_deck textarea content
-  const arenaMatch = html.match(/<textarea[^>]*id="arena_deck"[^>]*>([\s\S]*?)<\/textarea>/i);
-  if (arenaMatch) {
-    const lines = arenaMatch[1].split('\n');
-    let currentSection = 'mainboard';
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed) continue;
-      if (trimmed.toLowerCase() === 'commander') { currentSection = 'commanders'; continue; }
-      if (trimmed.toLowerCase() === 'deck') { currentSection = 'mainboard'; continue; }
-      if (trimmed.toLowerCase() === 'sideboard') { currentSection = 'sideboard'; continue; }
-
-      const m = trimmed.match(/^(\d+)\s+(.+)$/);
-      if (m) {
-        const qty = parseInt(m[1], 10);
-        const name = m[2].replace(/\s*\([A-Z0-9]+\)\s*\d*$/, '').trim();
-        deck[currentSection][name] = (deck[currentSection][name] || 0) + qty;
-      }
-    }
-  }
-
-  // Try to extract deck name from <h1>
-  const titleMatch = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
-  if (titleMatch) deck.name = titleMatch[1].replace(/<[^>]+>/g, '').trim();
-
-  return deck;
+  return Parsers.parseMtgDecks(html);
 }
 
 // --- MTGGoldfish (via download endpoint – may be blocked by Cloudflare) ---
@@ -509,26 +405,7 @@ async function fetchMtgGoldfishDeck(url) {
   }
 
   const text = await res.text();
-  const lines = text.split('\n').filter(l => l.trim() !== '');
-
-  const deck = { name: 'MTGGoldfish Deck', mainboard: {}, sideboard: {}, source: 'mtggoldfish' };
-  let currentBoard = 'mainboard';
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (trimmed === '') continue;
-    if (trimmed.toLowerCase() === 'sideboard') {
-      currentBoard = 'sideboard';
-      continue;
-    }
-    const m = trimmed.match(/^(\d+)\s+(.+)$/);
-    if (m) {
-      const qty = parseInt(m[1], 10);
-      const name = m[2].trim();
-      deck[currentBoard][name] = (deck[currentBoard][name] || 0) + qty;
-    }
-  }
-  return deck;
+  return Parsers.parseMtgGoldfish(text);
 }
 
 // --- Pool batch fetch (for the pool analyzer page) ---
@@ -542,14 +419,10 @@ async function fetchDecks(urls) {
     while (i < urls.length) {
       const url = urls[i++];
       try {
-        const deck = await fetchDeckByUrl(url);
+        const deck = await fetchDeckByUrl(url);   // throws 'emptyDeck' when no cards
         deck.url = url;
         Shared.fixCommanderHeuristic(deck);
-        if (Shared.sumBoard(deck.mainboard) + Shared.sumBoard(deck.commanders) === 0) {
-          errors.push({ url, error: chrome.i18n.getMessage('emptyDeck') });
-        } else {
-          decks.push(deck);
-        }
+        decks.push(deck);
       } catch (e) {
         errors.push({ url, error: (e && e.message) || chrome.i18n.getMessage('fetchFailed') });
       }

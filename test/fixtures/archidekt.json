@@ -1,0 +1,896 @@
+{
+ "name": "Buffs by Hans",
+ "cards": [
+  {
+   "quantity": 1,
+   "categories": [
+    "Buff"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Gaea's Gift"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Buff"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Tyvar's Stand"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Buff"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Invigorate"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Buff"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Brute Force"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Ramp"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Kodama's Reach"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Land"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Command Tower"
+    }
+   }
+  },
+  {
+   "quantity": 10,
+   "categories": [
+    "Land"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Forest"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Ramp"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Harrow"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Engines"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Hunter's Insight"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Engines"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Ohran Viper"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Removal"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Bite Down"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Removal"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Ram Through"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Engines"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Mischievous Catgeist // Catlike Curiosity"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Removal"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Cosmic Hunger"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Buff"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Groundswell"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Ramp"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Growth Spiral"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Ramp"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Eureka Moment"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Removal"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Inscription of Abundance"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Buff"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Become Immense"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Engines"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Vedalken Heretic"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Removal"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Decisive Denial"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Ramp"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Deeproot Wayfinder"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Ramp"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Joint Exploration"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Buff"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Temur Charm"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Land"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Frontier Bivouac"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Land"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Simic Growth Chamber"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Land"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Gruul Turf"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Land"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Izzet Boilerworks"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Land"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Evolving Wilds"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Land"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Terramorphic Expanse"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Land"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Temple of Epiphany"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Land"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Temple of Abandon"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Land"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Temple of Mystery"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Buff"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Simic Charm"
+    }
+   }
+  },
+  {
+   "quantity": 6,
+   "categories": [
+    "Land"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Island"
+    }
+   }
+  },
+  {
+   "quantity": 6,
+   "categories": [
+    "Land"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Mountain"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Buff"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Blossoming Defense"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Land"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Izzet Guildgate"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Land"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Gruul Guildgate"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Land"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Simic Guildgate"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Buff"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Titan's Strength"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Engines"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Oakhame Adversary"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Removal"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Soul's Fire"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Buff"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Shore Up"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Buff"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Vines of Vastwood"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Buff"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Snakeskin Veil"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Buff"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Tamiyo's Safekeeping"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Engines"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Djinn Illuminatus"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Engines"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Cold-Eyed Selkie"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Engines"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Stormchaser Drake"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Removal"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Khalni Ambush // Khalni Territory"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Engines"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Mercurial Spelldancer"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Ramp"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Cultivate"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Buff"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Colossal Growth"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Buff"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Mutagenic Growth"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Ramp"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Sticky Fingers"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Ramp"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Roiling Regrowth"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Ramp"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Goldvein Pick"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Ramp"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Beamtown Beatstick"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Engines"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Snake Umbra"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Engines"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Combat Research"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Engines"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Geode Golem"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Commander"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Xyris, the Writhing Storm"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Buff"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Fully Grown"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Removal"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Sunder Shaman"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Buff"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Collision // Colossus"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Engines"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Surrakar Spellblade"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Buff"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Titanic Growth"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Engines"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Bladegriff Prototype"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Buff"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Temur Battle Rage"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Removal"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Thrash // Threat"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Ramp"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Coiling Oracle"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Land"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Kessig Wolf Run"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Removal"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Trygon Predator"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Buff"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Giant Growth"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Engines"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Season of Growth"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Engines"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Neheb, Dreadhorde Champion"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Removal"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Master's Rebuke"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Buff"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Blazing Crescendo"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Removal"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Armed // Dangerous"
+    }
+   }
+  },
+  {
+   "quantity": 1,
+   "categories": [
+    "Removal"
+   ],
+   "card": {
+    "oracleCard": {
+     "name": "Roar of Challenge"
+    }
+   }
+  }
+ ]
+}

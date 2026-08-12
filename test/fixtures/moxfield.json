@@ -1,0 +1,23 @@
+{
+  "name": "Krenko Goblins (DC)",
+  "boards": {
+    "commanders": {
+      "cards": {
+        "c1": { "quantity": 1, "card": { "name": "Krenko, Mob Boss" } }
+      }
+    },
+    "mainboard": {
+      "cards": {
+        "m1": { "quantity": 1, "card": { "name": "Goblin Guide" } },
+        "m2": { "quantity": 20, "card": { "name": "Mountain" } },
+        "m3": { "quantity": 1, "card": { "name": "Sol Ring" } },
+        "m4": { "quantity": 0, "card": { "name": "Should Be Skipped (qty 0)" } }
+      }
+    },
+    "sideboard": {
+      "cards": {
+        "s1": { "quantity": 2, "card": { "name": "Pyroblast" } }
+      }
+    }
+  }
+}
