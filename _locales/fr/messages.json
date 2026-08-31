@@ -88,6 +88,9 @@
   "errGetpairdStatus":         { "message": "Erreur getpaird:" },
   "errGetpairdDeckNotFound":   { "message": "Deck getpaird introuvable" },
   "errGetpairdParseFailed":    { "message": "Impossible de parser la page getpaird" },
+  "settingsInjectLabel":       { "message": "Bouton de comparaison sur les sites de decks" },
+  "settingsInjectHint":        { "message": "Affiche un bouton Deck Compare flottant directement sur les pages de deck prises en charge." },
+  "injectPanelTitle":          { "message": "Comparer ce deck" },
   "emptyDeck":                 { "message": "Deck vide ou illisible" },
   "fetchFailed":               { "message": "Échec du fetch" },
 

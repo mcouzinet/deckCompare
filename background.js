@@ -37,6 +37,14 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return true;
   }
 
+  // The in-page button lives in a content script, which has no chrome.tabs access.
+  if (msg.type === 'OPEN_COMPARE') {
+    chrome.tabs.create({ url: chrome.runtime.getURL('compare.html') })
+      .then(() => sendResponse({ ok: true }))
+      .catch(err => sendResponse({ error: err.message }));
+    return true;
+  }
+
   if (msg.type === 'FETCH_IMAGE') {
     fetchImage(msg.url)
       .then(dataUrl => sendResponse({ dataUrl }))

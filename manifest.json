@@ -28,7 +28,8 @@
       ],
       "js": [
         "dom-parsers.js",
-        "content.js"
+        "content.js",
+        "inject-button.js"
       ],
       "run_at": "document_idle"
     },
@@ -38,7 +39,8 @@
       ],
       "js": [
         "dom-parsers.js",
-        "content.js"
+        "content.js",
+        "inject-button.js"
       ],
       "run_at": "document_idle"
     },
@@ -48,7 +50,8 @@
       ],
       "js": [
         "dom-parsers.js",
-        "content.js"
+        "content.js",
+        "inject-button.js"
       ],
       "run_at": "document_idle"
     },
@@ -58,7 +61,8 @@
       ],
       "js": [
         "dom-parsers.js",
-        "content.js"
+        "content.js",
+        "inject-button.js"
       ],
       "run_at": "document_idle"
     },
@@ -68,7 +72,8 @@
       ],
       "js": [
         "dom-parsers.js",
-        "content.js"
+        "content.js",
+        "inject-button.js"
       ],
       "run_at": "document_idle"
     },
@@ -78,7 +83,8 @@
       ],
       "js": [
         "dom-parsers.js",
-        "content.js"
+        "content.js",
+        "inject-button.js"
       ],
       "run_at": "document_idle"
     },
@@ -88,7 +94,8 @@
       ],
       "js": [
         "dom-parsers.js",
-        "content.js"
+        "content.js",
+        "inject-button.js"
       ],
       "run_at": "document_idle"
     }

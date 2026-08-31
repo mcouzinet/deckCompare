@@ -15,6 +15,7 @@ const settingsPanel = document.getElementById('settings-panel');
 const settingsUser = document.getElementById('settings-user');
 const settingsSave = document.getElementById('settings-save');
 const settingsHint = document.getElementById('settings-hint');
+const settingsInject = document.getElementById('settings-inject');
 
 const SUPPORTED_SITES = [
   { pattern: 'mtggoldfish.com/deck/', label: 'MTGGoldfish' },
@@ -51,6 +52,8 @@ document.getElementById('settings-title').textContent = chrome.i18n.getMessage('
 document.getElementById('settings-source-label').textContent = chrome.i18n.getMessage('settingsSource');
 document.getElementById('settings-user-label').textContent = chrome.i18n.getMessage('settingsUser');
 document.getElementById('settings-save-text').textContent = chrome.i18n.getMessage('settingsSave');
+document.getElementById('settings-inject-label').textContent = chrome.i18n.getMessage('settingsInjectLabel');
+document.getElementById('settings-inject-hint').textContent = chrome.i18n.getMessage('settingsInjectHint');
 deckUrlInput.placeholder = chrome.i18n.getMessage('pasteADeckUrl');
 document.getElementById('onboarding-title').textContent = chrome.i18n.getMessage('onboardingTitle');
 document.getElementById('onboarding-step1').textContent = chrome.i18n.getMessage('onboardingStep1');
@@ -93,8 +96,9 @@ document.querySelectorAll('.src-toggle button').forEach(btn => {
     document.querySelectorAll('.deck2-section').forEach(el => el.style.display = 'none');
   }
 
-  const stored = await chrome.storage.local.get(['moxfieldUser', 'moxfieldDecks', 'archidektUser', 'archidektDecks', 'magicvilleUser', 'magicvilleDecks', 'preferredPane', 'deckSource']);
+  const stored = await chrome.storage.local.get(['moxfieldUser', 'moxfieldDecks', 'archidektUser', 'archidektDecks', 'magicvilleUser', 'magicvilleDecks', 'preferredPane', 'deckSource', 'injectButton']);
   if (stored.preferredPane) switchPane(stored.preferredPane);
+  settingsInject.checked = !!stored.injectButton;   // opt-in: off unless the user enabled it
 
   // Restore deck source and username
   const source = stored.deckSource || 'moxfield';
@@ -133,6 +137,11 @@ document.getElementById('settings-toggle').addEventListener('click', () => {
 });
 document.getElementById('settings-close').addEventListener('click', () => {
   settingsPanel.style.display = 'none';
+});
+
+// In-page button toggle — the content script watches this key and mounts/unmounts live.
+settingsInject.addEventListener('change', () => {
+  chrome.storage.local.set({ injectButton: settingsInject.checked });
 });
 
 // --- Pool analyzer entry ---

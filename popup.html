@@ -240,6 +240,10 @@
     .settings-body { padding: 0 18px 14px; display: flex; flex-direction: column; gap: 10px; }
     .settings-field { display: flex; flex-direction: column; gap: 4px; }
     .settings-label { font-size: 11px; color: var(--tx-faint); font-weight: 600; }
+    .settings-check { flex-direction: row; align-items: flex-start; gap: 8px; cursor: pointer; }
+    .settings-check input { margin: 2px 0 0; accent-color: var(--acc, #6d28d9); flex: none; }
+    .settings-check .settings-label { cursor: pointer; }
+    .settings-hint { font-size: 11px; color: var(--tx-mut); margin-top: 2px; }
   </style>
 </head>
 <body>
@@ -280,6 +284,13 @@
         </div>
       </div>
       <div class="hint" id="settings-hint"></div>
+      <div class="settings-field settings-check">
+        <input type="checkbox" id="settings-inject">
+        <div>
+          <label class="settings-label" id="settings-inject-label" for="settings-inject"></label>
+          <div class="settings-hint" id="settings-inject-hint"></div>
+        </div>
+      </div>
     </div>
   </div>
 
