@@ -270,7 +270,9 @@ const ALLOWED_DECK_HOSTS = [
   'www.mtgtop8.com', 'mtgtop8.com',
   'www.mtggoldfish.com', 'mtggoldfish.com',
   'www.magic-ville.com', 'magic-ville.com',
-  'mtgdecks.net', 'www.mtgdecks.net'
+  'mtgdecks.net', 'www.mtgdecks.net',
+  'melee.gg', 'www.melee.gg',
+  'getpaird.io', 'www.getpaird.io'
 ];
 
 async function fetchDeckByUrl(url) {
@@ -287,6 +289,8 @@ async function fetchDeckByUrl(url) {
   else if (url.includes('mtggoldfish.com')) deck = await fetchMtgGoldfishDeck(url);
   else if (url.includes('magic-ville.com')) deck = await fetchMagicVilleDeck(url);
   else if (url.includes('mtgdecks.net')) deck = await fetchMtgDecksDeck(url);
+  else if (url.includes('melee.gg')) deck = await fetchMeleeDeck(url);
+  else if (url.includes('getpaird.io')) deck = await fetchGetpairdDeck(url);
   else throw new Error(chrome.i18n.getMessage('errUnsupportedSource'));
 
   // Guard: a page that yielded no cards (an archetype/listing page, or a parser
@@ -406,6 +410,40 @@ async function fetchMtgGoldfishDeck(url) {
 
   const text = await res.text();
   return Parsers.parseMtgGoldfish(text);
+}
+
+// --- Melee (melee.gg – server-rendered decklist HTML, no cookie needed) ---
+
+async function fetchMeleeDeck(url) {
+  const match = url.match(/\/Decklist\/View\/([0-9a-fA-F-]{36})/);
+  if (!match) throw new Error(chrome.i18n.getMessage('errMeleeInvalidUrl'));
+
+  const res = await fetch(`https://melee.gg/Decklist/View/${match[1]}`);
+  if (!res.ok) throw new Error(`${chrome.i18n.getMessage('errMeleeStatus')} ${res.status}`);
+
+  const text = await res.text();
+  return Parsers.parseMelee(text);
+}
+
+// --- getpaird.io (embedded `var _deckCards` JSON, no cookie needed) ---
+
+async function fetchGetpairdDeck(url) {
+  const match = url.match(/getpaird\.io\/decklists\/([^/?#]+)/);
+  if (!match) throw new Error(chrome.i18n.getMessage('errGetpairdInvalidUrl'));
+
+  const res = await fetch(`https://getpaird.io/decklists/${match[1]}`);
+  if (!res.ok) {
+    if (res.status === 404) throw new Error(chrome.i18n.getMessage('errGetpairdDeckNotFound'));
+    throw new Error(`${chrome.i18n.getMessage('errGetpairdStatus')} ${res.status}`);
+  }
+
+  const html = await res.text();
+  try {
+    return Parsers.parseGetpaird(html);
+  } catch (e) {
+    if (e.message === 'parseFailed') throw new Error(chrome.i18n.getMessage('errGetpairdParseFailed'));
+    throw e;
+  }
 }
 
 // --- Pool batch fetch (for the pool analyzer page) ---

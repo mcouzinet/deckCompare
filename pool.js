@@ -76,7 +76,7 @@
   function deckDisplayName(d) {
     const t = (d.label || "").trim();
     if (!t) return d.source;
-    if (/^(moxfield|archidekt|mtgtop8|mtggoldfish|magic-ville|mtgdecks|text) deck$/i.test(t)) return d.source;
+    if (/^(moxfield|archidekt|mtgtop8|mtggoldfish|magic-ville|mtgdecks|melee|paird|text) deck$/i.test(t)) return d.source;
     if (/^deck \d+$/i.test(t)) return d.source;
     return t;
   }

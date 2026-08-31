@@ -130,7 +130,99 @@
     return deck;
   }
 
-  const api = { parseMoxfield, parseArchidekt, parseMtgTop8, parseMtgGoldfish, parseMtgDecks, parseMagicVille };
+  // ---- Melee (melee.gg server-rendered decklist HTML) ----
+  // Cards live in .decklist-category blocks: a .decklist-category-title header
+  // ("Commander (1)", "Creature (21)", "Land (37)", "Sideboard (2)"…) followed by
+  // .decklist-record rows (.decklist-record-quantity + .decklist-record-name).
+  // The page also carries Mustache <script type="x-tmpl-mustache"> templates whose
+  // placeholder rows would be counted, so strip those first.
+  function meleeSectionFor(title) {
+    const t = title.replace(/\(.*$/, '').trim().toLowerCase();
+    if (t === 'commander') return 'commanders';
+    if (t === 'sideboard' || t === 'companion') return 'sideboard';
+    return 'mainboard'; // card-type headers (Creature/Instant/Land/…) stay mainboard
+  }
+
+  function parseMelee(html) {
+    const clean = html.replace(/<script[^>]*x-tmpl-mustache[^>]*>[\s\S]*?<\/script>/gi, '');
+    const deck = { name: 'Melee Deck', mainboard: {}, sideboard: {}, commanders: {}, source: 'melee' };
+
+    const titleMatch = clean.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+    if (titleMatch) {
+      const nm = decodeEntities(titleMatch[1].replace(/\s*\|\s*Melee\s*$/i, '').replace(/\s+/g, ' ').trim());
+      if (nm) deck.name = nm;
+    }
+
+    // Single ordered scan: each hit is EITHER a category header (group 1) OR a card
+    // row (qty group 2, name group 3). Rows span multiple lines, so this is not
+    // line-based; class matching is substring-tolerant to extra classes/attributes.
+    const tokenRe = /<div[^>]*class="[^"]*decklist-category-title[^"]*"[^>]*>([\s\S]*?)<\/div>|<span[^>]*class="[^"]*decklist-record-quantity[^"]*"[^>]*>\s*(\d+)\s*<\/span>[\s\S]*?<a[^>]*class="[^"]*decklist-record-name[^"]*"[^>]*>([\s\S]*?)<\/a>/gi;
+    let section = 'mainboard';
+    let m;
+    while ((m = tokenRe.exec(clean)) !== null) {
+      if (m[1] !== undefined) {
+        section = meleeSectionFor(m[1].replace(/<[^>]+>/g, ''));
+      } else {
+        const qty = parseInt(m[2], 10) || 1;
+        const name = decodeEntities(m[3].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim());
+        if (name) deck[section][name] = (deck[section][name] || 0) + qty;
+      }
+    }
+    return deck;
+  }
+
+  // ---- getpaird.io (embedded `var _deckCards = {…}` JSON blob) ----
+  // Throws Error('parseFailed') when the blob is absent/unparseable.
+  // Brace-counting (string-aware) rather than a lazy regex: MTG oracle text carries
+  // mana symbols like "{C};" whose "};" would fool a `\}\s*;` terminator.
+  function sliceJsonObject(text, startIdx) {
+    let depth = 0, inStr = false, esc = false;
+    for (let i = startIdx; i < text.length; i++) {
+      const ch = text[i];
+      if (inStr) {
+        if (esc) esc = false;
+        else if (ch === '\\') esc = true;
+        else if (ch === '"') inStr = false;
+      } else if (ch === '"') inStr = true;
+      else if (ch === '{') depth++;
+      else if (ch === '}') { if (--depth === 0) return text.slice(startIdx, i + 1); }
+    }
+    return null;
+  }
+
+  function extractDeckCards(text) {
+    const at = text.indexOf('_deckCards');
+    if (at === -1) return null;
+    const brace = text.indexOf('{', at);
+    if (brace === -1) return null;
+    const json = sliceJsonObject(text, brace);
+    if (!json) return null;
+    try { return JSON.parse(json); } catch { return null; }
+  }
+
+  const GETPAIRD_SECTIONS = { command_zone: 'commanders', mainboard: 'mainboard', sideboard: 'sideboard' };
+
+  function getpairdDeckFromData(data, name) {
+    const deck = { name: name || 'Paird Deck', mainboard: {}, sideboard: {}, commanders: {}, source: 'getpaird' };
+    for (const [key, board] of Object.entries(GETPAIRD_SECTIONS)) {
+      for (const c of (data[key] || [])) {
+        const nm = c && c.name;
+        const qty = (c && c.quantity) || 1;
+        if (nm) deck[board][nm] = (deck[board][nm] || 0) + qty;
+      }
+    }
+    return deck;
+  }
+
+  function parseGetpaird(html) {
+    const data = extractDeckCards(html);
+    if (!data) throw new Error('parseFailed');
+    const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+    const name = titleMatch ? decodeEntities(titleMatch[1].replace(/\s+/g, ' ').trim()) : '';
+    return getpairdDeckFromData(data, name);
+  }
+
+  const api = { parseMoxfield, parseArchidekt, parseMtgTop8, parseMtgGoldfish, parseMtgDecks, parseMagicVille, parseMelee, parseGetpaird };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else global.Parsers = api;
 })(typeof self !== 'undefined' ? self : globalThis);

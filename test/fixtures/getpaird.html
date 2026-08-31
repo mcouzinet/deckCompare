@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head><title>Phelia Test Deck</title></head>
+<body>
+  <div x-data="decklistShow()">…rendered by Alpine at runtime…</div>
+  <script>
+    // Raw data outside Alpine (avoids proxy wrapping issues). Note the oracle_text
+    // below contains "};" (a mana ability) — the brace-counting extractor must not
+    // treat that as the end of the object.
+    var _deckCards = {"stickers":[],"mainboard":[{"card_id":1,"name":"Sol Ring","quantity":1,"oracle_text":"{T}: Add {C}{C};"},{"card_id":2,"name":"Forest","quantity":10,"oracle_text":null},{"card_id":3,"name":"Cursed Mirror","quantity":1,"oracle_text":"{T}: Add {C};"}],"sideboard":[{"card_id":4,"name":"Pyroblast","quantity":2}],"command_zone":[{"card_id":5,"name":"Phelia, Exuberant Shepherd","quantity":1}]};
+  </script>
+</body>
+</html>

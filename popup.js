@@ -22,7 +22,9 @@ const SUPPORTED_SITES = [
   { pattern: 'archidekt.com/decks/', label: 'Archidekt' },
   { pattern: 'moxfield.com/decks/', label: 'Moxfield' },
   { pattern: 'magic-ville.com/fr/decks/showdeck', label: 'Magic-Ville' },
-  { pattern: 'mtgdecks.net/', label: 'mtgdecks' }
+  { pattern: 'mtgdecks.net/', label: 'mtgdecks' },
+  { pattern: 'melee.gg/Decklist/View', label: 'Melee' },
+  { pattern: 'getpaird.io/decklists/', label: 'getpaird' }
 ];
 
 let currentTab = null;

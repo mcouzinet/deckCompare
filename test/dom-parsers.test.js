@@ -59,8 +59,36 @@ test("Magic-Ville (DOM): defers to API with a name", () => {
   assert.equal(d.name, "Sephiroth DC");
 });
 
+test("Melee (DOM): .decklist-category blocks, mustache template ignored", () => {
+  const d = D.parseMelee(doc("melee.html"));
+  assert.equal(sum(d.commanders), 1);
+  assert.equal(d.commanders["Terra, Magical Adept // Esper Terra"], 1);
+  assert.equal(sum(d.mainboard), 4);                     // template "9" row not counted
+  assert.equal(sum(d.sideboard), 2);                     // Sideboard + Companion
+  assert.equal(d.mainboard["Sword of Fire & Ice"], 1);   // entity decoded by the DOM
+  assert.equal(d.name, "Krenko Test Deck // Back Face");
+});
+
+test("getpaird (DOM): reads inline _deckCards script text (no script execution)", () => {
+  const d = D.parseGetpaird(doc("getpaird.html"));
+  assert.ok(!d._needsApiFetch);
+  assert.equal(d.name, "Phelia Test Deck");
+  assert.equal(sum(d.commanders), 1);
+  assert.equal(sum(d.mainboard), 12);
+  assert.equal(sum(d.sideboard), 2);
+});
+
+test("getpaird (DOM): no _deckCards falls back to API", () => {
+  const dom = new JSDOM("<html><head><title>Some Deck</title></head><body></body></html>");
+  const d = D.parseGetpaird(dom.window.document);
+  assert.equal(d._needsApiFetch, true);
+  assert.equal(d.name, "Some Deck");
+});
+
 test("router dispatches by URL", () => {
   const d = D.parseDeckFromCurrentSite(doc("dom-mtgtop8.html"), "https://www.mtgtop8.com/event?e=1&d=2");
   assert.equal(d.source, "mtgtop8");
+  assert.equal(D.parseDeckFromCurrentSite(doc("melee.html"), "https://melee.gg/Decklist/View/abc").source, "melee");
+  assert.equal(D.parseDeckFromCurrentSite(doc("getpaird.html"), "https://getpaird.io/decklists/x").source, "getpaird");
   assert.equal(D.parseDeckFromCurrentSite(doc("dom-mtgtop8.html"), "https://unknown.com/x"), null);
 });

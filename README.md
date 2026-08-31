@@ -10,7 +10,7 @@ Chrome extension to compare Magic: The Gathering decklists side by side, across 
 
 - **Visual diff** — cards unique to each deck displayed as image grids, shared cards in a list with quantity deltas highlighted
 - **Similarity score** — Jaccard-based percentage with donut chart and overlap bar
-- **6 supported sites** — Moxfield, MTGGoldfish, Archidekt, mtgtop8, Magic-Ville, mtgdecks.net
+- **8 supported sites** — Moxfield, MTGGoldfish, Archidekt, mtgtop8, Magic-Ville, mtgdecks.net, Melee, getpaird
 - **Cross-site comparison** — compare a Moxfield deck against an mtgtop8 list, etc.
 - **Moxfield deck loader** — enter your username to browse and pick from your public decks
 - **Board filters** — filter by All / Commanders / Mainboard / Sideboard

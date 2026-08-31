@@ -139,16 +139,87 @@
     return deck;
   }
 
+  // --- Melee (server-rendered .decklist-category blocks) ---
+  function parseMelee(doc) {
+    const deck = { mainboard: {}, sideboard: {}, commanders: {}, source: 'melee' };
+    const sectionFor = (title) => {
+      const t = title.replace(/\(.*$/, '').trim().toLowerCase();
+      if (t === 'commander') return 'commanders';
+      if (t === 'sideboard' || t === 'companion') return 'sideboard';
+      return 'mainboard';
+    };
+    for (const cat of doc.querySelectorAll('.decklist-category')) {
+      const titleEl = cat.querySelector('.decklist-category-title');
+      const section = sectionFor(titleEl ? titleEl.textContent : '');
+      for (const rec of cat.querySelectorAll('.decklist-record')) {
+        const nameEl = rec.querySelector('.decklist-record-name');
+        const qtyEl = rec.querySelector('.decklist-record-quantity');
+        const name = nameEl && nameEl.textContent.replace(/\s+/g, ' ').trim();
+        if (!name) continue;
+        const qty = parseInt((qtyEl && qtyEl.textContent) || '1', 10) || 1;
+        deck[section][name] = (deck[section][name] || 0) + qty;
+      }
+    }
+    const t = (doc.title || '').replace(/\s*\|\s*Melee\s*$/i, '').trim();
+    deck.name = t || 'Melee Deck';
+    return deck;
+  }
+
+  // --- getpaird.io (inline `var _deckCards = {…}` script) ---
+  // Reads the script element's text (the page global isn't reachable from the
+  // content script's isolated world); brace-counts the object so mana-symbol "};"
+  // inside oracle text can't truncate it. Falls back to the API if absent.
+  function parseGetpaird(doc) {
+    const deck = { mainboard: {}, sideboard: {}, commanders: {}, source: 'getpaird' };
+    const titleEl = doc.querySelector('title');
+    deck.name = (titleEl ? titleEl.textContent.replace(/\s+/g, ' ').trim() : '') || 'Paird Deck';
+
+    let data = null;
+    for (const s of doc.querySelectorAll('script')) {
+      const text = s.textContent || '';
+      const at = text.indexOf('_deckCards');
+      if (at === -1) continue;
+      const brace = text.indexOf('{', at);
+      if (brace === -1) continue;
+      let depth = 0, inStr = false, esc = false, json = null;
+      for (let i = brace; i < text.length; i++) {
+        const ch = text[i];
+        if (inStr) {
+          if (esc) esc = false;
+          else if (ch === '\\') esc = true;
+          else if (ch === '"') inStr = false;
+        } else if (ch === '"') inStr = true;
+        else if (ch === '{') depth++;
+        else if (ch === '}') { if (--depth === 0) { json = text.slice(brace, i + 1); break; } }
+      }
+      if (json) { try { data = JSON.parse(json); } catch (_) {} }
+      if (data) break;
+    }
+    if (!data) { deck._needsApiFetch = true; return deck; }
+
+    const map = { command_zone: 'commanders', mainboard: 'mainboard', sideboard: 'sideboard' };
+    for (const [key, board] of Object.entries(map)) {
+      for (const c of (data[key] || [])) {
+        const nm = c && c.name;
+        const qty = (c && c.quantity) || 1;
+        if (nm) deck[board][nm] = (deck[board][nm] || 0) + qty;
+      }
+    }
+    return deck;
+  }
+
   function parseDeckFromCurrentSite(doc, url) {
     if (url.includes('mtggoldfish.com')) return parseMtgGoldfish(doc);
     if (url.includes('mtgtop8.com')) return parseMtgTop8(doc);
     if (url.includes('archidekt.com')) return parseArchidekt(doc);
     if (url.includes('magic-ville.com')) return parseMagicVille(doc);
     if (url.includes('mtgdecks.net')) return parseMtgDecks(doc);
+    if (url.includes('melee.gg')) return parseMelee(doc);
+    if (url.includes('getpaird.io')) return parseGetpaird(doc);
     return null;
   }
 
-  const api = { parseMtgGoldfish, parseMtgTop8, parseArchidekt, parseMagicVille, parseMtgDecks, parseDeckFromCurrentSite };
+  const api = { parseMtgGoldfish, parseMtgTop8, parseArchidekt, parseMagicVille, parseMtgDecks, parseMelee, parseGetpaird, parseDeckFromCurrentSite };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else global.DomParsers = api;
 })(typeof self !== 'undefined' ? self : globalThis);

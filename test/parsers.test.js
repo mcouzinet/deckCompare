@@ -72,3 +72,27 @@ test("Magic-Ville: missing deck (HTTP 200 body) throws 'notFound'", () => {
 test("Magic-Ville: unrecognizable page throws 'parseFailed'", () => {
   assert.throws(() => P.parseMagicVille("<html><body>totally different</body></html>"), /parseFailed/);
 });
+
+// ---- Melee ----
+test("Melee: category headers map to sections; mustache template rows ignored", () => {
+  const d = P.parseMelee(fx("melee.html"));
+  assert.equal(sum(d.commanders), 1);
+  assert.deepEqual(Object.keys(d.commanders), ["Terra, Magical Adept // Esper Terra"]); // DFC name kept
+  assert.equal(sum(d.mainboard), 4);                     // Creature 2 + Land 2 (template "9" stripped)
+  assert.equal(sum(d.sideboard), 2);                     // Sideboard 1 + Companion 1
+  assert.equal(d.mainboard["Sword of Fire & Ice"], 1);   // &amp; entity decoded
+  assert.equal(d.name, "Krenko Test Deck // Back Face");  // " | Melee" stripped
+});
+
+// ---- getpaird ----
+test("getpaird: command_zone→commanders; brace-counter survives '};' in oracle text", () => {
+  const d = P.parseGetpaird(fx("getpaird.html"));
+  assert.equal(d.name, "Phelia Test Deck");
+  assert.deepEqual(Object.keys(d.commanders), ["Phelia, Exuberant Shepherd"]);
+  assert.equal(sum(d.mainboard), 12);                    // Sol Ring 1 + Forest 10 + Cursed Mirror 1
+  assert.equal(sum(d.sideboard), 2);                     // Pyroblast x2
+});
+
+test("getpaird: missing _deckCards blob throws 'parseFailed'", () => {
+  assert.throws(() => P.parseGetpaird("<html><body>no data here</body></html>"), /parseFailed/);
+});
