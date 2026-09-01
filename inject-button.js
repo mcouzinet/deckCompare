@@ -24,10 +24,9 @@
     try { return DomParsers.findActionBarAnchor(doc, location.href, isRendered); } catch (_) { return null; }
   };
   const M = (k, s) => chrome.i18n.getMessage(k, s) || k;
-  // Web Store installs carry update_url; an unpacked local build does not. Same test
-  // as background.js — a dev build gets an amber button so it can't be mistaken for
-  // the published extension while testing.
-  const IS_DEV = !('update_url' in chrome.runtime.getManifest());
+  // NOTE: the in-page button looks the same in dev and in production on purpose — it is
+  // what users see, so it should not carry build state. The dev marker lives on the
+  // toolbar icon instead (recoloured + DEV badge in background.js).
 
   let host = null; // the shadow host element, null when not injected
 
@@ -61,7 +60,6 @@
     const anchor = anchorFor(document);
     host = document.createElement('div');
     host.id = HOST_ID;
-    host.classList.toggle('dev', IS_DEV);          // :host(.dev) recolours the pill
     host.classList.toggle('inline', !!anchor);     // :host(.inline) drops the pill shape
 
     // `all:initial` stops the page styling our host; everything else is set explicitly.
@@ -103,14 +101,7 @@
         padding: 11px 16px; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.3);
       }
       .fab:hover { background: #7c3aed; }
-      .fab svg { width: 16px; height: 16px; }
-      /* Dev build: amber pill + a DEV tag, so a local test build is obvious. */
-      :host(.dev) .fab { background: #b45309; }
-      :host(.dev) .fab:hover { background: #d97706; }
-      .dev-tag {
-        font-size: 9px; font-weight: 700; letter-spacing: .08em;
-        background: rgba(0,0,0,.32); border-radius: 4px; padding: 2px 4px;
-      }
+      .fab svg { width: 15px; height: 15px; flex: none; }
       /* Inline mode: sit in the site's own action bar. Deliberately keeps our brand
          colour instead of mimicking the site's buttons — the button must read as
          "added by the extension", not as a native feature of the page. */
@@ -145,11 +136,19 @@
       .msg.err { color: #f89a9a; }
     </style>
     <button class="fab" part="fab">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M4 7h7M4 17h7M17 4v16"/><path d="M14 7l3-3 3 3"/>
+      <!-- The extension's two-overlapping-cards mark, redrawn as inline SVG so it stays
+           sharp at any size and needs no web_accessible_resources. Kept monochrome
+           (currentColor) so it reads on the button in either theme; the depth comes
+           from opacity, which works on any background. -->
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="3.2" y="5" width="9.6" height="14" rx="2.2" fill="currentColor" opacity=".55"
+              transform="rotate(-9 8 12)"/>
+        <rect x="11.2" y="5" width="9.6" height="14" rx="2.2" fill="currentColor"
+              transform="rotate(7 16 12)"/>
+        <path d="M13.6 9.8h5M13.6 12.4h5M13.6 15h3" stroke="#6d28d9" stroke-width="1.5"
+              stroke-linecap="round" transform="rotate(7 16 12)"/>
       </svg>
       <span class="fab-label"></span>
-      <span class="dev-tag" hidden>DEV</span>
     </button>
     <div class="panel" hidden>
       <div class="row"><span class="title"></span><button class="x">&times;</button></div>
@@ -167,7 +166,6 @@
     const select = $('select'), go = $('.go'), msg = $('.msg');
 
     $('.fab-label').textContent = M('compare');
-    if (IS_DEV) $('.dev-tag').hidden = false;
     $('.title').textContent = M('injectPanelTitle');
     input.placeholder = M('pasteADeckUrl');
     go.textContent = M('compare');
