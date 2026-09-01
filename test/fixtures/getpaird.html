@@ -3,6 +3,12 @@
 <head><title>Phelia Test Deck</title></head>
 <body>
   <div x-data="decklistShow()">…rendered by Alpine at runtime…</div>
+  <!-- Action row. getpaird ships Tailwind utility classes only, so the in-page button
+       anchors on the Playtest link's route (/goldfish), which is stable. -->
+  <div class="hidden md:flex items-center gap-1.5 shrink-0 lg:justify-end flex-wrap">
+    <div class="relative"><button class="inline-flex items-center">Export</button></div>
+    <a class="inline-flex items-center" href="https://getpaird.io/decklists/phelia-2026-7QNGOu/goldfish">Playtest</a>
+  </div>
   <script>
     // Raw data outside Alpine (avoids proxy wrapping issues). Note the oracle_text
     // below contains "};" (a mana ability) — the brace-counting extractor must not

@@ -15,6 +15,16 @@
     </div>
   </script>
 
+  <!-- Action bar. Labels are localised (FR: "Images", "Acheter un deck"), so the
+       in-page button anchors on the .view-decklist-screenshot class, never the text. -->
+  <div class="decklist-details-row d-flex flex-column flex-md-row gap-8px mt-16px">
+    <div class="d-flex flex-row flex-gap-1">
+      <button class="btn btn-sm btn-secondary mb-auto view-decklist-screenshot" data-decklist-id="abc">Visual View</button>
+      <a class="btn btn-sm btn-secondary mb-auto" href="/Buy">Buy Deck</a>
+      <div class="dropdown"><button class="btn btn-sm btn-secondary">Actions</button></div>
+    </div>
+  </div>
+
   <div class="decklist-container three-column">
     <div class="decklist-category">
       <div class="decklist-category-title">Commander (1)</div>

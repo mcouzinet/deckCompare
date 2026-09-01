@@ -231,7 +231,54 @@
     return null;
   }
 
-  const api = { parseMoxfield, parseMtgGoldfish, parseMtgTop8, parseArchidekt, parseMagicVille, parseMtgDecks, parseMelee, parseGetpaird, parseDeckFromCurrentSite };
+  // --- Where the in-page button attaches on each site -------------------------
+  // Returns the element the button should sit after. Every selector is STRUCTURAL or
+  // ROUTE-based, never label text: melee's "Visual View" is "Images" in French, so a
+  // text match would break for non-English users.
+  //
+  // Sites we could open and inspect are anchored to their real action bar. The rest are
+  // anchored to a selector one of the parsers above ALREADY depends on, so the anchor is
+  // exactly as durable as parsing itself — if it breaks, the fixtures catch it.
+  // A miss is not a failure: inject-button.js falls back to a floating pill.
+  // `up` walks N levels up from the match (mtgtop8's link sits in its own wrapper).
+  const ANCHORS = [
+    // action bar, verified live
+    { host: 'melee.gg',      sel: '.view-decklist-screenshot' },
+    { host: 'getpaird.io',   sel: 'a[href$="/goldfish"]' },
+    // Archidekt renders BOTH a desktop and a hidden mobile Playtester link, hence the
+    // visibility filter below — anchoring to the hidden one would make our button
+    // invisible, which is worse than the floating fallback.
+    { host: 'archidekt.com', sel: 'a[href*="/playtester"]' },
+    // "Export →" row; /mtgo is the endpoint the background fetcher already uses
+    { host: 'mtgtop8.com',   sel: 'a[href^="mtgo?d="]', up: 1 },
+    // title-anchored: these sites sit behind bot checks/consent walls, so the hook is a
+    // selector the shipped parser relies on (see parseMagicVille / parseMtgGoldfish /
+    // parseMtgDecks) rather than a guess.
+    { host: 'magic-ville.com', sel: 'div.title16' },
+    { host: 'mtggoldfish.com', sel: 'h1.title' },
+    { host: 'mtgdecks.net',    sel: 'h1' },
+    // Moxfield: deck data comes from the API, so no parser selector is load-bearing here
+    // and nothing was verifiable behind its consent wall — it uses the floating pill.
+  ];
+
+  // `isVisible` is supplied by the content script (getBoundingClientRect); tests and
+  // jsdom omit it, where every match counts, since jsdom has no layout.
+  function findActionBarAnchor(doc, url, isVisible) {
+    const entry = ANCHORS.find(a => url.includes(a.host));
+    if (!entry) return null;
+    const shown = isVisible || (() => true);
+    try {
+      for (const el of doc.querySelectorAll(entry.sel)) {
+        if (!shown(el)) continue;
+        let target = el;
+        for (let i = 0; i < (entry.up || 0); i++) target = target.parentElement || target;
+        return target;
+      }
+    } catch (_) { /* bad selector on an unexpected DOM — fall back to floating */ }
+    return null;
+  }
+
+  const api = { parseMoxfield, parseMtgGoldfish, parseMtgTop8, parseArchidekt, parseMagicVille, parseMtgDecks, parseMelee, parseGetpaird, parseDeckFromCurrentSite, findActionBarAnchor, ANCHORS };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else global.DomParsers = api;
 })(typeof self !== 'undefined' ? self : globalThis);

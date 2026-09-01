@@ -11,19 +11,17 @@
   const STORAGE_KEY = 'injectButton';
   const HOST_ID = 'deckcompare-launcher';
 
-  // Where to place the button inside each site's own UI. `find` returns the element to
-  // sit next to. Anchors are STRUCTURAL/SEMANTIC on purpose — never label text, which is
-  // localised (melee's "Visual View" is "Images" in French). A site redesign only costs
-  // us the inline placement: mount() then falls back to the floating pill.
-  const ANCHORS = [
-    { host: 'melee.gg',    find: (d) => d.querySelector('.view-decklist-screenshot') },
-    { host: 'getpaird.io', find: (d) => d.querySelector('a[href$="/goldfish"]') },
-  ];
+  // Anchor table lives in dom-parsers.js (site-DOM knowledge, and unit-testable against
+  // the fixtures). A miss just means the floating pill instead of an inline button.
+  // Skip anchors that aren't actually rendered (Archidekt ships a hidden mobile copy of
+  // its Playtester link) — attaching to one would leave the button invisible.
+  const isRendered = (el) => {
+    const r = el.getBoundingClientRect();
+    return r.width > 0 && r.height > 0;
+  };
 
   const anchorFor = (doc) => {
-    const entry = ANCHORS.find(a => location.hostname.endsWith(a.host));
-    if (!entry) return null;
-    try { return entry.find(doc) || null; } catch (_) { return null; }
+    try { return DomParsers.findActionBarAnchor(doc, location.href, isRendered); } catch (_) { return null; }
   };
   const M = (k, s) => chrome.i18n.getMessage(k, s) || k;
   // Web Store installs carry update_url; an unpacked local build does not. Same test

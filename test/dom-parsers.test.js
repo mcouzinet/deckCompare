@@ -93,6 +93,42 @@ test("Moxfield (DOM): defers to the API but still marks a deck page", () => {
   assert.equal(d.source, "moxfield");
 });
 
+// ---- in-page button anchors ----
+// These guard the selectors the button attaches to. Three sites (Magic-Ville,
+// MTGGoldfish, mtgdecks) sit behind bot checks or consent walls and could not be
+// inspected live, so their anchors reuse a selector the parser already depends on —
+// which is exactly what these fixtures pin down.
+test("anchors: resolve against real fixtures", () => {
+  const cases = [
+    ["melee.html",        "https://melee.gg/Decklist/View/x",        "BUTTON"],
+    ["getpaird.html",     "https://getpaird.io/decklists/x",         "A"],
+    ["magicville-dc.html", "https://www.magic-ville.com/fr/decks/showdeck?ref=1", "DIV"],
+    ["mtgdecks.html",     "https://mtgdecks.net/x",                  "H1"],
+  ];
+  for (const [fixture, url, tag] of cases) {
+    const enc = fixture === "magicville-dc.html" ? "latin1" : "utf8";
+    const d = new JSDOM(fs.readFileSync(path.join(__dirname, "fixtures", fixture), enc)).window.document;
+    const el = D.findActionBarAnchor(d, url);
+    assert.ok(el, `no anchor found for ${fixture}`);
+    assert.equal(el.tagName, tag, `unexpected anchor element for ${fixture}`);
+  }
+});
+
+test("anchors: unknown site and missing element both yield null (floating fallback)", () => {
+  const d = doc("melee.html");
+  assert.equal(D.findActionBarAnchor(d, "https://unknown.example/x"), null);   // no entry
+  assert.equal(D.findActionBarAnchor(d, "https://getpaird.io/decklists/x"), null); // entry, no match
+  // Moxfield is deliberately absent — it uses the floating pill.
+  assert.equal(D.findActionBarAnchor(d, "https://www.moxfield.com/decks/x"), null);
+});
+
+test("anchors: never key off localised label text", () => {
+  // melee renders "Images" in French; anchoring on "Visual View" would break for them.
+  const src = fs.readFileSync(path.join(__dirname, "..", "dom-parsers.js"), "utf8");
+  const table = src.slice(src.indexOf("const ANCHORS"), src.indexOf("function findActionBarAnchor"));
+  assert.ok(!/Visual View|Playtest"|Export"/.test(table), "anchor selectors must not match on label text");
+});
+
 test("router dispatches by URL", () => {
   const d = D.parseDeckFromCurrentSite(doc("dom-mtgtop8.html"), "https://www.mtgtop8.com/event?e=1&d=2");
   assert.equal(d.source, "mtgtop8");
