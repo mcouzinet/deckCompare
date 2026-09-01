@@ -111,6 +111,18 @@
       hostEl.classList.add('compact');
       hostEl.style.setProperty('--dc-anchor-height', `${Math.max(18, Math.round(h) + 4)}px`);
     }
+
+    // Horizontal breathing room. When the row is a flex/grid with a gap, that already
+    // spaces us and adding margin would double it; otherwise (mtgtop8's export line is
+    // plain inline flow) we'd sit flush against the neighbours, so mirror their own
+    // horizontal margin, with a small floor so we are never glued to them.
+    const gap = parentCs ? parseFloat(parentCs.columnGap) : NaN;
+    if (!(gap > 0)) {
+      const neighbourMargin = Math.max(parseFloat(cs.marginRight) || 0, parseFloat(cs.marginLeft) || 0);
+      const m = Math.min(Math.max(6, Math.round(neighbourMargin)), 14);
+      hostEl.style.marginLeft = `${m}px`;
+      hostEl.style.marginRight = `${m}px`;
+    }
   }
 
   // SPA/late-rendered toolbars (Moxfield, Archidekt) may not exist at document_idle.
