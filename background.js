@@ -1,6 +1,36 @@
 // Service worker – handles deck fetching from APIs (avoids CORS)
 importScripts('shared.js', 'parsers.js');
 
+// --- Dev-build marker -------------------------------------------------------
+// Chrome injects `update_url` into the manifest of Web Store installs; an unpacked
+// (locally loaded) extension has none. Used to make a local build unmistakable, so
+// it is never confused with the published one. No extra permission needed.
+const IS_DEV = !('update_url' in chrome.runtime.getManifest());
+
+// Recolour the toolbar icon at runtime (swap the R/B channels) rather than shipping
+// a second icon set — nothing extra to package or to strip from the release zip.
+async function markDevBuild() {
+  chrome.action.setBadgeText({ text: 'DEV' });
+  chrome.action.setBadgeBackgroundColor({ color: '#dc2626' });
+  chrome.action.setTitle({ title: `${chrome.i18n.getMessage('appName')} — DEV` });
+  try {
+    const imageData = {};
+    for (const size of [16, 48, 128]) {
+      const blob = await (await fetch(chrome.runtime.getURL(`icons/icon${size}.png`))).blob();
+      const bitmap = await createImageBitmap(blob);
+      const ctx = new OffscreenCanvas(size, size).getContext('2d');
+      ctx.drawImage(bitmap, 0, 0, size, size);
+      const data = ctx.getImageData(0, 0, size, size);
+      const px = data.data;
+      for (let i = 0; i < px.length; i += 4) { const r = px[i]; px[i] = px[i + 2]; px[i + 2] = r; }
+      imageData[size] = data;
+    }
+    await chrome.action.setIcon({ imageData });
+  } catch (_) { /* the DEV badge alone still marks the build */ }
+}
+
+if (IS_DEV) markDevBuild();
+
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === 'FETCH_DECK') {
     fetchDeckByUrl(msg.url)

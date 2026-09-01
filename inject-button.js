@@ -9,6 +9,10 @@
   const STORAGE_KEY = 'injectButton';
   const HOST_ID = 'deckcompare-launcher';
   const M = (k, s) => chrome.i18n.getMessage(k, s) || k;
+  // Web Store installs carry update_url; an unpacked local build does not. Same test
+  // as background.js — a dev build gets an amber button so it can't be mistaken for
+  // the published extension while testing.
+  const IS_DEV = !('update_url' in chrome.runtime.getManifest());
 
   let host = null; // the shadow host element, null when not injected
 
@@ -40,6 +44,7 @@
     if (!looksLikeDeckPage()) return;
     host = document.createElement('div');
     host.id = HOST_ID;
+    if (IS_DEV) host.className = 'dev';   // :host(.dev) recolours the pill
     // The host itself must not be styled by the page, and must sit above it.
     host.style.cssText = 'all:initial;position:fixed;z-index:2147483647;bottom:20px;right:20px;';
     const root = host.attachShadow({ mode: 'open' });
@@ -61,6 +66,13 @@
       }
       .fab:hover { background: #7c3aed; }
       .fab svg { width: 16px; height: 16px; }
+      /* Dev build: amber pill + a DEV tag, so a local test build is obvious. */
+      :host(.dev) .fab { background: #b45309; }
+      :host(.dev) .fab:hover { background: #d97706; }
+      .dev-tag {
+        font-size: 9px; font-weight: 700; letter-spacing: .08em;
+        background: rgba(0,0,0,.32); border-radius: 4px; padding: 2px 4px;
+      }
       .panel {
         position: absolute; bottom: 52px; right: 0; width: 290px;
         background: #16141c; color: #ece9f3; border: 1px solid #2f2b3a;
@@ -92,6 +104,7 @@
         <path d="M4 7h7M4 17h7M17 4v16"/><path d="M14 7l3-3 3 3"/>
       </svg>
       <span class="fab-label"></span>
+      <span class="dev-tag" hidden>DEV</span>
     </button>
     <div class="panel" hidden>
       <div class="row"><span class="title"></span><button class="x">&times;</button></div>
@@ -109,6 +122,7 @@
     const select = $('select'), go = $('.go'), msg = $('.msg');
 
     $('.fab-label').textContent = M('compare');
+    if (IS_DEV) $('.dev-tag').hidden = false;
     $('.title').textContent = M('injectPanelTitle');
     input.placeholder = M('pasteADeckUrl');
     go.textContent = M('compare');
