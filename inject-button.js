@@ -259,7 +259,11 @@
       }
       .go:hover:not(:disabled) { background: var(--dc-brand-hi); }
       .go:disabled { opacity: .55; cursor: default; }
-      .msg { margin-top: 8px; font-size: 12px; color: var(--dc-tx-mut); min-height: 1em; }
+      /* Collapses entirely when there is nothing to say. It used to reserve a line to
+         avoid a jump when a status appears, but that left dead space under the button
+         for the whole time the panel is idle — which is most of it. */
+      .msg { margin-top: 8px; font-size: 12px; color: var(--dc-tx-mut); }
+      .msg:empty { display: none; }
       /* popup.html styles #status.error with --brand-hi; same convention here. */
       .msg.err { color: var(--dc-brand-hi); }
     </style>
