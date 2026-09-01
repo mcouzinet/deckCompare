@@ -131,13 +131,24 @@ refreshBtn.addEventListener('click', async () => {
 });
 
 // --- Settings panel ---
+// Settings replaces the main view rather than stacking on top of it: shown together they
+// made the popup far taller than it needs to be. The header stays so the panel still
+// reads as part of the extension and the gear remains reachable.
+// #status deliberately stays visible: it is where "Save & load" reports progress and
+// errors, which happen while the settings panel is the only thing on screen.
+const mainViews = ['.p-body', '.p-foot']
+  .map(sel => document.querySelector(sel))
+  .filter(Boolean);
+
+function showSettings(show) {
+  settingsPanel.style.display = show ? 'block' : 'none';
+  for (const el of mainViews) el.style.display = show ? 'none' : '';
+}
+
 document.getElementById('settings-toggle').addEventListener('click', () => {
-  const visible = settingsPanel.style.display !== 'none';
-  settingsPanel.style.display = visible ? 'none' : 'block';
+  showSettings(settingsPanel.style.display === 'none');
 });
-document.getElementById('settings-close').addEventListener('click', () => {
-  settingsPanel.style.display = 'none';
-});
+document.getElementById('settings-close').addEventListener('click', () => showSettings(false));
 
 // In-page button toggle — the content script watches this key and mounts/unmounts live.
 // Some supported pages need access the extension doesn't hold by default: Moxfield (its
@@ -208,8 +219,9 @@ async function loadUserDecks() {
     settingsHint.innerHTML = `<b>${resp.decks.length}</b> ${chrome.i18n.getMessage('decksLoaded')}`;
     moxHint.className = 'hint';
     moxHint.innerHTML = `<b>${source}</b> · ${esc(username)} · <b>${resp.decks.length}</b> decks · ${now}`;
-    // Auto-close settings after success
-    settingsPanel.style.display = 'none';
+    // Auto-close settings after success — via showSettings, so the main view comes back;
+    // hiding the panel alone would leave the popup blank.
+    showSettings(false);
   } catch (err) {
     setStatus(`${chrome.i18n.getMessage('error')}: ${err.message}`, true);
   } finally {

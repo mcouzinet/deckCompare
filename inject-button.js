@@ -137,15 +137,31 @@
     }
   }
 
-  // SPA/late-rendered toolbars (Moxfield, Archidekt) may not exist at document_idle.
-  // Retry the mount while the DOM settles, then give up and let mount() fall back to
-  // the floating pill. Disconnects as soon as the button is in the page.
+  const hasAnchorEntry = () => {
+    try { return DomParsers.ANCHORS.some(a => location.href.includes(a.host)); }
+    catch (_) { return false; }
+  };
+
+  // Moxfield and Archidekt render their toolbar from JS, so at document_idle the anchor
+  // does not exist yet. Mounting straight away would take the floating fallback and stay
+  // there for good — the button never moved into Moxfield's toolbar for exactly this
+  // reason. So when the site HAS an anchor but it is not in the DOM yet, wait for it
+  // before mounting; that also avoids flashing a floating pill that then jumps.
+  // The timeout is the giving-up point: mount floating rather than nothing.
   function mountWhenReady() {
-    mount();
-    if (host) return;
-    const obs = new MutationObserver(() => { mount(); if (host) obs.disconnect(); });
+    if (!hasAnchorEntry() || anchorFor(document)) { mount(); return; }
+
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      obs.disconnect();
+      clearTimeout(timer);
+      mount();
+    };
+    const obs = new MutationObserver(() => { if (anchorFor(document)) finish(); });
     obs.observe(document.documentElement, { childList: true, subtree: true });
-    setTimeout(() => { obs.disconnect(); mount(); }, 8000);
+    const timer = setTimeout(finish, 8000);
   }
 
   // --- markup (inside the shadow root, so these class names are private) ---
