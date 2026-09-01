@@ -136,7 +136,7 @@ refreshBtn.addEventListener('click', async () => {
 // reads as part of the extension and the gear remains reachable.
 // #status deliberately stays visible: it is where "Save & load" reports progress and
 // errors, which happen while the settings panel is the only thing on screen.
-const mainViews = ['.p-body', '.p-foot']
+const mainViews = ['.p-body']
   .map(sel => document.querySelector(sel))
   .filter(Boolean);
 

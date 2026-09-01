@@ -203,12 +203,10 @@
     #status.error { color: var(--brand-hi); }
 
     /* footer */
-    .p-foot {
-      padding: 12px 18px; border-top: 1px solid var(--line); background: var(--ink-0);
-      display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
-    }
-    .p-foot .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--tx-faint); margin-right: 2px; }
-    .p-foot .chip {
+    /* Supported-site list — moved out of the main view into Settings. */
+    .settings-sites { gap: 6px; }
+    .settings-sites .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .settings-sites .chip {
       font-size: 10.5px; font-weight: 600; color: var(--tx-mut);
       background: var(--ink-2); border: 1px solid var(--line);
       padding: 3px 8px; border-radius: 6px; white-space: nowrap;
@@ -291,6 +289,22 @@
           <div class="settings-hint" id="settings-inject-hint"></div>
         </div>
       </div>
+      <!-- Reference material, not something needed on every use: it lives here rather
+           than in the main view, which it made longer and harder to scan. -->
+      <div class="settings-field settings-sites">
+        <label class="settings-label" id="supports-lbl"></label>
+        <div class="chips">
+          <span class="chip">Moxfield</span>
+          <span class="chip">Archidekt</span>
+          <span class="chip">MTGGoldfish</span>
+          <span class="chip">mtgtop8</span>
+          <span class="chip">Magic-Ville</span>
+          <span class="chip">mtgdecks</span>
+          <span class="chip">Melee</span>
+          <span class="chip">getpaird</span>
+        </div>
+        <div class="settings-hint" id="url-hint"></div>
+      </div>
     </div>
   </div>
 
@@ -356,7 +370,6 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
           </button>
         </div>
-        <div class="hint" id="url-hint"></div>
       </div>
 
       <div class="pane" id="pane-mox">
@@ -380,17 +393,6 @@
 
   <div id="status"></div>
 
-  <div class="p-foot">
-    <span class="lbl" id="supports-lbl"></span>
-    <span class="chip">Moxfield</span>
-    <span class="chip">Archidekt</span>
-    <span class="chip">MTGGoldfish</span>
-    <span class="chip">mtgtop8</span>
-    <span class="chip">Magic-Ville</span>
-    <span class="chip">mtgdecks</span>
-    <span class="chip">Melee</span>
-    <span class="chip">getpaird</span>
-  </div>
 
   <script src="popup.js"></script>
 </body>
