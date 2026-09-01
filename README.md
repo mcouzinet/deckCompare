@@ -41,7 +41,7 @@ hosts and nothing else; switching the button back off revokes them.
 
 ### From Chrome Web Store
 
-*(Coming soon)*
+**[Install Deck Compare — MTG](https://chromewebstore.google.com/detail/deck-compare-%E2%80%93-mtg/miijiappldgijnnokopjfiponelkdhcg)**
 
 ### Manual install (developer mode)
 
