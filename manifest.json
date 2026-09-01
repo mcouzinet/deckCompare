@@ -19,9 +19,21 @@
     "https://www.magic-ville.com/*",
     "https://mtgdecks.net/*",
     "https://melee.gg/*",
-    "https://getpaird.io/*"
+    "https://getpaird.io/*",
+    "https://www.moxfield.com/*"
   ],
   "content_scripts": [
+    {
+      "matches": [
+        "https://www.moxfield.com/decks/*"
+      ],
+      "js": [
+        "dom-parsers.js",
+        "content.js",
+        "inject-button.js"
+      ],
+      "run_at": "document_idle"
+    },
     {
       "matches": [
         "https://www.mtggoldfish.com/deck/*"

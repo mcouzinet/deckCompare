@@ -1,13 +1,30 @@
 // Optional in-page button (off by default; toggled in the popup's Settings panel).
-// Injects a floating "Compare" launcher on supported deck pages so the user can start
-// a comparison without opening the popup. Everything lives inside a Shadow DOM so the
-// host site's CSS can't reach it (and ours can't leak out). Reuses the same pipeline as
-// the popup: DomParsers for the current page, background FETCH_DECK for the target.
+// Adds a "Compare" launcher on supported deck pages so a comparison can be started
+// without opening the popup. Where we know the site's own action bar it is inserted
+// there (see ANCHORS); otherwise it falls back to a floating pill. Everything lives
+// inside a Shadow DOM so the host site's CSS can't reach it (and ours can't leak out).
+// Reuses the popup pipeline: DomParsers for the current page, background FETCH_DECK
+// for the target.
 //
 // Loaded after dom-parsers.js + content.js, so DomParsers is available.
 (function () {
   const STORAGE_KEY = 'injectButton';
   const HOST_ID = 'deckcompare-launcher';
+
+  // Where to place the button inside each site's own UI. `find` returns the element to
+  // sit next to. Anchors are STRUCTURAL/SEMANTIC on purpose — never label text, which is
+  // localised (melee's "Visual View" is "Images" in French). A site redesign only costs
+  // us the inline placement: mount() then falls back to the floating pill.
+  const ANCHORS = [
+    { host: 'melee.gg',    find: (d) => d.querySelector('.view-decklist-screenshot') },
+    { host: 'getpaird.io', find: (d) => d.querySelector('a[href$="/goldfish"]') },
+  ];
+
+  const anchorFor = (doc) => {
+    const entry = ANCHORS.find(a => location.hostname.endsWith(a.host));
+    if (!entry) return null;
+    try { return entry.find(doc) || null; } catch (_) { return null; }
+  };
   const M = (k, s) => chrome.i18n.getMessage(k, s) || k;
   // Web Store installs carry update_url; an unpacked local build does not. Same test
   // as background.js — a dev build gets an amber button so it can't be mistaken for
@@ -18,11 +35,11 @@
 
   // --- lifecycle: mount/unmount so the popup toggle applies without a page reload ---
 
-  chrome.storage.local.get([STORAGE_KEY]).then(({ [STORAGE_KEY]: on }) => { if (on) mount(); });
+  chrome.storage.local.get([STORAGE_KEY]).then(({ [STORAGE_KEY]: on }) => { if (on) mountWhenReady(); });
 
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== 'local' || !changes[STORAGE_KEY]) return;
-    changes[STORAGE_KEY].newValue ? mount() : unmount();
+    changes[STORAGE_KEY].newValue ? mountWhenReady() : unmount();
   });
 
   function unmount() {
@@ -42,15 +59,38 @@
   function mount() {
     if (host || document.getElementById(HOST_ID)) return;
     if (!looksLikeDeckPage()) return;
+
+    const anchor = anchorFor(document);
     host = document.createElement('div');
     host.id = HOST_ID;
-    if (IS_DEV) host.className = 'dev';   // :host(.dev) recolours the pill
-    // The host itself must not be styled by the page, and must sit above it.
-    host.style.cssText = 'all:initial;position:fixed;z-index:2147483647;bottom:20px;right:20px;';
+    host.classList.toggle('dev', IS_DEV);          // :host(.dev) recolours the pill
+    host.classList.toggle('inline', !!anchor);     // :host(.inline) drops the pill shape
+
+    // `all:initial` stops the page styling our host; everything else is set explicitly.
+    // align-self:flex-start pins us to the top of the site's action bar and stops the
+    // flex row stretching us. (melee's bar is ~130px tall and pins its own buttons to
+    // the top with mb-auto: default stretch made us 131px, centre left us 52px too low.)
+    host.style.cssText = anchor
+      ? 'all:initial;display:inline-flex;vertical-align:middle;align-self:flex-start;'
+      : 'all:initial;position:fixed;z-index:2147483647;bottom:20px;right:20px;';
+
     const root = host.attachShadow({ mode: 'open' });
     root.innerHTML = TEMPLATE;
     wire(root);
-    (document.body || document.documentElement).appendChild(host);
+
+    if (anchor && anchor.parentElement) anchor.insertAdjacentElement('afterend', host);
+    else (document.body || document.documentElement).appendChild(host);
+  }
+
+  // SPA/late-rendered toolbars (Moxfield, Archidekt) may not exist at document_idle.
+  // Retry the mount while the DOM settles, then give up and let mount() fall back to
+  // the floating pill. Disconnects as soon as the button is in the page.
+  function mountWhenReady() {
+    mount();
+    if (host) return;
+    const obs = new MutationObserver(() => { mount(); if (host) obs.disconnect(); });
+    obs.observe(document.documentElement, { childList: true, subtree: true });
+    setTimeout(() => { obs.disconnect(); mount(); }, 8000);
   }
 
   // --- markup (inside the shadow root, so these class names are private) ---
@@ -73,8 +113,15 @@
         font-size: 9px; font-weight: 700; letter-spacing: .08em;
         background: rgba(0,0,0,.32); border-radius: 4px; padding: 2px 4px;
       }
+      /* Inline mode: sit in the site's own action bar. Deliberately keeps our brand
+         colour instead of mimicking the site's buttons — the button must read as
+         "added by the extension", not as a native feature of the page. */
+      :host(.inline) .fab {
+        border-radius: 6px; padding: 6px 12px; font-size: 12.5px;
+        box-shadow: none; white-space: nowrap;
+      }
       .panel {
-        position: absolute; bottom: 52px; right: 0; width: 290px;
+        position: fixed; z-index: 2147483647; width: 290px;
         background: #16141c; color: #ece9f3; border: 1px solid #2f2b3a;
         border-radius: 12px; padding: 14px; box-shadow: 0 10px 34px rgba(0,0,0,.45);
         font: 400 13px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -129,10 +176,26 @@
 
     const setMsg = (text, isErr) => { msg.textContent = text; msg.className = isErr ? 'msg err' : 'msg'; };
 
+    // The panel is position:fixed and placed from the button's own rect, so no overflow
+    // or stacking context on the host page can clip it. Clamped to stay on screen.
+    function placePanel() {
+      const b = fab.getBoundingClientRect();
+      const w = 290, margin = 8;
+      const left = Math.min(Math.max(margin, b.right - w), innerWidth - w - margin);
+      const below = b.bottom + margin;
+      const fitsBelow = below + panel.offsetHeight <= innerHeight - margin;
+      panel.style.left = `${Math.round(left)}px`;
+      panel.style.top = fitsBelow
+        ? `${Math.round(below)}px`
+        : `${Math.round(Math.max(margin, b.top - panel.offsetHeight - margin))}px`;
+    }
+
     fab.addEventListener('click', () => {
       panel.hidden = !panel.hidden;
-      if (!panel.hidden) { fillSavedDecks(select); input.focus(); }
+      if (!panel.hidden) { fillSavedDecks(select); placePanel(); input.focus(); }
     });
+    addEventListener('resize', () => { if (!panel.hidden) placePanel(); });
+    addEventListener('scroll', () => { if (!panel.hidden) placePanel(); }, true);
     $('.x').addEventListener('click', () => { panel.hidden = true; });
 
     // Picking a saved deck fills the input, so there's a single source of truth.

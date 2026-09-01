@@ -106,6 +106,17 @@
     return deck;
   }
 
+  // --- Moxfield: always defer to the background API ---
+  // Moxfield is a SPA whose deck data comes from api2.moxfield.com, not from the page,
+  // so there is nothing reliable to scrape here — but returning a deck (rather than
+  // null) marks this as a deck page for callers such as the in-page button.
+  function parseMoxfield(doc) {
+    const deck = { mainboard: {}, sideboard: {}, commanders: {}, source: 'moxfield' };
+    deck.name = (doc.title || '').replace(/\s*[|·-]\s*Moxfield.*$/i, '').trim() || 'Moxfield Deck';
+    deck._needsApiFetch = true;
+    return deck;
+  }
+
   // --- Magic-Ville: always defer to the background API (English card names) ---
   function parseMagicVille(doc) {
     const deck = { mainboard: {}, sideboard: {}, commanders: {}, source: 'magic-ville' };
@@ -209,6 +220,7 @@
   }
 
   function parseDeckFromCurrentSite(doc, url) {
+    if (url.includes('moxfield.com')) return parseMoxfield(doc);
     if (url.includes('mtggoldfish.com')) return parseMtgGoldfish(doc);
     if (url.includes('mtgtop8.com')) return parseMtgTop8(doc);
     if (url.includes('archidekt.com')) return parseArchidekt(doc);
@@ -219,7 +231,7 @@
     return null;
   }
 
-  const api = { parseMtgGoldfish, parseMtgTop8, parseArchidekt, parseMagicVille, parseMtgDecks, parseMelee, parseGetpaird, parseDeckFromCurrentSite };
+  const api = { parseMoxfield, parseMtgGoldfish, parseMtgTop8, parseArchidekt, parseMagicVille, parseMtgDecks, parseMelee, parseGetpaird, parseDeckFromCurrentSite };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else global.DomParsers = api;
 })(typeof self !== 'undefined' ? self : globalThis);

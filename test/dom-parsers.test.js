@@ -85,10 +85,19 @@ test("getpaird (DOM): no _deckCards falls back to API", () => {
   assert.equal(d.name, "Some Deck");
 });
 
+test("Moxfield (DOM): defers to the API but still marks a deck page", () => {
+  const dom = new JSDOM("<html><head><title>Krenko EDH | Moxfield</title></head><body></body></html>");
+  const d = D.parseMoxfield(dom.window.document);
+  assert.equal(d._needsApiFetch, true);          // data lives on api2.moxfield.com
+  assert.equal(d.name, "Krenko EDH");
+  assert.equal(d.source, "moxfield");
+});
+
 test("router dispatches by URL", () => {
   const d = D.parseDeckFromCurrentSite(doc("dom-mtgtop8.html"), "https://www.mtgtop8.com/event?e=1&d=2");
   assert.equal(d.source, "mtgtop8");
   assert.equal(D.parseDeckFromCurrentSite(doc("melee.html"), "https://melee.gg/Decklist/View/abc").source, "melee");
   assert.equal(D.parseDeckFromCurrentSite(doc("getpaird.html"), "https://getpaird.io/decklists/x").source, "getpaird");
+  assert.equal(D.parseDeckFromCurrentSite(doc("getpaird.html"), "https://www.moxfield.com/decks/x").source, "moxfield");
   assert.equal(D.parseDeckFromCurrentSite(doc("dom-mtgtop8.html"), "https://unknown.com/x"), null);
 });
