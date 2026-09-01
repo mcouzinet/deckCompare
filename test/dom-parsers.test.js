@@ -123,11 +123,16 @@ test("anchors: unknown site and missing element both yield null (floating fallba
   assert.equal(D.findActionBarAnchor(d, "https://www.moxfield.com/decks/x"), null);
 });
 
-test("anchors: never key off localised label text", () => {
-  // melee renders "Images" in French; anchoring on "Visual View" would break for them.
-  const src = fs.readFileSync(path.join(__dirname, "..", "dom-parsers.js"), "utf8");
-  const table = src.slice(src.indexOf("const ANCHORS"), src.indexOf("function findActionBarAnchor"));
-  assert.ok(!/Visual View|Playtest"|Export"/.test(table), "anchor selectors must not match on label text");
+test("anchors: selectors are structural and valid", () => {
+  // melee renders "Images" in French, so matching on label text would break for them.
+  // Assert on the selectors themselves — an earlier version regexed the source file and
+  // tripped over the word "Visual" in a comment.
+  const d = new JSDOM("<html><body></body></html>").window.document;
+  for (const a of D.ANCHORS) {
+    assert.doesNotThrow(() => d.querySelector(a.sel), `${a.host}: invalid selector ${a.sel}`);
+    assert.ok(!/:contains\(|:has-text/i.test(a.sel), `${a.host}: matches on text, not structure`);
+    assert.ok(/[#.\[]/.test(a.sel), `${a.host}: no class/id/attribute hook in ${a.sel}`);
+  }
 });
 
 test("router dispatches by URL", () => {
