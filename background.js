@@ -31,6 +31,41 @@ async function markDevBuild() {
 
 if (IS_DEV) markDevBuild();
 
+// --- Optional Moxfield page access (in-page button only) --------------------
+// Moxfield deck data comes from api2.moxfield.com, so the extension has never needed
+// access to www.moxfield.com itself — every other supported site serves its decks from
+// the domain the user is browsing. Only the in-page button needs the page. Requiring it
+// up front would disable the extension for every existing user until they re-accepted,
+// so it is OPTIONAL: the popup requests it when the button is switched on, and the
+// content script is registered here once it is granted (and torn down when revoked).
+const MOXFIELD_ORIGIN = 'https://www.moxfield.com/*';
+const MOXFIELD_SCRIPT_ID = 'moxfield-in-page';
+
+async function syncMoxfieldScript() {
+  let granted, existing;
+  try {
+    granted = await chrome.permissions.contains({ origins: [MOXFIELD_ORIGIN] });
+    existing = await chrome.scripting.getRegisteredContentScripts({ ids: [MOXFIELD_SCRIPT_ID] });
+  } catch { return; }
+
+  try {
+    if (granted && !existing.length) {
+      await chrome.scripting.registerContentScripts([{
+        id: MOXFIELD_SCRIPT_ID,
+        matches: ['https://www.moxfield.com/decks/*'],
+        js: ['dom-parsers.js', 'content.js', 'inject-button.js'],
+        runAt: 'document_idle'
+      }]);
+    } else if (!granted && existing.length) {
+      await chrome.scripting.unregisterContentScripts({ ids: [MOXFIELD_SCRIPT_ID] });
+    }
+  } catch { /* registration is best-effort; the other 7 sites are unaffected */ }
+}
+
+chrome.permissions.onAdded.addListener(syncMoxfieldScript);
+chrome.permissions.onRemoved.addListener(syncMoxfieldScript);
+syncMoxfieldScript();   // also covers each service-worker restart
+
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === 'FETCH_DECK') {
     fetchDeckByUrl(msg.url)

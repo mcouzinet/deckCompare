@@ -89,7 +89,7 @@
   "errGetpairdDeckNotFound":   { "message": "getpaird deck not found" },
   "errGetpairdParseFailed":    { "message": "Could not parse the getpaird page" },
   "settingsInjectLabel":       { "message": "Compare button on deck sites" },
-  "settingsInjectHint":        { "message": "Shows a floating Deck Compare button directly on supported deck pages." },
+  "settingsInjectHint":        { "message": "Adds a Deck Compare button on supported deck pages. Moxfield asks for one extra permission." },
   "injectPanelTitle":          { "message": "Compare this deck" },
   "emptyDeck":                 { "message": "Empty or unreadable deck" },
   "fetchFailed":               { "message": "Fetch failed" },

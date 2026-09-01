@@ -140,8 +140,19 @@ document.getElementById('settings-close').addEventListener('click', () => {
 });
 
 // In-page button toggle — the content script watches this key and mounts/unmounts live.
-settingsInject.addEventListener('change', () => {
-  chrome.storage.local.set({ injectButton: settingsInject.checked });
+// Moxfield is the one supported site whose page the extension can't touch by default
+// (its decks come from api2.moxfield.com), so its access is an optional permission
+// asked for here, from this click — chrome.permissions.request needs a user gesture.
+// Declining costs only the button on Moxfield; everything else keeps working.
+const MOXFIELD_ORIGIN = 'https://www.moxfield.com/*';
+
+settingsInject.addEventListener('change', async () => {
+  const on = settingsInject.checked;
+  chrome.storage.local.set({ injectButton: on });
+  try {
+    if (on) await chrome.permissions.request({ origins: [MOXFIELD_ORIGIN] });
+    else await chrome.permissions.remove({ origins: [MOXFIELD_ORIGIN] });
+  } catch (_) { /* declined or unavailable — the other 7 sites are unaffected */ }
 });
 
 // --- Pool analyzer entry ---

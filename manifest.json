@@ -7,7 +7,8 @@
   "default_locale": "en",
   "permissions": [
     "activeTab",
-    "storage"
+    "storage",
+    "scripting"
   ],
   "host_permissions": [
     "https://api2.moxfield.com/*",
@@ -19,21 +20,9 @@
     "https://www.magic-ville.com/*",
     "https://mtgdecks.net/*",
     "https://melee.gg/*",
-    "https://getpaird.io/*",
-    "https://www.moxfield.com/*"
+    "https://getpaird.io/*"
   ],
   "content_scripts": [
-    {
-      "matches": [
-        "https://www.moxfield.com/decks/*"
-      ],
-      "js": [
-        "dom-parsers.js",
-        "content.js",
-        "inject-button.js"
-      ],
-      "run_at": "document_idle"
-    },
     {
       "matches": [
         "https://www.mtggoldfish.com/deck/*"
@@ -130,5 +119,8 @@
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
-  }
+  },
+  "optional_host_permissions": [
+    "https://www.moxfield.com/*"
+  ]
 }
