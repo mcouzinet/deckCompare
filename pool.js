@@ -20,7 +20,6 @@
   let cat = "all";
   const selected = new Set();
   const imgByName = new Map(); // card name -> scryfall image_uri (for hover/hero art)
-  const imgCache = new Map(); // image_uri -> dataUrl
   const pooledDecks = []; // the editable pool (add/remove + re-analyze)
   const pastedTextsSeen = new Set(); // raw text of pasted decks currently in the pool (dedup)
   const enrichMap = new Map(); // persists across adds; only new names are fetched
@@ -248,13 +247,12 @@
     updateSelbar();
   }
 
+  // Scryfall URLs are used as-is: the manifest's img-src allows them, so the browser
+  // loads and caches them itself. This used to proxy every image through the service
+  // worker as base64 only because the CSP blocked remote images, which cost a round trip
+  // per card and a cache that died with the page. Kept async so callers are unchanged.
   async function fetchImg(url) {
-    if (!url) return null;
-    if (imgCache.has(url)) return imgCache.get(url);
-    const r = await sendToBackground({ type: "FETCH_IMAGE", url });
-    const dataUrl = r && r.dataUrl ? r.dataUrl : null;
-    if (dataUrl) imgCache.set(url, dataUrl);
-    return dataUrl;
+    return url || null;
   }
 
   function renderHero() {

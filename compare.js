@@ -278,48 +278,35 @@
     ).join("");
   }
 
-  // ===== image loading — 10 concurrent via background =====
-  const imageCache = new Map();
+  // ===== image loading =====
+  // Images point straight at Scryfall (the manifest's img-src allows it). They used to
+  // be fetched in the service worker, base64'd and messaged back, purely because the CSP
+  // blocked remote images — which meant a round trip per card, a 33% size penalty from
+  // base64, batches of 10 that serialised the whole grid, and a cache that lived only in
+  // this page's memory, so every reload refetched everything and Scryfall started
+  // answering 429. Loading them directly hands all of that to the browser: its HTTP
+  // cache persists across reloads, and `loading="lazy"` only fetches what is scrolled to.
+  function settleSlot(img, ok) {
+    const slot = img.closest(".card-slot");
+    if (!slot) return;
+    slot.classList.remove("is-loading");
+    if (!ok) slot.classList.add("is-proxy");
+  }
 
   function initLazy() {
-    const imgs = [...document.querySelectorAll("img[data-src]")];
-    const BATCH = 10;
-
-    function settle(img, ok) {
-      const slot = img.closest(".card-slot");
-      if (!slot) return;
-      slot.classList.remove("is-loading");
-      if (!ok) slot.classList.add("is-proxy");
-    }
-
-    async function loadOne(img) {
+    for (const img of document.querySelectorAll("img[data-src]")) {
       const url = img.dataset.src;
       delete img.dataset.src;
-      if (!url) return;
-
-      const name = img.alt;
-      let dataUrl = imageCache.get(name);
-      if (!dataUrl) {
-        const resp = await sendToBackground({ type: "FETCH_IMAGE", url });
-        dataUrl = resp?.dataUrl;
-        if (dataUrl) imageCache.set(name, dataUrl);
-      }
-
-      if (dataUrl) { img.src = dataUrl; settle(img, true); }
-      else settle(img, false);
+      if (!url) { settleSlot(img, false); continue; }
+      img.loading = "lazy";
+      img.decoding = "async";
+      img.addEventListener("load", () => settleSlot(img, true), { once: true });
+      img.addEventListener("error", () => settleSlot(img, false), { once: true });
+      img.src = url;
     }
-
-    (async () => {
-      for (let i = 0; i < imgs.length; i += BATCH) {
-        const batch = imgs.slice(i, i + BATCH);
-        await Promise.all(batch.map(loadOne));
-      }
-    })();
   }
 
   // ===== hover preview (always loads "normal" version) =====
-  const previewCache = new Map();
-
   function initPreview(deckA, deckB) {
     const stage = document.getElementById("preview-stage");
     const img = document.getElementById("preview-img");
@@ -338,22 +325,13 @@
       if (b > 0) parts.push(`<span class="pq b">${b}× <i>${esc(deckB.name)}</i></span>`);
       qtyEl.innerHTML = parts.join("");
 
+      // Straight to Scryfall, same as the grid. The load handler guards against a slow
+      // response arriving after the pointer has already moved to another card.
       stage.classList.remove("has-img");
-      const cached = previewCache.get(name);
-      if (cached) {
-        img.src = cached;
-        stage.classList.add("has-img");
-      } else {
-        sendToBackground({ type: "FETCH_IMAGE", url: imgUrl(name, "normal") }).then(resp => {
-          if (resp?.dataUrl) {
-            previewCache.set(name, resp.dataUrl);
-            if (current === name) {
-              img.src = resp.dataUrl;
-              stage.classList.add("has-img");
-            }
-          }
-        });
-      }
+      img.onload = () => { if (img.dataset.for === current) stage.classList.add("has-img"); };
+      img.onerror = null;
+      img.dataset.for = name;
+      img.src = imgUrl(name, "normal");
     }
 
     document.addEventListener("mouseover", e => {

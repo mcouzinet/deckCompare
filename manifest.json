@@ -102,7 +102,7 @@
     }
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; connect-src https://api2.moxfield.com https://archidekt.com https://www.mtgtop8.com https://www.mtggoldfish.com https://api.scryfall.com https://cards.scryfall.io https://www.magic-ville.com https://mtgdecks.net https://melee.gg https://getpaird.io https://fonts.googleapis.com https://fonts.gstatic.com; font-src https://fonts.googleapis.com https://fonts.gstatic.com; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; img-src 'self' data:;"
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src https://api2.moxfield.com https://archidekt.com https://www.mtgtop8.com https://www.mtggoldfish.com https://api.scryfall.com https://cards.scryfall.io https://www.magic-ville.com https://mtgdecks.net https://melee.gg https://getpaird.io https://fonts.googleapis.com https://fonts.gstatic.com; font-src https://fonts.googleapis.com https://fonts.gstatic.com; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; img-src 'self' data: https://api.scryfall.com https://cards.scryfall.io;"
   },
   "background": {
     "service_worker": "background.js"
