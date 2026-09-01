@@ -122,7 +122,15 @@
     // horizontal margin, with a small floor so we are never glued to them.
     const gap = parentCs ? parseFloat(parentCs.columnGap) : NaN;
     if (!(gap > 0)) {
-      const neighbourMargin = Math.max(parseFloat(cs.marginRight) || 0, parseFloat(cs.marginLeft) || 0);
+      // Prefer the anchor's own margin, but fall back to the item before it: a row often
+      // spaces every child except its last (Moxfield's toolbar uses Bootstrap me-5
+      // throughout, then nothing on the "More" wrapper we attach to), and reading only
+      // the anchor there would drop us to the floor value and break the row's rhythm.
+      let neighbourMargin = Math.max(parseFloat(cs.marginRight) || 0, parseFloat(cs.marginLeft) || 0);
+      const prev = anchor.previousElementSibling;
+      if (!neighbourMargin && prev) {
+        try { neighbourMargin = parseFloat(getComputedStyle(prev).marginRight) || 0; } catch (_) {}
+      }
       const m = Math.min(Math.max(6, Math.round(neighbourMargin)), 14);
       hostEl.style.marginLeft = `${m}px`;
       hostEl.style.marginRight = `${m}px`;

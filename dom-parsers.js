@@ -266,8 +266,11 @@
     // Comments) whose hash routes are stable; step up to the <li> so the button becomes
     // another tab. Anchoring on the h1 left it stranded on its own line under the title.
     { host: 'mtgdecks.net',    sel: 'a[href="#tools"]', up: 1 },
-    // Moxfield: deck data comes from the API, so no parser selector is load-bearing here
-    // and nothing was verifiable behind its consent wall — it uses the floating pill.
+    // Moxfield's deck subheader (Primer / Playtest / Bulk Edit / Buy Deck / More).
+    // #subheader-more is a real id, unlike the row's other hook (xQ0_bw2aqoYGKBWqhsjz),
+    // which is a build hash and would break on their next deploy. Stepping up to its
+    // wrapper puts the button at the end of the row instead of splitting the group.
+    { host: 'moxfield.com', sel: '#subheader-more', up: 1 }
   ];
 
   // `isVisible` is supplied by the content script (getBoundingClientRect); tests and

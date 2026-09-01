@@ -105,6 +105,8 @@ test("anchors: resolve against real fixtures", () => {
     ["magicville-dc.html", "https://www.magic-ville.com/fr/decks/showdeck?ref=1", "DIV"],
     ["magicville-dc.html", "https://magic-ville.com/fr/decks/showdeck?ref=1", "DIV"],  // www-less
     ["mtgdecks.html",     "https://mtgdecks.net/x",                  "LI"],
+    ["moxfield.html",     "https://moxfield.com/decks/x",            "DIV"],
+    ["moxfield.html",     "https://www.moxfield.com/decks/x",        "DIV"],  // www twin
   ];
   for (const [fixture, url, tag] of cases) {
     const enc = fixture === "magicville-dc.html" ? "latin1" : "utf8";
@@ -119,8 +121,6 @@ test("anchors: unknown site and missing element both yield null (floating fallba
   const d = doc("melee.html");
   assert.equal(D.findActionBarAnchor(d, "https://unknown.example/x"), null);   // no entry
   assert.equal(D.findActionBarAnchor(d, "https://getpaird.io/decklists/x"), null); // entry, no match
-  // Moxfield is deliberately absent — it uses the floating pill.
-  assert.equal(D.findActionBarAnchor(d, "https://www.moxfield.com/decks/x"), null);
 });
 
 test("anchors: selectors are structural and valid", () => {
