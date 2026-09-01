@@ -259,7 +259,10 @@
     // button becomes a new row at the end of that menu rather than sitting inside one.
     { host: 'magic-ville.com', sel: '.lil_menu a[href*="proxy"]', up: 1 },
     { host: 'mtggoldfish.com', sel: 'h1.title' },
-    { host: 'mtgdecks.net',    sel: 'h1' },
+    // mtgdecks has a real tab bar (Deck View / Arena Export / Tools & Download /
+    // Comments) whose hash routes are stable; step up to the <li> so the button becomes
+    // another tab. Anchoring on the h1 left it stranded on its own line under the title.
+    { host: 'mtgdecks.net',    sel: 'a[href="#tools"]', up: 1 },
     // Moxfield: deck data comes from the API, so no parser selector is load-bearing here
     // and nothing was verifiable behind its consent wall — it uses the floating pill.
   ];

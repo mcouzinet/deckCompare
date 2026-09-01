@@ -104,7 +104,7 @@ test("anchors: resolve against real fixtures", () => {
     ["getpaird.html",     "https://getpaird.io/decklists/x",         "A"],
     ["magicville-dc.html", "https://www.magic-ville.com/fr/decks/showdeck?ref=1", "DIV"],
     ["magicville-dc.html", "https://magic-ville.com/fr/decks/showdeck?ref=1", "DIV"],  // www-less
-    ["mtgdecks.html",     "https://mtgdecks.net/x",                  "H1"],
+    ["mtgdecks.html",     "https://mtgdecks.net/x",                  "LI"],
   ];
   for (const [fixture, url, tag] of cases) {
     const enc = fixture === "magicville-dc.html" ? "latin1" : "utf8";
