@@ -104,7 +104,11 @@
     //  - plain text links (Magic-Ville's menu is a row of ~15px links): a 30px button
     //    there inflates the line and reads as misaligned, so shrink to a compact chip
     //    that sits on the text line instead of towering over it.
-    const h = anchor.getBoundingClientRect().height;
+    // Only size to the neighbour when it is itself a control. Sites with no usable
+    // action bar are anchored to a heading instead, and matching a heading's height
+    // makes the button oversized — there it keeps its own default.
+    const isHeading = /^H[1-6]$/.test(anchor.tagName) || !!anchor.querySelector('h1, h2, h3');
+    const h = isHeading ? 0 : anchor.getBoundingClientRect().height;
     if (h >= 20 && h <= 52) {
       hostEl.style.setProperty('--dc-anchor-height', `${Math.round(h)}px`);
     } else if (h > 0 && h < 20) {
@@ -142,27 +146,48 @@
   // at any size and needs no web_accessible_resources. Monochrome (currentColor) with
   // depth from opacity, so it reads on any background. Used on the button and, so the
   // panel is identifiably ours, in the panel header.
+  // Card fills are classed rather than hardcoded so the same markup can be monochrome on
+  // the coloured button and two-tone (the icon's orange + teal) on the dark panel. The
+  // rule lines use a translucent black, which works over either fill — an earlier version
+  // stroked them in the button colour, which made them vanish anywhere else.
   const MARK = `
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <rect x="3.2" y="5" width="9.6" height="14" rx="2.2" fill="currentColor" opacity=".55"
+      <rect class="c-back" x="3.2" y="5" width="9.6" height="14" rx="2.2"
             transform="rotate(-9 8 12)"/>
-      <rect x="11.2" y="5" width="9.6" height="14" rx="2.2" fill="currentColor"
+      <rect class="c-front" x="11.2" y="5" width="9.6" height="14" rx="2.2"
             transform="rotate(7 16 12)"/>
-      <path d="M13.6 9.8h5M13.6 12.4h5M13.6 15h3" stroke="#6d28d9" stroke-width="1.5"
+      <path d="M13.6 9.8h5M13.6 12.4h5M13.6 15h3" stroke="rgba(0,0,0,.3)" stroke-width="1.5"
             stroke-linecap="round" transform="rotate(7 16 12)"/>
     </svg>`;
 
   const TEMPLATE = `
     <style>
+      /* Deck Compare's own palette, mirrored from popup.html's :root so the injected UI
+         matches the extension rather than inventing a look. Values are inlined because
+         the host page never sees those custom properties. */
+      :host {
+        --dc-brand: #d9485e;      /* --brand      */
+        --dc-brand-hi: #e76074;   /* --brand-hi   */
+        --dc-card-a: #e3a24f;     /* --a, the icon's orange card */
+        --dc-card-b: #56b6c9;     /* --b, the icon's teal card   */
+        --dc-ink-1: #12151d; --dc-ink-2: #181c26; --dc-ink-3: #20252f;
+        --dc-tx-hi: #eef0f6; --dc-tx: #c4c9d6; --dc-tx-mut: #868da0;
+        --dc-line: rgba(255,255,255,0.12);
+      }
       :host, * { box-sizing: border-box; }
       .fab {
         display: flex; align-items: center; gap: 8px;
         font: 600 13px/1.2 system-ui, -apple-system, "Segoe UI", sans-serif;
-        color: #fff; background: #6d28d9; border: 0; border-radius: 999px;
+        color: #fff; background: var(--dc-brand); border: 0; border-radius: 999px;
         padding: 11px 16px; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.3);
       }
-      .fab:hover { background: #7c3aed; }
+      .fab:hover { background: var(--dc-brand-hi); }
       .fab svg { width: 15px; height: 15px; flex: none; }
+      /* Monochrome on the coloured button, two-tone on the dark panel header. */
+      .fab .c-back { fill: #fff; opacity: .5; }
+      .fab .c-front { fill: #fff; }
+      .brand .c-back { fill: var(--dc-card-a); }
+      .brand .c-front { fill: var(--dc-card-b); }
       /* Inline mode: sit in the site's own action bar. Deliberately keeps our brand
          colour instead of mimicking the site's buttons — the button must read as
          "added by the extension", not as a native feature of the page. */
@@ -180,7 +205,7 @@
       :host(.compact) .fab svg { width: 12px; height: 12px; }
       .panel {
         position: fixed; z-index: 2147483647; width: 290px;
-        background: #16141c; color: #ece9f3; border: 1px solid #2f2b3a;
+        background: var(--dc-ink-1); color: var(--dc-tx-hi); border: 1px solid var(--dc-line);
         border-radius: 12px; padding: 14px; box-shadow: 0 10px 34px rgba(0,0,0,.45);
         font: 400 13px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
       }
@@ -189,29 +214,30 @@
       /* The panel has to say whose it is — on a host site it is otherwise an unexplained
          popup. Same wordmark as the toolbar popup: Deck + bold Compare. */
       .brand { display: flex; align-items: center; gap: 7px; }
-      .brand svg { width: 17px; height: 17px; color: #8b5cf6; flex: none; }
-      .brand-name { font-size: 13px; font-weight: 500; color: #ece9f3; letter-spacing: .01em; }
+      .brand svg { width: 17px; height: 17px; flex: none; }
+      .brand-name { font-size: 13px; font-weight: 500; color: var(--dc-tx-hi); letter-spacing: .01em; }
       .brand-name b { font-weight: 700; }
       .title {
         font-size: 10.5px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;
-        color: #8f88a3; margin-bottom: 10px;
+        color: var(--dc-tx-mut); margin-bottom: 10px;
       }
-      .x { border: 0; background: none; color: #a79fbd; font-size: 18px; line-height: 1; cursor: pointer; padding: 0 2px; }
-      .x:hover { color: #fff; }
+      .x { border: 0; background: none; color: var(--dc-tx-mut); font-size: 18px; line-height: 1; cursor: pointer; padding: 0 2px; }
+      .x:hover { color: var(--dc-tx-hi); }
       select, input {
-        width: 100%; font: inherit; color: #ece9f3; background: #211d2b;
-        border: 1px solid #322d40; border-radius: 8px; padding: 8px 10px; margin-bottom: 8px;
+        width: 100%; font: inherit; color: var(--dc-tx-hi); background: var(--dc-ink-2);
+        border: 1px solid var(--dc-line); border-radius: 8px; padding: 8px 10px; margin-bottom: 8px;
       }
-      select:focus, input:focus { outline: 2px solid #6d28d9; outline-offset: -1px; }
+      select:focus, input:focus { outline: 2px solid var(--dc-brand); outline-offset: -1px; }
       select[hidden] { display: none; }
       .go {
         width: 100%; font: 600 13px/1 system-ui, sans-serif; color: #fff;
-        background: #6d28d9; border: 0; border-radius: 8px; padding: 10px; cursor: pointer;
+        background: var(--dc-brand); border: 0; border-radius: 8px; padding: 10px; cursor: pointer;
       }
-      .go:hover:not(:disabled) { background: #7c3aed; }
+      .go:hover:not(:disabled) { background: var(--dc-brand-hi); }
       .go:disabled { opacity: .55; cursor: default; }
-      .msg { margin-top: 8px; font-size: 12px; color: #a79fbd; min-height: 1em; }
-      .msg.err { color: #f89a9a; }
+      .msg { margin-top: 8px; font-size: 12px; color: var(--dc-tx-mut); min-height: 1em; }
+      /* popup.html styles #status.error with --brand-hi; same convention here. */
+      .msg.err { color: var(--dc-brand-hi); }
     </style>
     <button class="fab" part="fab">
       ${MARK}
