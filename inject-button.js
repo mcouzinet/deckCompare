@@ -138,6 +138,20 @@
 
   // --- markup (inside the shadow root, so these class names are private) ---
 
+  // The extension's two-overlapping-cards mark, redrawn as inline SVG so it stays sharp
+  // at any size and needs no web_accessible_resources. Monochrome (currentColor) with
+  // depth from opacity, so it reads on any background. Used on the button and, so the
+  // panel is identifiably ours, in the panel header.
+  const MARK = `
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="3.2" y="5" width="9.6" height="14" rx="2.2" fill="currentColor" opacity=".55"
+            transform="rotate(-9 8 12)"/>
+      <rect x="11.2" y="5" width="9.6" height="14" rx="2.2" fill="currentColor"
+            transform="rotate(7 16 12)"/>
+      <path d="M13.6 9.8h5M13.6 12.4h5M13.6 15h3" stroke="#6d28d9" stroke-width="1.5"
+            stroke-linecap="round" transform="rotate(7 16 12)"/>
+    </svg>`;
+
   const TEMPLATE = `
     <style>
       :host, * { box-sizing: border-box; }
@@ -171,8 +185,17 @@
         font: 400 13px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
       }
       .panel[hidden] { display: none; }
-      .row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-      .title { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #a79fbd; }
+      .row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+      /* The panel has to say whose it is — on a host site it is otherwise an unexplained
+         popup. Same wordmark as the toolbar popup: Deck + bold Compare. */
+      .brand { display: flex; align-items: center; gap: 7px; }
+      .brand svg { width: 17px; height: 17px; color: #8b5cf6; flex: none; }
+      .brand-name { font-size: 13px; font-weight: 500; color: #ece9f3; letter-spacing: .01em; }
+      .brand-name b { font-weight: 700; }
+      .title {
+        font-size: 10.5px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;
+        color: #8f88a3; margin-bottom: 10px;
+      }
       .x { border: 0; background: none; color: #a79fbd; font-size: 18px; line-height: 1; cursor: pointer; padding: 0 2px; }
       .x:hover { color: #fff; }
       select, input {
@@ -191,22 +214,15 @@
       .msg.err { color: #f89a9a; }
     </style>
     <button class="fab" part="fab">
-      <!-- The extension's two-overlapping-cards mark, redrawn as inline SVG so it stays
-           sharp at any size and needs no web_accessible_resources. Kept monochrome
-           (currentColor) so it reads on the button in either theme; the depth comes
-           from opacity, which works on any background. -->
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <rect x="3.2" y="5" width="9.6" height="14" rx="2.2" fill="currentColor" opacity=".55"
-              transform="rotate(-9 8 12)"/>
-        <rect x="11.2" y="5" width="9.6" height="14" rx="2.2" fill="currentColor"
-              transform="rotate(7 16 12)"/>
-        <path d="M13.6 9.8h5M13.6 12.4h5M13.6 15h3" stroke="#6d28d9" stroke-width="1.5"
-              stroke-linecap="round" transform="rotate(7 16 12)"/>
-      </svg>
+      ${MARK}
       <span class="fab-label"></span>
     </button>
     <div class="panel" hidden>
-      <div class="row"><span class="title"></span><button class="x">&times;</button></div>
+      <div class="row">
+        <span class="brand">${MARK}<span class="brand-name">Deck<b>Compare</b></span></span>
+        <button class="x" aria-label="Close">&times;</button>
+      </div>
+      <div class="title"></div>
       <select hidden></select>
       <input type="text" />
       <button class="go"></button>
@@ -267,18 +283,23 @@
   }
 
   // Offer the decks the user already loaded in the popup (Moxfield/Archidekt/Magic-Ville).
+  // Stays hidden unless at least one real deck was added: an empty picker showing only
+  // "select a deck" is noise, and looks broken.
   async function fillSavedDecks(select) {
     if (select.dataset.filled) return;
-    const { deckSource } = await chrome.storage.local.get(['deckSource']);
-    const source = deckSource || 'moxfield';
-    const stored = await chrome.storage.local.get([`${source}Decks`]);
-    const decks = stored[`${source}Decks`] || [];
-    if (!decks.length) return;
-    select.hidden = false;
-    select.dataset.filled = '1';
-    const placeholder = new Option(M('selectDeck'), '');
-    select.add(placeholder);
+    let decks = [];
+    try {
+      const { deckSource } = await chrome.storage.local.get(['deckSource']);
+      const source = deckSource || 'moxfield';
+      const stored = await chrome.storage.local.get([`${source}Decks`]);
+      decks = (stored[`${source}Decks`] || []).filter(d => d && d.url && d.name);
+    } catch (_) { return; }
+    if (!decks.length) { select.hidden = true; return; }
+
+    select.add(new Option(M('selectDeck'), ''));
     for (const d of decks) select.add(new Option(d.format ? `${d.name} · ${d.format}` : d.name, d.url));
+    select.dataset.filled = '1';
+    select.hidden = false;   // only once it actually holds decks
   }
 
   const send = (msg) => new Promise((resolve, reject) => {
