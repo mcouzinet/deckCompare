@@ -249,10 +249,11 @@
     // visibility filter below — anchoring to the hidden one would make our button
     // invisible, which is worse than the floating fallback.
     { host: 'archidekt.com', sel: 'a[href*="/playtester"]' },
-    // End of the "Export →" row. Anchoring on the MTGO link put the button between
-    // MTGO and .dec, splitting the export group; .dec is the last item, so we land
-    // after it. Both are relative hrefs on mtgtop8 (href=dec?d=…), hence the ^= form.
-    { host: 'mtgtop8.com',   sel: 'a[href^="dec?d="]', up: 1 },
+    // Next to "Switch to Visual" — mtgtop8's equivalent of melee's Visual View, so the
+    // button sits in the same place on both. Sitting in the export cluster instead put
+    // it in the middle of a dense run of MTGO/.dec links. The switch=visual query is the
+    // stable hook (the label is a plain string, and the row has no ids or classes).
+    { host: 'mtgtop8.com',   sel: 'a[href*="switch=visual"]', up: 1 },
     // title-anchored: these sites sit behind bot checks/consent walls, so the hook is a
     // selector the shipped parser relies on (see parseMagicVille / parseMtgGoldfish /
     // parseMtgDecks) rather than a guess.
