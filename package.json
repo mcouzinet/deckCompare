@@ -1,6 +1,6 @@
 {
   "name": "deck-compare",
-  "version": "0.7.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Deck Compare — MTG (Chrome extension). Unit tests for the site parsers (background + DOM via jsdom) and pure-logic modules. No network.",
   "scripts": {

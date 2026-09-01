@@ -4,6 +4,40 @@ Toutes les modifications notables de **Deck Compare — MTG** sont consignées i
 Le format s'inspire de [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
+## [1.0.0] — 2026-09-01
+
+### Ajouté
+- **Bouton « Comparer » directement sur les sites de decks** — optionnel et **désactivé
+  par défaut**, activable dans les Réglages du popup (icône ⚙️). Il s'insère dans la
+  barre d'actions propre à chaque site, aux 8 endroits attendus :
+  - Melee, à côté de *Visual View* ; Archidekt, à côté de *Playtester* ;
+    getpaird, à côté de *Playtest* ; mtgtop8, à côté de *Switch to Visual* ;
+    Magic-Ville, après *Proxies* ; mtgdecks, dans la barre d'onglets ;
+    MTGGoldfish, près du titre ; Moxfield, en fin de barre du deck.
+  - Il reprend la taille, l'alignement et l'espacement du bouton voisin, et bascule en
+    version compacte au milieu d'un menu de liens texte.
+  - Si un site refond son interface, le bouton revient en flottant : le placement est
+    perdu, jamais la fonctionnalité.
+- Le panneau ouvert par ce bouton s'identifie clairement comme **Deck Compare** et reprend
+  la charte de l'extension.
+
+### Modifié
+- **Chargement des images de cartes nettement plus fiable et plus rapide.** Elles étaient
+  récupérées une par une par le service worker puis converties en base64, faute de quoi la
+  politique de sécurité les bloquait — d'où des lots séquentiels, un cache perdu à chaque
+  rechargement et des images manquantes lorsque Scryfall limitait le débit. Elles sont
+  désormais chargées directement, avec le cache du navigateur, en parallèle, et seulement
+  quand elles arrivent à l'écran.
+- Dans le popup, les **Réglages remplacent la vue principale** au lieu de s'y ajouter, ce
+  qui rendait la fenêtre beaucoup trop haute.
+
+### Sécurité et vie privée
+- L'accès aux pages Moxfield et aux variantes www/sans-www est demandé **uniquement au
+  moment où le bouton est activé**, et révoqué lorsqu'il est désactivé. Aucune permission
+  supplémentaire n'est exigée à la mise à jour : les utilisateurs existants ne sont pas
+  interrompus.
+- Le proxy d'images interne, devenu inutile, a été supprimé.
+
 ## [0.9.0] — 2026-08-31
 
 ### Ajouté
@@ -70,6 +104,7 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 ### Ajouté
 - Séparation des créatures, vue en liste, cartes plus grandes et nettoyage de code.
 
+[1.0.0]: https://github.com/mcouzinet/deckCompare/compare/v0.9.0...v1.0.0
 [0.9.0]: https://github.com/mcouzinet/deckCompare/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/mcouzinet/deckCompare/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/mcouzinet/deckCompare/compare/v0.6.0...v0.7.0

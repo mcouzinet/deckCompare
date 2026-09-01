@@ -129,13 +129,6 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return true;
   }
 
-  if (msg.type === 'FETCH_IMAGE') {
-    fetchImage(msg.url)
-      .then(dataUrl => sendResponse({ dataUrl }))
-      .catch(() => sendResponse({ dataUrl: null }));
-    return true;
-  }
-
   if (msg.type === 'FETCH_CARD_TYPES') {
     fetchCardTypes(msg.names)
       .then(types => sendResponse(types))
@@ -206,34 +199,6 @@ async function fetchCardTypes(names) {
 
   await Shared.cacheMerge('cardTypeCache', fresh, CARD_TYPE_TTL);
   return { lands: [...landNames], creatures: [...creatureNames] };
-}
-
-// --- Image proxy (avoids CORS) with retry on 429 ---
-
-const ALLOWED_IMAGE_HOSTS = ['api.scryfall.com', 'cards.scryfall.io'];
-
-async function fetchImage(url) {
-  try {
-    const parsed = new URL(url);
-    if (!ALLOWED_IMAGE_HOSTS.includes(parsed.hostname)) return null;
-  } catch { return null; }
-  for (let i = 0; i < 3; i++) {
-    const res = await fetch(url);
-    if (res.ok) {
-      const blob = await res.blob();
-      const buf = await blob.arrayBuffer();
-      const bytes = new Uint8Array(buf);
-      let binary = '';
-      for (let j = 0; j < bytes.length; j++) binary += String.fromCharCode(bytes[j]);
-      return `data:${blob.type};base64,${btoa(binary)}`;
-    }
-    if (res.status === 429) {
-      await new Promise(r => setTimeout(r, 1500 * Math.pow(2, i)));
-      continue;
-    }
-    return null;
-  }
-  return null;
 }
 
 // --- Moxfield: list user's public decks ---
