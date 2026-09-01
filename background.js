@@ -31,40 +31,59 @@ async function markDevBuild() {
 
 if (IS_DEV) markDevBuild();
 
-// --- Optional Moxfield page access (in-page button only) --------------------
-// Moxfield deck data comes from api2.moxfield.com, so the extension has never needed
-// access to www.moxfield.com itself — every other supported site serves its decks from
-// the domain the user is browsing. Only the in-page button needs the page. Requiring it
-// up front would disable the extension for every existing user until they re-accepted,
-// so it is OPTIONAL: the popup requests it when the button is switched on, and the
-// content script is registered here once it is granted (and torn down when revoked).
-const MOXFIELD_ORIGIN = 'https://www.moxfield.com/*';
-const MOXFIELD_SCRIPT_ID = 'moxfield-in-page';
+// --- Optional page access for the in-page button ----------------------------
+// Two kinds of gap are covered here, both OPTIONAL so that shipping this never forces
+// existing users through a permission dialog (which disables the extension until they
+// re-accept):
+//
+//  1. Moxfield — its decks come from api2.moxfield.com, so the extension has never
+//     needed access to the page the user is actually looking at.
+//  2. www/non-www twins — the manifest declares e.g. www.mtgtop8.com, but the site also
+//     serves mtgtop8.com, where a content script matching only the www form never runs.
+//     The background fetcher already accepts both (ALLOWED_DECK_HOSTS); only the button
+//     had the hole.
+//
+// Each granted origin gets its content script registered here, and unregistered if the
+// permission is revoked.
+const OPTIONAL_SCRIPTS = [
+  { id: 'moxfield-www',    origin: 'https://www.moxfield.com/*',  matches: ['https://www.moxfield.com/decks/*'] },
+  { id: 'moxfield-bare',   origin: 'https://moxfield.com/*',      matches: ['https://moxfield.com/decks/*'] },
+  { id: 'mtgtop8-bare',    origin: 'https://mtgtop8.com/*',       matches: ['https://mtgtop8.com/event*'] },
+  { id: 'mtggoldfish-bare', origin: 'https://mtggoldfish.com/*',  matches: ['https://mtggoldfish.com/deck/*'] },
+  { id: 'magicville-bare', origin: 'https://magic-ville.com/*',   matches: ['https://magic-ville.com/fr/decks/showdeck*'] },
+  { id: 'mtgdecks-www',    origin: 'https://www.mtgdecks.net/*',  matches: ['https://www.mtgdecks.net/*'] }
+];
 
-async function syncMoxfieldScript() {
-  let granted, existing;
+const OPTIONAL_ORIGINS = OPTIONAL_SCRIPTS.map(s => s.origin);
+
+async function syncOptionalScripts() {
+  let registered;
   try {
-    granted = await chrome.permissions.contains({ origins: [MOXFIELD_ORIGIN] });
-    existing = await chrome.scripting.getRegisteredContentScripts({ ids: [MOXFIELD_SCRIPT_ID] });
+    registered = await chrome.scripting.getRegisteredContentScripts();
   } catch { return; }
+  const have = new Set(registered.map(s => s.id));
 
-  try {
-    if (granted && !existing.length) {
-      await chrome.scripting.registerContentScripts([{
-        id: MOXFIELD_SCRIPT_ID,
-        matches: ['https://www.moxfield.com/decks/*'],
-        js: ['dom-parsers.js', 'content.js', 'inject-button.js'],
-        runAt: 'document_idle'
-      }]);
-    } else if (!granted && existing.length) {
-      await chrome.scripting.unregisterContentScripts({ ids: [MOXFIELD_SCRIPT_ID] });
-    }
-  } catch { /* registration is best-effort; the other 7 sites are unaffected */ }
+  for (const entry of OPTIONAL_SCRIPTS) {
+    let granted;
+    try { granted = await chrome.permissions.contains({ origins: [entry.origin] }); } catch { continue; }
+    try {
+      if (granted && !have.has(entry.id)) {
+        await chrome.scripting.registerContentScripts([{
+          id: entry.id,
+          matches: entry.matches,
+          js: ['dom-parsers.js', 'content.js', 'inject-button.js'],
+          runAt: 'document_idle'
+        }]);
+      } else if (!granted && have.has(entry.id)) {
+        await chrome.scripting.unregisterContentScripts({ ids: [entry.id] });
+      }
+    } catch { /* best-effort per site; the statically declared ones are unaffected */ }
+  }
 }
 
-chrome.permissions.onAdded.addListener(syncMoxfieldScript);
-chrome.permissions.onRemoved.addListener(syncMoxfieldScript);
-syncMoxfieldScript();   // also covers each service-worker restart
+chrome.permissions.onAdded.addListener(syncOptionalScripts);
+chrome.permissions.onRemoved.addListener(syncOptionalScripts);
+syncOptionalScripts();   // also covers each service-worker restart
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === 'FETCH_DECK') {

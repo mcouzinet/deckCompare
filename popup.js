@@ -140,19 +140,27 @@ document.getElementById('settings-close').addEventListener('click', () => {
 });
 
 // In-page button toggle — the content script watches this key and mounts/unmounts live.
-// Moxfield is the one supported site whose page the extension can't touch by default
-// (its decks come from api2.moxfield.com), so its access is an optional permission
-// asked for here, from this click — chrome.permissions.request needs a user gesture.
-// Declining costs only the button on Moxfield; everything else keeps working.
-const MOXFIELD_ORIGIN = 'https://www.moxfield.com/*';
+// Some supported pages need access the extension doesn't hold by default: Moxfield (its
+// decks come from api2.moxfield.com, not the page) and the www/non-www twins of sites
+// declared under only one form. They are optional permissions, asked for here from this
+// click — chrome.permissions.request needs a user gesture — and revoked when the button
+// is switched off. Declining costs only the button on those hosts; the rest keeps working.
+const OPTIONAL_ORIGINS = [
+  'https://www.moxfield.com/*',
+  'https://moxfield.com/*',
+  'https://mtgtop8.com/*',
+  'https://mtggoldfish.com/*',
+  'https://magic-ville.com/*',
+  'https://www.mtgdecks.net/*'
+];
 
 settingsInject.addEventListener('change', async () => {
   const on = settingsInject.checked;
   chrome.storage.local.set({ injectButton: on });
   try {
-    if (on) await chrome.permissions.request({ origins: [MOXFIELD_ORIGIN] });
-    else await chrome.permissions.remove({ origins: [MOXFIELD_ORIGIN] });
-  } catch (_) { /* declined or unavailable — the other 7 sites are unaffected */ }
+    if (on) await chrome.permissions.request({ origins: OPTIONAL_ORIGINS });
+    else await chrome.permissions.remove({ origins: OPTIONAL_ORIGINS });
+  } catch (_) { /* declined or unavailable — statically declared sites still work */ }
 });
 
 // --- Pool analyzer entry ---

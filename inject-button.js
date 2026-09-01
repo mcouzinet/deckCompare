@@ -99,10 +99,18 @@
     if (parseFloat(cs.marginBottom) > 24) align = 'flex-start';
     hostEl.style.alignSelf = align;
 
-    // Match the neighbour's height when it is button-sized, so we don't read as a
-    // smaller, misaligned control next to it.
+    // Size to the neighbour. Two shapes, because action bars come in two kinds:
+    //  - real buttons (20-52px): match their height exactly;
+    //  - plain text links (Magic-Ville's menu is a row of ~15px links): a 30px button
+    //    there inflates the line and reads as misaligned, so shrink to a compact chip
+    //    that sits on the text line instead of towering over it.
     const h = anchor.getBoundingClientRect().height;
-    if (h >= 20 && h <= 52) hostEl.style.setProperty('--dc-anchor-height', `${Math.round(h)}px`);
+    if (h >= 20 && h <= 52) {
+      hostEl.style.setProperty('--dc-anchor-height', `${Math.round(h)}px`);
+    } else if (h > 0 && h < 20) {
+      hostEl.classList.add('compact');
+      hostEl.style.setProperty('--dc-anchor-height', `${Math.max(18, Math.round(h) + 4)}px`);
+    }
   }
 
   // SPA/late-rendered toolbars (Moxfield, Archidekt) may not exist at document_idle.
@@ -139,6 +147,11 @@
         box-shadow: none; white-space: nowrap;
         min-height: var(--dc-anchor-height, 30px);
       }
+      /* Neighbours are text links, not buttons — sit on their line, don't tower over it. */
+      :host(.compact) .fab {
+        border-radius: 4px; padding: 0 7px; font-size: 11px; gap: 5px;
+      }
+      :host(.compact) .fab svg { width: 12px; height: 12px; }
       .panel {
         position: fixed; z-index: 2147483647; width: 290px;
         background: #16141c; color: #ece9f3; border: 1px solid #2f2b3a;

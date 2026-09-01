@@ -121,6 +121,11 @@
     "128": "icons/icon128.png"
   },
   "optional_host_permissions": [
-    "https://www.moxfield.com/*"
+    "https://www.moxfield.com/*",
+    "https://moxfield.com/*",
+    "https://mtgtop8.com/*",
+    "https://mtggoldfish.com/*",
+    "https://magic-ville.com/*",
+    "https://www.mtgdecks.net/*"
   ]
 }
