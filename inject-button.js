@@ -90,14 +90,13 @@
       parentCs = anchor.parentElement ? getComputedStyle(anchor.parentElement) : null;
     } catch (_) { return; }
 
-    // Vertical placement: the anchor's own alignment wins, else the row's.
-    let align = cs.alignSelf;
-    if (!align || align === 'auto' || align === 'normal') align = (parentCs && parentCs.alignItems) || 'center';
-    if (align === 'normal' || align === 'stretch') align = 'center';  // never let the row stretch us
-    // melee pins its buttons to the top of a ~130px bar with mb-auto, which computes to
-    // a large margin-bottom rather than to align-self.
-    if (parseFloat(cs.marginBottom) > 24) align = 'flex-start';
-    hostEl.style.alignSelf = align;
+    // Vertical placement is settled by measurement further down, not by copying the
+    // row's alignment rules — those reason about the anchor's box, and a stretched
+    // wrapper's centre is not where its link sits. Aligning to the top here is what
+    // makes that correction exact: under align-self:center flexbox centres the margin
+    // box, so a margin-top only moves us by half of it (that is why Moxfield stayed
+    // visibly low even after a correction was applied).
+    hostEl.style.alignSelf = 'flex-start';
 
     // Size to the neighbour. Two shapes, because action bars come in two kinds:
     //  - real buttons (20-52px): match their height exactly;
@@ -140,6 +139,16 @@
       const m = Math.min(Math.max(6, Math.round(neighbourMargin)), 14);
       hostEl.style.marginLeft = `${m}px`;
       hostEl.style.marginRight = `${m}px`;
+    }
+
+    // Line our centre up with the control's, from the rendered positions. This replaces
+    // the per-site alignment guesswork: it works whatever the row does, including
+    // melee's mb-auto-pinned bar, and needs no special case per site.
+    const cRect = control.getBoundingClientRect();
+    const hRect = hostEl.getBoundingClientRect();
+    if (cRect.height && hRect.height) {
+      const delta = (cRect.top + cRect.height / 2) - (hRect.top + hRect.height / 2);
+      if (Math.abs(delta) > 0.5) hostEl.style.marginTop = `${Math.round(delta)}px`;
     }
   }
 
