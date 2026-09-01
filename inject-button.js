@@ -104,11 +104,17 @@
     //  - plain text links (Magic-Ville's menu is a row of ~15px links): a 30px button
     //    there inflates the line and reads as misaligned, so shrink to a compact chip
     //    that sits on the text line instead of towering over it.
-    // Only size to the neighbour when it is itself a control. Sites with no usable
-    // action bar are anchored to a heading instead, and matching a heading's height
-    // makes the button oversized — there it keeps its own default.
-    const isHeading = /^H[1-6]$/.test(anchor.tagName) || !!anchor.querySelector('h1, h2, h3');
-    const h = isHeading ? 0 : anchor.getBoundingClientRect().height;
+    // Measure the control, not the wrapper we were inserted next to. Several anchors
+    // step up to a wrapper to get the insertion point right, and a bare wrapper in a
+    // flex row stretches to the row's height — on Moxfield that made the button 44px
+    // beside 24px links. The wrapper still decides WHERE we go; its inner control
+    // decides how big we are.
+    const control = anchor.matches('a, button') ? anchor : (anchor.querySelector('a, button') || anchor);
+
+    // Sites with no usable action bar are anchored to a heading instead, and matching a
+    // heading's height makes the button oversized — there it keeps its own default.
+    const isHeading = /^H[1-6]$/.test(control.tagName) || !!anchor.querySelector('h1, h2, h3');
+    const h = isHeading ? 0 : control.getBoundingClientRect().height;
     if (h >= 20 && h <= 52) {
       hostEl.style.setProperty('--dc-anchor-height', `${Math.round(h)}px`);
     } else if (h > 0 && h < 20) {
