@@ -254,7 +254,10 @@
     // title-anchored: these sites sit behind bot checks/consent walls, so the hook is a
     // selector the shipped parser relies on (see parseMagicVille / parseMtgGoldfish /
     // parseMtgDecks) rather than a guess.
-    { host: 'magic-ville.com', sel: 'div.title16' },
+    // Magic-Ville's action menu is a stack of one-link .lil_menu rows (Anglais, MWS,
+    // Historique, Proxies…). Anchor on the Proxies row's route and step up, so the
+    // button becomes a new row at the end of that menu rather than sitting inside one.
+    { host: 'magic-ville.com', sel: '.lil_menu a[href*="proxy"]', up: 1 },
     { host: 'mtggoldfish.com', sel: 'h1.title' },
     { host: 'mtgdecks.net',    sel: 'h1' },
     // Moxfield: deck data comes from the API, so no parser selector is load-bearing here

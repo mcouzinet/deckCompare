@@ -63,19 +63,46 @@
     host.classList.toggle('inline', !!anchor);     // :host(.inline) drops the pill shape
 
     // `all:initial` stops the page styling our host; everything else is set explicitly.
-    // align-self:flex-start pins us to the top of the site's action bar and stops the
-    // flex row stretching us. (melee's bar is ~130px tall and pins its own buttons to
-    // the top with mb-auto: default stretch made us 131px, centre left us 52px too low.)
     host.style.cssText = anchor
-      ? 'all:initial;display:inline-flex;vertical-align:middle;align-self:flex-start;'
+      ? 'all:initial;display:inline-flex;vertical-align:middle;'
       : 'all:initial;position:fixed;z-index:2147483647;bottom:20px;right:20px;';
 
     const root = host.attachShadow({ mode: 'open' });
     root.innerHTML = TEMPLATE;
     wire(root);
 
-    if (anchor && anchor.parentElement) anchor.insertAdjacentElement('afterend', host);
-    else (document.body || document.documentElement).appendChild(host);
+    if (anchor && anchor.parentElement) {
+      anchor.insertAdjacentElement('afterend', host);
+      matchAnchorBox(host, anchor, root);
+    } else {
+      (document.body || document.documentElement).appendChild(host);
+    }
+  }
+
+  // Sit like a peer of the button we were inserted next to, instead of imposing one
+  // geometry on every site: each action bar aligns its children differently, and a
+  // hardcoded value looks wrong somewhere (flex-start suited melee's tall bar but left
+  // the button riding high on getpaird, and short next to Archidekt's 39px control).
+  function matchAnchorBox(hostEl, anchor, root) {
+    let cs, parentCs;
+    try {
+      cs = getComputedStyle(anchor);
+      parentCs = anchor.parentElement ? getComputedStyle(anchor.parentElement) : null;
+    } catch (_) { return; }
+
+    // Vertical placement: the anchor's own alignment wins, else the row's.
+    let align = cs.alignSelf;
+    if (!align || align === 'auto' || align === 'normal') align = (parentCs && parentCs.alignItems) || 'center';
+    if (align === 'normal' || align === 'stretch') align = 'center';  // never let the row stretch us
+    // melee pins its buttons to the top of a ~130px bar with mb-auto, which computes to
+    // a large margin-bottom rather than to align-self.
+    if (parseFloat(cs.marginBottom) > 24) align = 'flex-start';
+    hostEl.style.alignSelf = align;
+
+    // Match the neighbour's height when it is button-sized, so we don't read as a
+    // smaller, misaligned control next to it.
+    const h = anchor.getBoundingClientRect().height;
+    if (h >= 20 && h <= 52) hostEl.style.setProperty('--dc-anchor-height', `${Math.round(h)}px`);
   }
 
   // SPA/late-rendered toolbars (Moxfield, Archidekt) may not exist at document_idle.
@@ -105,9 +132,12 @@
       /* Inline mode: sit in the site's own action bar. Deliberately keeps our brand
          colour instead of mimicking the site's buttons — the button must read as
          "added by the extension", not as a native feature of the page. */
+      /* --dc-anchor-height is set from the neighbouring button so we match its size;
+         it falls back to our own padding when the anchor isn't button-sized. */
       :host(.inline) .fab {
-        border-radius: 6px; padding: 6px 12px; font-size: 12.5px;
+        border-radius: 6px; padding: 0 12px; font-size: 12.5px;
         box-shadow: none; white-space: nowrap;
+        min-height: var(--dc-anchor-height, 30px);
       }
       .panel {
         position: fixed; z-index: 2147483647; width: 290px;
