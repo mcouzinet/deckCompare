@@ -9,7 +9,7 @@ Chrome extension to compare Magic: The Gathering decklists side by side, across 
 ## Features
 
 - **Visual diff** — cards unique to each deck displayed as image grids, shared cards in a list with quantity deltas highlighted
-- **Similarity score** — share of the larger deck the two lists have in common, with donut chart and overlap bar
+- **Similarity score** — share of the larger deck the two lists have in common, shown as a headline figure with an overlap bar
 - **8 supported sites** — Moxfield, MTGGoldfish, Archidekt, mtgtop8, Magic-Ville, mtgdecks.net, Melee, getpaird
 - **Cross-site comparison** — compare a Moxfield deck against an mtgtop8 list, etc.
 - **In-page Compare button** *(optional, off by default)* — adds a Compare button to each
@@ -21,6 +21,9 @@ Chrome extension to compare Magic: The Gathering decklists side by side, across 
   page recomputed for the filtered subset
 - **View modes** — compact grid, responsive grid, or list
 - **Card preview** — hover, click or focus any card to see the full image via Scryfall
+- **Pool analysis** — a second full-page surface: paste several decklists and see the
+  most-played cards, the average decklist, the mana curve and the top sideboard cards;
+  your pool is saved between sessions
 - **Bilingual** — English / French based on browser language
 - **No account needed** — no data collected, 100% client-side
 

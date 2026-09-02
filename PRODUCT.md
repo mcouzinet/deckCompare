@@ -56,9 +56,11 @@ exports.
 ## Capabilities and Constraints
 
 - Chrome Manifest V3. Vanilla JS, no build step, no framework, no bundler.
-- Three HTML surfaces each carry their own inline `<style>` and their own copy of the
-  palette; there is no shared UI layer. Any token change must be made in three files or
-  they drift.
+- A shared `theme.css` carries the palette and the single button component across the
+  three extension pages, and `shared.js` carries the cross-surface logic (deck
+  normalisation, saved-deck reader, optional-origin table); the injected in-page button
+  re-declares the tokens inside its shadow root, the one place a linked stylesheet cannot
+  reach.
 - Internationalised through `chrome.i18n` / `_locales`: English and French, resolved from
   the browser language. Every user-facing string lives in `_locales`.
 - No account, no backend, no analytics, no cookies. Everything runs client-side.
@@ -83,7 +85,7 @@ Name: Deck Compare — MTG. Published on the Chrome Web Store.
 
 ## Evidence on Hand
 
-- Live product, v0.9.0 on the Chrome Web Store; v1.0.0 in the working tree.
+- Live product on the Chrome Web Store; v1.0.0 tagged and submitted.
 - Real card data and imagery via the Scryfall API (`image_uris`, type lines).
 - Unit tests over the eight site parsers with fixtures in `test/fixtures/`.
 - A design critique snapshot at `.impeccable/critique/` scoring the pre-v1 UI 20/40.
