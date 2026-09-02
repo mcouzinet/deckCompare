@@ -2,283 +2,259 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <title>Deck Compare</title>
+  <meta name="color-scheme" content="dark">
+  <!-- Critical: theme.css is external, so the popup would paint white for one
+       frame before it lands. One ground colour, kept in step with --felt. -->
+  <style>html{background-color:#17120d}</style>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="theme.css">
   <style>
-    :root {
-      --ink-0: #0c0e13; --ink-1: #12151d; --ink-2: #181c26; --ink-3: #20252f; --ink-4: #2a3040;
-      --line: rgba(255,255,255,0.07); --line-strong: rgba(255,255,255,0.12);
-      --tx-hi: #eef0f6; --tx: #c4c9d6; --tx-mut: #868da0; --tx-faint: #5b6273;
-      --a: #e3a24f; --a-soft: rgba(227,162,79,0.14);
-      --b: #56b6c9; --b-soft: rgba(86,182,201,0.14);
-      --match: #74bd84;
-      --brand: #d9485e; --brand-hi: #e76074;
-      --font-display: "Bricolage Grotesque","Geist",system-ui,sans-serif;
-      --font-ui: "Geist",system-ui,-apple-system,sans-serif;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { width: 400px; font-family: var(--font-ui); font-size: 13px; color: var(--tx); background: var(--ink-1); }
+    /* The popup is the near edge of the same mat: 400px of felt, your side at the top,
+       the opponent's below, the seam between them. */
+    body { width: 400px; }
 
-    /* header */
     .p-head {
-      display: flex; align-items: center; gap: 11px; padding: 15px 18px;
-      border-bottom: 1px solid var(--line); background: linear-gradient(180deg,var(--ink-2),var(--ink-1));
+      display: flex; align-items: center; gap: calc(var(--unit) * 1.5);
+      padding: calc(var(--unit) * 2) calc(var(--unit) * 2.5);
+      border-bottom: 1px solid var(--rule);
     }
-    .brand { display: flex; align-items: center; gap: 11px; }
-    .brand-mark { width: 26px; height: 26px; border-radius: 7px; }
-    .brand-name { font-family: var(--font-display); font-weight: 700; font-size: 15px; color: #edb567; }
-    .brand-name b { color: #6fc6d8; font-weight: 800; }
+    .p-head .spacer { flex: 1; }
     .bmc {
-      display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px 5px 8px;
-      border-radius: 999px; font-size: 11px; font-weight: 600; text-decoration: none;
-      color: #2a2410; background: linear-gradient(180deg,#ffdd55,#ffc933);
-      border: 1px solid rgba(0,0,0,0.18); margin-left: auto;
-      box-shadow: 0 2px 8px -3px rgba(255,201,51,0.5),inset 0 1px 0 rgba(255,255,255,0.5);
-      transition: transform 0.14s; white-space: nowrap;
+      display: inline-flex; align-items: center; gap: calc(var(--unit) * 0.8);
+      padding: calc(var(--unit) * 0.8) calc(var(--unit) * 1.2);
+      font-size: var(--fs-micro); font-weight: 600; text-decoration: none; white-space: nowrap;
+      color: var(--warn); border: 1px solid var(--stitch); border-radius: 4px;
+      transition: color .12s, border-color .12s;
     }
-    .bmc svg { width: 14px; height: 14px; }
-    .bmc:hover { transform: translateY(-1px); }
+    .bmc svg { width: 13px; height: 13px; }
+    .bmc:hover { color: var(--warn-hi); border-color: var(--warn); }
 
-    /* body */
-    .p-body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 14px; }
+    .p-body { padding: calc(var(--unit) * 2.5); display: flex; flex-direction: column; gap: calc(var(--unit) * 2); }
 
+    /* --- your side ---------------------------------------------------------------- */
     .field-label {
-      font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.11em;
-      font-weight: 600; color: var(--tx-mut); margin-bottom: 8px;
-      display: flex; align-items: center; gap: 7px;
+      font-family: var(--font-display);
+      font-size: var(--fs-micro); font-weight: 700;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      margin-bottom: calc(var(--unit) * 1.2);
+      display: flex; align-items: center; gap: calc(var(--unit) * 0.9);
     }
-    .field-label .pip { width: 7px; height: 7px; border-radius: 50%; }
-    .field-label.a .pip { background: var(--a); box-shadow: 0 0 8px var(--a); }
-    .field-label.a { color: var(--a); }
-    .field-label.b .pip { background: var(--b); box-shadow: 0 0 8px var(--b); }
-    .field-label.b { color: var(--b); }
+    .field-label .pip { width: 6px; height: 6px; border-radius: 50%; flex: none; }
+    .field-label.a { color: var(--a); } .field-label.a .pip { background: var(--a); }
+    .field-label.b { color: var(--b); } .field-label.b .pip { background: var(--b); }
 
-    /* detected deck */
+    /* The detected deck is a card laid on the mat, lit from above. No accent stripe:
+       the label above it already carries the side's ink. */
     .detected {
-      display: flex; align-items: center; gap: 11px; padding: 12px 13px;
-      background: var(--ink-2); border: 1px solid var(--line); border-radius: 11px;
-      position: relative; overflow: hidden;
+      display: flex; align-items: center; gap: calc(var(--unit) * 1.5);
+      padding: calc(var(--unit) * 1.5);
+      background: var(--felt-lit); border: 1px solid var(--stitch);
+      border-radius: 5px; box-shadow: var(--lift-1);
     }
-    .detected::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--a); }
     .detected .ico {
-      width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0;
-      display: grid; place-items: center; background: var(--a-soft); color: var(--a);
+      width: 32px; height: 32px; border-radius: 4px; flex: none;
+      display: grid; place-items: center;
+      background: var(--a-wash); color: var(--a);
     }
-    .detected .ico svg { width: 18px; height: 18px; }
+    .detected .ico svg { width: 17px; height: 17px; }
     .detected .meta { min-width: 0; flex: 1; }
     .detected .dname {
-      font-family: var(--font-display); font-weight: 700; font-size: 14px; color: var(--tx-hi);
+      font-family: var(--font-display); font-weight: 700; font-size: var(--fs-lg);
+      color: var(--ink); line-height: 1.15;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .detected .dsub { font-size: 11.5px; color: var(--tx-mut); margin-top: 2px; display: flex; align-items: center; gap: 6px; }
-    .detected .live { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 600; color: var(--match); }
-    .detected .live .blink { width: 6px; height: 6px; border-radius: 50%; background: var(--match); box-shadow: 0 0 8px var(--match); }
-    .detected.none { opacity: 1; }
-    .detected.none::before { background: var(--tx-faint); }
-    .detected.none .ico { background: var(--ink-3); color: var(--tx-faint); }
+    .detected .dsub { margin-top: 3px; display: flex; align-items: center; gap: var(--unit); }
+    .detected .live {
+      display: inline-flex; align-items: center; gap: 5px; flex: none;
+      font-size: var(--fs-micro); font-weight: 600; color: var(--match);
+    }
+    .detected .live .blink { width: 6px; height: 6px; border-radius: 50%; background: var(--match); }
+    .detected.none .ico { background: var(--raised); color: var(--ink-3); }
+    .detected.none .dname { color: var(--ink-2); font-size: var(--fs-md); }
+    .src-chip {
+      font-size: var(--fs-micro); font-weight: 600; letter-spacing: 0.06em;
+      padding: 2px 6px; border-radius: 3px; white-space: nowrap;
+      background: var(--raised); color: var(--ink-2);
+    }
 
-    /* No deck detected — onboarding state */
+    /* --- first run ---------------------------------------------------------------- */
     .onboarding { display: none; }
-    .detected.none ~ .onboarding { display: block; }
-    .onboarding-box {
-      margin-top: 10px; padding: 12px 14px; background: var(--ink-2);
-      border: 1px dashed var(--line-strong); border-radius: 10px;
+    .detected.none ~ .onboarding { display: block; margin-top: calc(var(--unit) * 1.5); }
+    .onboarding-steps { list-style: none; }
+    .onboarding-steps li {
+      display: flex; align-items: baseline; gap: var(--unit);
+      padding: calc(var(--unit) * 0.6) 0; font-size: var(--fs-xs); color: var(--ink-2);
     }
-    .onboarding-title { font-size: 12px; font-weight: 600; color: var(--tx-hi); margin-bottom: 8px; }
-    .onboarding-steps { list-style: none; font-size: 11.5px; color: var(--tx-mut); }
-    .onboarding-steps li { padding: 3px 0; display: flex; align-items: baseline; gap: 8px; }
     .onboarding-steps .num {
-      width: 18px; height: 18px; border-radius: 50%; background: var(--ink-4);
-      color: var(--tx-hi); font-size: 10px; font-weight: 700; flex-shrink: 0;
+      width: 17px; height: 17px; border-radius: 50%; flex: none;
       display: inline-flex; align-items: center; justify-content: center;
+      background: var(--raised); color: var(--ink); font-size: var(--fs-micro); font-weight: 700;
+      font-family: var(--font-mono);
     }
-    .onboarding-sites { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
-    .onboarding-sites .chip {
-      font-size: 10px; font-weight: 600; color: var(--tx);
-      background: var(--ink-3); border: 1px solid var(--line);
-      padding: 2px 7px; border-radius: 5px;
+    .onboarding-sites, .settings-sites .chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: calc(var(--unit) * 1.5); }
+    .chip {
+      font-size: var(--fs-micro); font-weight: 600; white-space: nowrap;
+      padding: 2px 7px; border-radius: 3px;
+      background: var(--raised); color: var(--ink-2);
     }
 
-    /* Deck search dropdown */
+    /* --- the seam ----------------------------------------------------------------- */
+    .vsline { display: flex; align-items: center; gap: calc(var(--unit) * 1.5); }
+    .vsline::before, .vsline::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+    .vsline span {
+      font-family: var(--font-display); font-weight: 700; font-size: var(--fs-micro);
+      letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-3);
+    }
+
+    /* --- open deck tabs ------------------------------------------------------------ */
+    .tabpick { margin-bottom: calc(var(--unit) * 1.5); }
+    .tabpick-label {
+      font-size: var(--fs-micro); font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--ink-3); margin-bottom: var(--unit);
+    }
+    .tabpick-list { display: flex; flex-direction: column; gap: 5px; }
+    .tabpick-item {
+      display: flex; align-items: center; gap: calc(var(--unit) * 1.2);
+      width: 100%; text-align: left; cursor: pointer;
+      padding: calc(var(--unit) * 1.2);
+      font-family: var(--font-ui); font-size: var(--fs-xs); color: var(--ink);
+      background: var(--felt-lit); border: 1px solid var(--stitch); border-radius: 4px;
+      box-shadow: var(--lift-1);
+      transition: transform .12s cubic-bezier(.2,.8,.3,1), box-shadow .12s, background .12s;
+    }
+    .tabpick-item:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--lift-2); background: var(--raised); }
+    .tabpick-item:disabled { opacity: .45; cursor: default; box-shadow: none; }
+    .tabpick-item .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tabpick-item .src-chip { flex: none; }
+
+    /* --- the one field ------------------------------------------------------------- */
+    .input-row { display: flex; gap: var(--unit); }
     .deck-search-wrap { position: relative; flex: 1; min-width: 0; }
-    .deck-search-wrap .inp { width: 100%; }
     .deck-dropdown {
-      display: none; position: absolute; top: 100%; left: 0; right: 0;
-      margin-top: 4px; max-height: 200px; overflow-y: auto;
-      background: var(--ink-2); border: 1px solid var(--line-strong);
-      border-radius: 9px; z-index: 50; box-shadow: 0 12px 32px -8px rgba(0,0,0,0.6);
+      display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 50;
+      max-height: 210px; overflow-y: auto;
+      background: var(--felt-lit); border: 1px solid var(--stitch);
+      border-radius: 5px; box-shadow: var(--lift-3);
     }
     .deck-dropdown.open { display: block; }
     .deck-option {
-      padding: 8px 12px; cursor: pointer; font-size: 12.5px;
-      color: var(--tx); display: flex; justify-content: space-between;
-      align-items: center; gap: 8px; transition: background 0.1s;
+      display: flex; align-items: center; justify-content: space-between; gap: var(--unit);
+      padding: calc(var(--unit) * 1.1) calc(var(--unit) * 1.5);
+      font-size: var(--fs-xs); color: var(--ink-2); cursor: pointer;
     }
-    .deck-option:first-child { border-radius: 8px 8px 0 0; }
-    .deck-option:last-child { border-radius: 0 0 8px 8px; }
-    .deck-option:hover, .deck-option.active { background: var(--ink-4); color: var(--tx-hi); }
-    .deck-option .fmt { font-size: 10px; color: var(--tx-faint); font-weight: 600; flex-shrink: 0; }
+    .deck-option:hover, .deck-option.active { background: var(--raised); color: var(--ink); }
     .deck-option .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .deck-dropdown-empty { padding: 12px; text-align: center; font-size: 12px; color: var(--tx-faint); }
+    .deck-option .fmt { font-size: var(--fs-micro); color: var(--ink-3); font-weight: 600; flex: none; }
+    .deck-dropdown-empty {
+      padding: calc(var(--unit) * 1.1) calc(var(--unit) * 1.5);
+      font-size: var(--fs-xs); color: var(--ink-3);
+    }
 
-    /* "Configure your account" notice */
+    /* --- hints -------------------------------------------------------------------- */
+    .hint { font-size: var(--fs-micro); color: var(--ink-3); }
+    .hint b { color: var(--ink-2); font-weight: 600; }
+    button.hint, button.hint-configure { font-family: inherit; text-align: left; width: 100%; cursor: pointer; }
+    button.hint { border: 0; background: none; padding: 0; margin-top: var(--unit); }
     .hint-configure {
-      padding: 10px 12px; background: var(--warn-soft, rgba(230,181,78,0.14));
-      border: 1px dashed var(--warn, #e6b54e); border-radius: 8px;
-      color: var(--warn, #e6b54e); font-size: 12px; font-weight: 600;
-      display: flex; align-items: center; gap: 8px;
+      display: flex; align-items: center; gap: var(--unit); margin-top: var(--unit);
+      padding: calc(var(--unit) * 1.2);
+      font-size: var(--fs-xs); font-weight: 600; color: var(--warn);
+      background: transparent; border: 1px dashed var(--warn); border-radius: 4px;
     }
-    .hint-configure svg { width: 16px; height: 16px; flex-shrink: 0; }
-    .src-chip {
-      font-size: 10.5px; font-weight: 600; padding: 2px 7px; border-radius: 5px;
-      background: var(--ink-3); border: 1px solid var(--line); color: var(--tx);
-    }
+    .hint-configure svg { width: 15px; height: 15px; flex: none; }
+    .hint-configure:hover { background: rgba(230,181,78,0.08); }
 
-    /* vs divider */
-    .vsline { display: flex; align-items: center; gap: 12px; }
-    .vsline::before,.vsline::after { content: ""; flex: 1; height: 1px; background: var(--line); }
-    .vsline span { font-family: var(--font-display); font-weight: 800; font-size: 11px; letter-spacing: 0.18em; color: var(--tx-faint); text-transform: uppercase; }
-
-    /* source toggle */
-    .src-toggle {
-      display: flex; background: var(--ink-2); border: 1px solid var(--line);
-      border-radius: 9px; padding: 3px; gap: 2px; margin-bottom: 11px;
-    }
-    .src-toggle button {
-      flex: 1; border: 0; background: transparent; color: var(--tx-mut);
-      font-family: var(--font-ui); font-size: 12px; font-weight: 600;
-      padding: 7px; border-radius: 6px; cursor: pointer; transition: all .14s;
-      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    }
-    .src-toggle button svg { width: 14px; height: 14px; }
-    .src-toggle button.active { background: var(--ink-4); color: var(--tx-hi); }
-
+    /* --- pool, a second table ------------------------------------------------------ */
     .pool-entry {
-      display: flex; align-items: center; justify-content: center; gap: 9px; width: 100%;
-      padding: 11px; border: 1px solid var(--line-strong); border-radius: 11px; cursor: pointer;
-      background: linear-gradient(180deg,var(--ink-2),var(--ink-1)); color: var(--tx-hi);
-      font-family: var(--font-ui); font-weight: 600; font-size: 13px; transition: border-color 0.14s,transform 0.14s;
+      display: flex; align-items: center; justify-content: center; gap: var(--unit);
+      width: 100%; cursor: pointer;
+      padding: calc(var(--unit) * 1.3);
+      font-family: var(--font-ui); font-size: var(--fs-xs); font-weight: 600;
+      color: var(--ink-2); background: transparent;
+      border: 1px solid var(--rule); border-radius: 4px;
+      transition: color .12s, border-color .12s, background .12s;
     }
-    .pool-entry:hover { border-color: var(--a); transform: translateY(-1px); }
-    .pool-entry svg { width: 16px; height: 16px; color: var(--a); }
-    .pool-entry .sub { font-weight: 500; color: var(--tx-mut); font-size: 11.5px; }
+    .pool-entry:hover { color: var(--ink); border-color: var(--stitch); background: var(--felt-lit); }
+    .pool-entry svg { width: 14px; height: 14px; color: var(--a); }
+    .pool-entry .sub { color: var(--ink-3); font-weight: 500; }
 
-    .pane { display: none; flex-direction: column; gap: 9px; }
-    .pane.active { display: flex; }
-
-    .input-row { display: flex; gap: 8px; }
-    .inp {
-      flex: 1; min-width: 0; padding: 10px 12px; background: var(--ink-2);
-      border: 1px solid var(--line); border-radius: 9px; color: var(--tx-hi);
-      font-family: var(--font-ui); font-size: 13px; outline: none;
-      transition: border-color .14s,box-shadow .14s;
-    }
-    .inp::placeholder { color: var(--tx-faint); }
-    .inp:focus { border-color: var(--b); box-shadow: 0 0 0 3px var(--b-soft); }
-    select.inp {
-      cursor: pointer; appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%23868da0' stroke-width='2'%3E%3Cpath d='M3 5l4 4 4-4'/%3E%3C/svg%3E");
-      background-repeat: no-repeat; background-position: right 11px center; padding-right: 32px;
-    }
-    select.inp option { background: var(--ink-2); color: var(--tx-hi); }
-
-    .btn {
-      border: 0; border-radius: 9px; cursor: pointer; white-space: nowrap;
-      font-family: var(--font-ui); font-weight: 600; font-size: 13px;
-      padding: 10px 16px; transition: all .14s; display: inline-flex; align-items: center; gap: 7px;
-    }
-    .btn svg { width: 15px; height: 15px; }
-    .btn-primary { background: var(--brand); color: #fff; box-shadow: 0 3px 12px -4px rgba(217,72,94,0.6); }
-    .btn-primary:hover:not(:disabled) { background: var(--brand-hi); }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-ghost { background: var(--ink-3); color: var(--tx); border: 1px solid var(--line); }
-    .btn-ghost:hover:not(:disabled) { background: var(--ink-4); color: var(--tx-hi); }
-    .btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; }
-
-    .hint { font-size: 11px; color: var(--tx-faint); }
-    .hint b { color: var(--tx-mut); font-weight: 600; }
-
-    #status { padding: 0 18px 4px; font-size: 12px; color: var(--tx-mut); min-height: 20px; }
-    #status.error { color: var(--brand-hi); }
-
-    /* footer */
-    /* Supported-site list — moved out of the main view into Settings. */
-    .settings-sites { gap: 6px; }
-    .settings-sites .chips { display: flex; flex-wrap: wrap; gap: 6px; }
-    .settings-sites .chip {
-      font-size: 10.5px; font-weight: 600; color: var(--tx-mut);
-      background: var(--ink-2); border: 1px solid var(--line);
-      padding: 3px 8px; border-radius: 6px; white-space: nowrap;
-    }
-
-    /* Settings button */
-    .settings-btn {
-      width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 8px;
-      background: var(--ink-2); color: var(--tx-mut); cursor: pointer;
-      display: grid; place-items: center; transition: all 0.14s; flex-shrink: 0;
-    }
-    .settings-btn svg { width: 16px; height: 16px; }
-    .settings-btn:hover { color: var(--tx-hi); background: var(--ink-3); }
-
-    /* Settings panel */
-    .settings-panel {
-      border-bottom: 1px solid var(--line); background: var(--ink-0);
-    }
+    /* --- settings ------------------------------------------------------------------ */
+    .settings-panel { border-bottom: 1px solid var(--rule); }
     .settings-head {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 18px; font-size: 11px; text-transform: uppercase;
-      letter-spacing: 0.1em; font-weight: 600; color: var(--tx-mut);
+      padding: calc(var(--unit) * 1.5) calc(var(--unit) * 2.5);
+      font-family: var(--font-display);
+      font-size: var(--fs-micro); font-weight: 700;
+      letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-3);
     }
-    .settings-close {
-      border: 0; background: none; color: var(--tx-mut); font-size: 18px;
-      cursor: pointer; padding: 0 4px; line-height: 1;
+    .settings-body { padding: 0 calc(var(--unit) * 2.5) calc(var(--unit) * 2); display: flex; flex-direction: column; gap: calc(var(--unit) * 1.5); }
+    .settings-field { display: flex; flex-direction: column; gap: calc(var(--unit) * 0.7); }
+    .settings-label { font-size: var(--fs-micro); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+    .settings-hint { font-size: var(--fs-micro); color: var(--ink-3); }
+    .settings-check { flex-direction: row; align-items: flex-start; gap: var(--unit); }
+    .settings-check input { margin: 2px 0 0; flex: none; }
+    .settings-check .settings-label { cursor: pointer; text-transform: none; letter-spacing: 0; font-size: var(--fs-xs); color: var(--ink-2); }
+    .source-row { display: flex; gap: 5px; }
+    .source-row .mat-btn { flex: 1; padding: calc(var(--unit) * 1.2) calc(var(--unit) * 0.6); font-size: var(--fs-xs); }
+
+    #status {
+      padding: 0 calc(var(--unit) * 2.5) calc(var(--unit) * 1.5);
+      font-size: var(--fs-xs); color: var(--ink-3); min-height: 18px;
     }
-    .settings-close:hover { color: var(--tx-hi); }
-    .settings-body { padding: 0 18px 14px; display: flex; flex-direction: column; gap: 10px; }
-    .settings-field { display: flex; flex-direction: column; gap: 4px; }
-    .settings-label { font-size: 11px; color: var(--tx-faint); font-weight: 600; }
-    .settings-check { flex-direction: row; align-items: flex-start; gap: 8px; cursor: pointer; }
-    .settings-check input { margin: 2px 0 0; accent-color: var(--acc, #6d28d9); flex: none; }
-    .settings-check .settings-label { cursor: pointer; }
-    .settings-hint { font-size: 11px; color: var(--tx-mut); margin-top: 2px; }
+    #status.error { color: var(--brand); }
   </style>
 </head>
 <body>
+<!--
+  DIRECTION CONTRACT — Deck Compare, popup
+  THESIS: The near edge of the same table: your deck, the seam, the opponent's side —
+    not a form with two fields.
+  OWN-WORLD: Warm felt under one overhead light. Areas are silkscreened with a rule and
+    a name, never boxed and never nested. Deck 1 orange and deck 2 teal are the two sides
+    of the mat, not accents. One button component. No element carries its own halo.
+  STORY: The reader sees which deck is theirs, picks the other from a tab they already
+    have open, and is on the results page in one click.
+  FIRST VIEWPORT: Your deck named on a lifted card at the top, VERSUS across the seam,
+    the open deck tabs beneath it, then the one field and Compare.
+  FORM: The Table — candidate 3 of 7 by resonance; seed 009366bf.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+-->
   <div class="p-head">
-    <div class="brand">
-      <img class="brand-mark" src="icons/icon48.png" alt="">
-      <span class="brand-name">Deck<b>Compare</b></span>
-    </div>
+    <span class="wordmark">
+      <img src="icons/icon48.png" alt="">
+      <span>Deck<b>Compare</b></span>
+    </span>
+    <div class="spacer"></div>
     <a href="https://buymeacoffee.com/mcouzinet" target="_blank" rel="noopener" class="bmc">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h11v5a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4V8Z"/><path d="M16 9h2a2.5 2.5 0 0 1 0 5h-2"/><path d="M7 3v2M10.5 3v2M14 3v2"/></svg>
       <span id="bmc-text"></span>
     </a>
-    <button class="settings-btn" id="settings-toggle" title="Settings">
+    <button class="mat-btn mat-btn--flat mat-btn--icon" id="settings-toggle">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
     </button>
   </div>
 
-  <!-- Settings panel -->
   <div class="settings-panel" id="settings-panel" style="display:none">
     <div class="settings-head">
       <span id="settings-title"></span>
-      <button class="settings-close" id="settings-close">&times;</button>
+      <button class="mat-btn mat-btn--flat mat-btn--icon" id="settings-close" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
     </div>
     <div class="settings-body">
       <div class="settings-field">
-        <label class="settings-label" id="settings-source-label"></label>
-        <select class="inp" id="deck-source">
-          <option value="moxfield">Moxfield</option>
-          <option value="archidekt">Archidekt</option>
-          <option value="magicville">Magic-Ville</option>
-        </select>
+        <label class="settings-label" id="settings-user-label" for="settings-user"></label>
+        <input class="mat-field" id="settings-user" type="text">
       </div>
       <div class="settings-field">
-        <label class="settings-label" id="settings-user-label"></label>
-        <div class="input-row">
-          <input class="inp" id="settings-user" type="text">
-          <button class="btn btn-ghost" id="settings-save"><span id="settings-save-text"></span></button>
+        <label class="settings-label" id="settings-loadfrom-label"></label>
+        <div class="source-row">
+          <button class="mat-btn" data-source="moxfield">Moxfield</button>
+          <button class="mat-btn" data-source="archidekt">Archidekt</button>
+          <button class="mat-btn" data-source="magicville">Magic-Ville</button>
         </div>
       </div>
       <div class="hint" id="settings-hint"></div>
@@ -289,8 +265,6 @@
           <div class="settings-hint" id="settings-inject-hint"></div>
         </div>
       </div>
-      <!-- Reference material, not something needed on every use: it lives here rather
-           than in the main view, which it made longer and harder to scan. -->
       <div class="settings-field settings-sites">
         <label class="settings-label" id="supports-lbl"></label>
         <div class="chips">
@@ -309,10 +283,6 @@
   </div>
 
   <div class="p-body">
-    <button class="pool-entry" id="pool-btn">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="7"/><rect x="12" y="6" width="3" height="11"/><rect x="17" y="13" width="3" height="4"/></svg>
-      <span id="pool-entry-text"></span> <span class="sub" id="pool-entry-sub"></span>
-    </button>
     <div>
       <div class="field-label a"><span class="pip"></span><span id="lbl-deck1"></span></div>
       <div class="detected none" id="detected">
@@ -326,23 +296,21 @@
         <span class="live" id="detected-live" style="display:none"><span class="blink"></span><span id="detected-badge"></span></span>
       </div>
       <div class="onboarding" id="onboarding">
-        <div class="onboarding-box">
-          <div class="onboarding-title" id="onboarding-title"></div>
-          <ol class="onboarding-steps">
-            <li><span class="num">1</span><span id="onboarding-step1"></span></li>
-            <li><span class="num">2</span><span id="onboarding-step2"></span></li>
-            <li><span class="num">3</span><span id="onboarding-step3"></span></li>
-          </ol>
-          <div class="onboarding-sites">
-            <span class="chip">Moxfield</span>
-            <span class="chip">MTGGoldfish</span>
-            <span class="chip">Archidekt</span>
-            <span class="chip">mtgtop8</span>
-            <span class="chip">Magic-Ville</span>
-            <span class="chip">mtgdecks</span>
-            <span class="chip">Melee</span>
-            <span class="chip">getpaird</span>
-          </div>
+        <div class="settings-label" id="onboarding-title"></div>
+        <ol class="onboarding-steps">
+          <li><span class="num">1</span><span id="onboarding-step1"></span></li>
+          <li><span class="num">2</span><span id="onboarding-step2"></span></li>
+          <li><span class="num">3</span><span id="onboarding-step3"></span></li>
+        </ol>
+        <div class="onboarding-sites">
+          <span class="chip">Moxfield</span>
+          <span class="chip">MTGGoldfish</span>
+          <span class="chip">Archidekt</span>
+          <span class="chip">mtgtop8</span>
+          <span class="chip">Magic-Ville</span>
+          <span class="chip">mtgdecks</span>
+          <span class="chip">Melee</span>
+          <span class="chip">getpaird</span>
         </div>
       </div>
     </div>
@@ -351,49 +319,36 @@
 
     <div class="deck2-section">
       <div class="field-label b"><span class="pip"></span><span id="lbl-deck2"></span></div>
-      <div class="src-toggle">
-        <button class="active" data-pane="url">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/><path d="M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/></svg>
-          <span id="tab-url-text"></span>
-        </button>
-        <button data-pane="mox">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7l-8-4-8 4 8 4 8-4z"/><path d="M4 12l8 4 8-4M4 17l8 4 8-4"/></svg>
-          <span id="tab-mox-text"></span>
-        </button>
+
+      <div class="tabpick" id="tabpick" hidden>
+        <div class="tabpick-label" id="tabpick-label"></div>
+        <div class="tabpick-list" id="tabpick-list"></div>
       </div>
 
-      <div class="pane active" id="pane-url">
-        <div class="input-row">
-          <input class="inp" id="deck-url" type="text">
-          <button class="btn btn-primary" id="compare-btn">
-            <span id="cmp-url-text"></span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-          </button>
+      <div class="input-row">
+        <div class="deck-search-wrap">
+          <input class="mat-field" id="deck-url" type="text" autocomplete="off"
+                 role="combobox" aria-expanded="false" aria-autocomplete="list"
+                 aria-controls="deck-dropdown">
+          <div class="deck-dropdown" id="deck-dropdown" role="listbox"></div>
         </div>
+        <button class="mat-btn mat-btn--go" id="compare-btn">
+          <span id="cmp-url-text"></span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
       </div>
-
-      <div class="pane" id="pane-mox">
-        <div class="input-row">
-          <div class="deck-search-wrap">
-            <input class="inp" id="deck-search" type="text" disabled autocomplete="off">
-            <div class="deck-dropdown" id="deck-dropdown"></div>
-          </div>
-          <button class="settings-btn" id="refresh-btn" title="Refresh decks" style="display:none">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-          </button>
-          <button class="btn btn-primary" id="compare-moxfield-btn" disabled>
-            <span id="cmp-mox-text"></span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-          </button>
-        </div>
-        <div class="hint" id="mox-hint"></div>
-      </div>
+      <button type="button" class="hint" id="mox-hint"></button>
     </div>
+
+    <button class="pool-entry" id="pool-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="7"/><rect x="12" y="6" width="3" height="11"/><rect x="17" y="13" width="3" height="4"/></svg>
+      <span id="pool-entry-text"></span> <span class="sub" id="pool-entry-sub"></span>
+    </button>
   </div>
 
-  <div id="status"></div>
+  <div id="status" role="status" aria-live="polite"></div>
 
-
+  <script src="shared.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

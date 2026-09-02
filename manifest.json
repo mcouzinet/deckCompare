@@ -28,6 +28,7 @@
         "https://www.mtggoldfish.com/deck/*"
       ],
       "js": [
+        "shared.js",
         "dom-parsers.js",
         "content.js",
         "inject-button.js"
@@ -39,6 +40,7 @@
         "https://www.mtgtop8.com/event*"
       ],
       "js": [
+        "shared.js",
         "dom-parsers.js",
         "content.js",
         "inject-button.js"
@@ -50,6 +52,7 @@
         "https://archidekt.com/decks/*"
       ],
       "js": [
+        "shared.js",
         "dom-parsers.js",
         "content.js",
         "inject-button.js"
@@ -61,6 +64,7 @@
         "https://www.magic-ville.com/fr/decks/showdeck*"
       ],
       "js": [
+        "shared.js",
         "dom-parsers.js",
         "content.js",
         "inject-button.js"
@@ -72,6 +76,7 @@
         "https://mtgdecks.net/*"
       ],
       "js": [
+        "shared.js",
         "dom-parsers.js",
         "content.js",
         "inject-button.js"
@@ -83,6 +88,7 @@
         "https://melee.gg/Decklist/View/*"
       ],
       "js": [
+        "shared.js",
         "dom-parsers.js",
         "content.js",
         "inject-button.js"
@@ -94,6 +100,7 @@
         "https://getpaird.io/decklists/*"
       ],
       "js": [
+        "shared.js",
         "dom-parsers.js",
         "content.js",
         "inject-button.js"

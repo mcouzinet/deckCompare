@@ -1,0 +1,226 @@
+/* Deck Compare — "The Table"
+   One world, one file. The three extension pages linked this instead of each keeping
+   their own copy of the palette, which is how the eight site chips ended up styled at
+   two different sizes and pool.html ended up pinned to lang="fr".
+   The injected button mirrors these values inside its shadow root, where a stylesheet
+   link cannot reach; that copy is marked at its declaration.
+
+   The surface is a playmat seen under one overhead light. Consequences, not decoration:
+   - felt is warm, never blue-black; the light falls from above, so every elevation is an
+     offset shadow and nothing carries a halo of its own;
+   - areas are silkscreened onto the mat with a printed rule and a printed label — they
+     are zones, never boxes, and never nest;
+   - the deck colours are the two players' sides of the table, not accents sprinkled on. */
+
+:root {
+  /* ground — warm felt under a single light */
+  --felt:      #17120d;
+  --felt-lit:  #201a13;
+  --felt-deep: #0d0a06;
+  --raised:    #2a221a;
+  --raised-hi: #33291f;    /* a chip reached for */
+
+  /* printed ink */
+  --ink:   #f4eee3;
+  --ink-2: #c9bfad;
+  --ink-3: #9a8f7c;
+
+  /* the players' sides — locked brand encoding, unchanged */
+  --a:     #e3a24f;
+  --b:     #56b6c9;
+  --match: #74bd84;
+  --a-wash:     rgba(227,162,79,0.13);
+  --b-wash:     rgba(86,182,201,0.13);
+  --match-wash: rgba(116,189,132,0.12);
+  --warn:  #e6b54e;
+  --warn-hi: #ffc933;      /* the coffee chip on hover */
+
+  /* The action red, a lacquer that shares the felt's light: hue 9-12°, where the old
+     crimson sat at 351° and read as imported from a cooler world. --brand is text-only
+     (5.43:1 on felt); filled buttons take the deeper step (5.51:1 with white). */
+  --brand:      #e0654a;
+  --brand-btn:  #b8402c;
+  --brand-btn-hi: #c74a33;
+  --brand-wash: rgba(224,101,74,0.15);
+
+  /* stitching and printed rules */
+  --stitch: rgba(244,238,227,0.13);
+  --rule:   rgba(244,238,227,0.07);
+
+  /* one light, from above: every shadow shares its direction. No coloured halos. */
+  --lift-1: 0 1px 2px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.32);
+  --lift-2: 0 2px 4px rgba(0,0,0,.5),  0 8px 20px rgba(0,0,0,.42);
+  --lift-3: 0 6px 10px rgba(0,0,0,.5), 0 20px 44px rgba(0,0,0,.5);
+  /* pressed into the felt rather than sitting on it */
+  --press:  inset 0 2px 5px rgba(0,0,0,.66), inset 0 -1px 0 rgba(244,238,227,.05);
+
+  /* type ramp — 11→34px, seven steps */
+  --fs-micro: 11px;
+  --fs-xs:    12px;
+  --fs-sm:    13px;
+  --fs-md:    15px;
+  --fs-lg:    18px;
+  --fs-xl:    24px;
+  --fs-2xl:   34px;
+
+  --font-display: "Bricolage Grotesque","Geist",system-ui,sans-serif;
+  --font-ui:      "Geist",system-ui,-apple-system,sans-serif;
+  --font-mono:    "Geist Mono",ui-monospace,SFMono-Regular,monospace;
+
+  /* the printed grid every zone, card and counter snaps to */
+  --unit: 8px;
+  --gutter: calc(var(--unit) * 3);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* The mat itself. Matted fibre, not a weave: low-amplitude noise, fixed so it reads as
+   one continuous surface under the content rather than tiling with it.
+   The layers live on html, not body: a root background is painted by the compositor,
+   whereas a fixed body background (with html carrying its own color) forces a
+   main-thread repaint of the viewport-sized noise on every scroll frame — on the
+   pages that scroll hundreds of card images. Body stays transparent for the same
+   reason; the inline critical style in each page colours html only. */
+html {
+  background-color: var(--felt);
+  background-image:
+    radial-gradient(120% 80% at 50% -10%, rgba(244,238,227,0.055), transparent 60%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.045'/%3E%3C/svg%3E");
+  background-attachment: fixed, fixed;
+}
+
+body {
+  font-family: var(--font-ui);
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+
+/* --- browser surfaces ------------------------------------------------------------
+   The parts we did not draw still carry the world. Left at their defaults they belong
+   to no design system, and they are the cheapest tell that a page was assembled. */
+::selection { background: var(--a-wash); color: var(--ink); }
+:root { accent-color: var(--a); caret-color: var(--a); color-scheme: dark; }
+* { scrollbar-width: thin; scrollbar-color: var(--raised) transparent; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: var(--raised); border-radius: 999px; border: 3px solid transparent; background-clip: content-box; }
+*::-webkit-scrollbar-thumb:hover { background: var(--raised-hi); background-clip: content-box; }
+a { color: var(--ink); text-underline-offset: 0.22em; text-decoration-thickness: 1px; }
+/* Counts, quantities and deltas are measurements: they line up in columns. */
+.num, .qty, output { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+:focus-visible {
+  outline: 2px solid var(--a);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* --- printed marks ---------------------------------------------------------------
+   A zone on a playmat is silkscreened onto the felt: a hairline rule and a name. It is
+   not a container, so it has no fill, no border box and no rounded corners, and zones
+   never nest. */
+.zone { padding-top: calc(var(--unit) * 2); }
+/* Stacked zones need air between them; two zones side by side on the same row are
+   peers, not a stack, so the rule is scoped to the vertical case. */
+.zone + .zone { margin-top: calc(var(--unit) * 5); }
+.sides > .zone + .zone { margin-top: 0; }
+.zone-mark {
+  display: flex; align-items: center; gap: calc(var(--unit) * 1.5);
+  padding-bottom: var(--unit);
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: calc(var(--unit) * 2);
+}
+.zone-name {
+  font-family: var(--font-display);
+  font-size: var(--fs-micro); font-weight: 700;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--ink-3);
+}
+.zone-count {
+  margin-left: auto;
+  font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+  font-size: var(--fs-xs); color: var(--ink-3);
+}
+/* A side's own zone takes that side's ink. */
+.side-a .zone-name, .side-a .zone-count { color: var(--a); }
+.side-b .zone-name, .side-b .zone-count { color: var(--b); }
+.side-a .zone-mark { border-bottom-color: var(--a-wash); }
+.side-b .zone-mark { border-bottom-color: var(--b-wash); }
+
+/* --- the one button component -----------------------------------------------------
+   Nine separate treatments used to be invented wherever a button was needed. One
+   component, four variants, one shape language: a printed chip lying on the mat that
+   lifts when you reach for it. */
+.mat-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: calc(var(--unit) * 0.9);
+  font-family: var(--font-ui); font-size: var(--fs-sm); font-weight: 600;
+  line-height: 1; white-space: nowrap; cursor: pointer;
+  padding: calc(var(--unit) * 1.4) calc(var(--unit) * 2);
+  color: var(--ink); background: var(--raised);
+  border: 1px solid var(--stitch); border-radius: 4px;
+  box-shadow: var(--lift-1);
+  transition: transform .12s cubic-bezier(.2,.8,.3,1), box-shadow .12s, background .12s;
+}
+.mat-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--lift-2); background: var(--raised-hi); }
+.mat-btn:active:not(:disabled) { transform: translateY(0); box-shadow: var(--lift-1); }
+.mat-btn:disabled { opacity: .45; cursor: default; box-shadow: none; }
+.mat-btn svg { width: 15px; height: 15px; flex: none; }
+
+.mat-btn--go { background: var(--brand-btn); border-color: transparent; color: #fff; }
+.mat-btn--go:hover:not(:disabled) { background: var(--brand-btn-hi); }
+
+/* Flat against the mat: no lift until you reach for it. */
+.mat-btn--flat { background: transparent; border-color: transparent; box-shadow: none; color: var(--ink-2); }
+.mat-btn--flat:hover:not(:disabled) { background: var(--felt-lit); color: var(--ink); box-shadow: var(--lift-1); }
+
+.mat-btn--icon { padding: calc(var(--unit) * 1.2); }
+.mat-btn--icon svg { width: 16px; height: 16px; }
+
+/* --- printed inputs --------------------------------------------------------------- */
+.mat-field {
+  width: 100%; padding: calc(var(--unit) * 1.4) calc(var(--unit) * 1.6);
+  font-family: var(--font-ui); font-size: var(--fs-sm); color: var(--ink);
+  background: var(--felt-deep); border: 1px solid var(--stitch);
+  border-radius: 4px; outline: none;
+  box-shadow: var(--press);
+  transition: border-color .12s;
+}
+.mat-field::placeholder { color: var(--ink-3); }
+.mat-field:focus { border-color: var(--a); }
+
+/* --- selectable segments ----------------------------------------------------------
+   State is printed, never colour alone: the selected segment is pressed into the felt
+   and says so, so the control still reads with colour removed. */
+.segments { display: inline-flex; gap: 2px; padding: 2px; background: var(--felt-deep); border-radius: 5px; box-shadow: var(--press); }
+.segment {
+  font-family: var(--font-ui); font-size: var(--fs-xs); font-weight: 600;
+  letter-spacing: 0.04em; padding: calc(var(--unit) * 1.1) calc(var(--unit) * 1.8);
+  color: var(--ink-3); background: transparent; border: 0; border-radius: 3px; cursor: pointer;
+  transition: color .12s, background .12s;
+}
+.segment:hover { color: var(--ink-2); }
+.segment[aria-pressed="true"] { color: var(--ink); background: var(--raised); box-shadow: var(--lift-1); }
+
+/* --- the wordmark, printed on the mat edge ---------------------------------------- */
+.wordmark { display: inline-flex; align-items: center; gap: calc(var(--unit) * 1.3); }
+.wordmark img { width: 26px; height: 26px; border-radius: 5px; }
+.wordmark span {
+  font-family: var(--font-display); font-weight: 700; font-size: var(--fs-md);
+  letter-spacing: -0.01em; color: var(--a);
+}
+.wordmark b { color: var(--b); font-weight: 800; }
+
+/* --- utility ---------------------------------------------------------------------- */
+.hide { display: none !important; }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

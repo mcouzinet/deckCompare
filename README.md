@@ -9,25 +9,29 @@ Chrome extension to compare Magic: The Gathering decklists side by side, across 
 ## Features
 
 - **Visual diff** — cards unique to each deck displayed as image grids, shared cards in a list with quantity deltas highlighted
-- **Similarity score** — Jaccard-based percentage with donut chart and overlap bar
+- **Similarity score** — share of the larger deck the two lists have in common, with donut chart and overlap bar
 - **8 supported sites** — Moxfield, MTGGoldfish, Archidekt, mtgtop8, Magic-Ville, mtgdecks.net, Melee, getpaird
 - **Cross-site comparison** — compare a Moxfield deck against an mtgtop8 list, etc.
 - **In-page Compare button** *(optional, off by default)* — adds a Compare button to each
   site's own toolbar, so a comparison starts without opening the popup. Enable it under
   the gear icon → *Compare button on deck sites*.
-- **Moxfield deck loader** — enter your username to browse and pick from your public decks
-- **Board filters** — filter by All / Commanders / Mainboard / Sideboard
-- **View modes** — compact, comfortable, or large card grids
-- **Card preview** — hover any card to see the full image via Scryfall
+- **Your own decks** — enter your username under the gear icon and load your public decks
+  from Moxfield, Archidekt or Magic-Ville; the Deck 2 field then searches all of them
+- **Board filters** — All / Commanders / Mainboard / Sideboard, with every figure on the
+  page recomputed for the filtered subset
+- **View modes** — compact grid, responsive grid, or list
+- **Card preview** — hover, click or focus any card to see the full image via Scryfall
 - **Bilingual** — English / French based on browser language
 - **No account needed** — no data collected, 100% client-side
 
 ## How it works
 
 1. Open a deck on any supported site
-2. Click the extension icon — or the in-page **Compare** button, if enabled — and paste a
-   second deck URL (or pick one from your Moxfield collection)
-3. Get a full visual breakdown in a new tab
+2. Click the extension icon — or the in-page **Compare** button, if enabled. If another
+   supported deck page is already open, pick it in one click; otherwise paste a second
+   deck URL, or search your loaded decks by name
+3. Get a full visual breakdown in a new tab — then swap the two decks, or compare against
+   a different one, without leaving the page
 
 ### Permissions
 

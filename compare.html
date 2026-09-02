@@ -4,499 +4,458 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Deck Compare — Results</title>
+  <meta name="color-scheme" content="dark">
+  <!-- Critical: theme.css is external, so the popup would paint white for one
+       frame before it lands. One ground colour, kept in step with --felt. -->
+  <style>html{background-color:#17120d}</style>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="theme.css">
   <style>
-    :root {
-      --ink-0: #0c0e13;
-      --ink-1: #12151d;
-      --ink-2: #181c26;
-      --ink-3: #20252f;
-      --ink-4: #2a3040;
-      --line: rgba(255,255,255,0.07);
-      --line-strong: rgba(255,255,255,0.12);
-      --tx-hi: #eef0f6;
-      --tx: #c4c9d6;
-      --tx-mut: #868da0;
-      --tx-faint: #5b6273;
-      --a: #e3a24f;
-      --a-soft: rgba(227,162,79,0.14);
-      --b: #56b6c9;
-      --b-soft: rgba(86,182,201,0.14);
-      --match: #74bd84;
-      --match-soft: rgba(116,189,132,0.13);
-      --warn: #e6b54e;
-      --warn-soft: rgba(230,181,78,0.14);
-      --brand: #d9485e;
-      --brand-hi: #e76074;
-      --radius: 14px;
-      --radius-sm: 9px;
-      --shadow-1: 0 1px 0 rgba(255,255,255,0.04) inset, 0 2px 8px rgba(0,0,0,0.3);
-      --font-display: "Bricolage Grotesque","Geist",system-ui,sans-serif;
-      --font-ui: "Geist",system-ui,-apple-system,sans-serif;
-      --font-mono: "Geist Mono",ui-monospace,monospace;
+    /* --- the mat ------------------------------------------------------------------ */
+    .mat {
+      max-width: 1320px; margin: 0 auto;
+      padding: calc(var(--unit) * 3) var(--gutter) calc(var(--unit) * 6);
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scrollbar-color: var(--ink-4) transparent; }
-    body {
-      font-family: var(--font-ui);
-      background: radial-gradient(1200px 600px at 75% -10%,rgba(86,182,201,0.05),transparent 60%),
-        radial-gradient(1000px 500px at 10% -5%,rgba(227,162,79,0.05),transparent 55%),var(--ink-0);
-      color: var(--tx); font-size: 14px; line-height: 1.5;
-      -webkit-font-smoothing: antialiased; min-height: 100vh;
-    }
-    ::selection { background: rgba(217,72,94,0.3); }
 
-    /* top bar */
-    .topbar {
-      position: sticky; top: 0; z-index: 40;
-      display: flex; align-items: center; gap: 16px; padding: 14px 28px;
-      background: rgba(12,14,19,0.82); backdrop-filter: blur(14px);
-      border-bottom: 1px solid var(--line);
+    .mat-edge {
+      display: flex; align-items: center; gap: calc(var(--unit) * 2);
+      flex-wrap: wrap; row-gap: calc(var(--unit) * 1.5);
+      padding: calc(var(--unit) * 2) var(--gutter);
+      border-bottom: 1px solid var(--rule);
+      max-width: 1320px; margin: 0 auto;
     }
-    .brand { display: flex; align-items: center; gap: 11px; }
-    .brand-mark {
-      width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
-    }
-    .brand-name { font-family: var(--font-display); font-weight: 700; font-size: 16px; letter-spacing: -0.01em; color: #edb567; }
-    .brand-name b { color: #6fc6d8; font-weight: 800; }
-    .topbar-spacer { flex: 1; }
-    .topbar-meta { font-size: 12px; color: var(--tx-faint); display: flex; align-items: center; gap: 7px; }
-    .topbar-meta .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--tx-faint); }
+    .mat-edge .spacer { flex: 1; }
+    .edge-actions { display: flex; align-items: center; gap: var(--unit); }
+    .tb-wrap { position: relative; }
 
+    /* Buy me a coffee: it keeps its place and its link, and stops outshouting the
+       primary action it sits next to. */
     .bmc {
-      display: inline-flex; align-items: center; gap: 8px; padding: 7px 13px 7px 11px;
-      border-radius: 999px; font-size: 12.5px; font-weight: 600; text-decoration: none;
-      color: #2a2410; background: linear-gradient(180deg,#ffdd55,#ffc933);
-      border: 1px solid rgba(0,0,0,0.18);
-      box-shadow: 0 3px 12px -4px rgba(255,201,51,0.55),inset 0 1px 0 rgba(255,255,255,0.5);
-      transition: transform 0.14s,box-shadow 0.14s; white-space: nowrap;
+      display: inline-flex; align-items: center; gap: var(--unit);
+      padding: calc(var(--unit) * 1.2) calc(var(--unit) * 1.6);
+      font-size: var(--fs-xs); font-weight: 600; text-decoration: none; white-space: nowrap;
+      color: var(--warn); background: transparent;
+      border: 1px solid var(--stitch); border-radius: 4px;
+      transition: color .12s, border-color .12s;
     }
-    .bmc svg { width: 16px; height: 16px; }
-    .bmc:hover { transform: translateY(-1px); box-shadow: 0 6px 18px -5px rgba(255,201,51,0.7),inset 0 1px 0 rgba(255,255,255,0.5); }
+    .bmc svg { width: 15px; height: 15px; }
+    .bmc:hover { color: var(--warn-hi); border-color: var(--warn); }
 
-    /* layout */
-    .shell {
-      display: grid; grid-template-columns: minmax(0,1fr) 320px; gap: 28px;
-      max-width: 1320px; margin: 0 auto; padding: 28px; align-items: start;
-    }
-    @media (max-width:1000px) {
-      .shell { grid-template-columns: minmax(0,1fr); }
-      .rail { display: none !important; }
-    }
-
-    /* matchup hero */
+    /* --- the matchup, pressed into the felt --------------------------------------- */
     .matchup {
-      background: linear-gradient(180deg,var(--ink-2),var(--ink-1));
-      border: 1px solid var(--line); border-radius: var(--radius);
-      padding: 22px 24px 20px; box-shadow: var(--shadow-1); margin-bottom: 20px;
+      display: grid; grid-template-columns: 1fr auto 1fr;
+      align-items: center; gap: var(--gutter);
+      padding: calc(var(--unit) * 6) 0 calc(var(--unit) * 4);
     }
-    .matchup-decks { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 24px; }
-    .deckcard { min-width: 0; }
-    .deckcard.b { text-align: right; }
-    .deck-eyebrow {
-      font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.13em;
-      font-weight: 600; margin-bottom: 7px; display: flex; align-items: center; gap: 7px;
-    }
-    .deckcard.b .deck-eyebrow { justify-content: flex-end; }
-    .deck-eyebrow .pip { width: 8px; height: 8px; border-radius: 50%; }
-    .deckcard.a .deck-eyebrow { color: var(--a); }
-    .deckcard.a .pip { background: var(--a); box-shadow: 0 0 10px var(--a); }
-    .deckcard.b .deck-eyebrow { color: var(--b); }
-    .deckcard.b .pip { background: var(--b); box-shadow: 0 0 10px var(--b); }
+    .side { min-width: 0; }
+    .side.b { text-align: right; }
+
+    /* No eyebrow above the name: the deck's own ink says which side it is, and the
+       stitched edge under it repeats that without a second label. */
     .deck-name {
+      display: block;
       font-family: var(--font-display); font-weight: 700;
-      font-size: clamp(18px,2vw,24px); color: var(--tx-hi);
-      letter-spacing: -0.015em; line-height: 1.2;
-      word-break: break-word;
+      font-size: clamp(var(--fs-lg), 2.6vw, var(--fs-xl));
+      line-height: 1.15; letter-spacing: -0.02em;
+      text-decoration: none; overflow-wrap: break-word;
     }
-    a.deck-name { text-decoration: none; transition: opacity 0.14s; }
-    a.deck-name:hover { opacity: 0.75; }
-    .deck-sub { margin-top: 6px; font-size: 12px; color: var(--tx-mut); display: flex; align-items: center; gap: 8px; overflow: hidden; }
-    .src-chip { flex-shrink: 0; }
-    .deckcard.b .deck-sub { justify-content: flex-end; }
-    .src-chip {
-      font-size: 10.5px; font-weight: 600; padding: 2px 7px; border-radius: 5px;
-      background: var(--ink-3); border: 1px solid var(--line); color: var(--tx);
+    .side.a .deck-name { color: var(--a); }
+    .side.b .deck-name { color: var(--b); }
+    a.deck-name:hover { text-decoration: underline; }
+    .deck-edge { height: 2px; margin-top: calc(var(--unit) * 1.5); border-radius: 2px; }
+    .side.a .deck-edge { background: linear-gradient(90deg, var(--a), transparent); }
+    .side.b .deck-edge { background: linear-gradient(270deg, var(--b), transparent); }
+    .deck-src {
+      margin-top: var(--unit);
+      font-size: var(--fs-micro); font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--ink-3);
     }
 
-    /* similarity ring */
-    .similarity { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 0 6px; }
-    .ring { position: relative; width: 88px; height: 88px; }
-    .ring svg { transform: rotate(-90deg); display: block; }
-    .ring-val { position: absolute; inset: 0; display: grid; place-items: center; }
-    .ring-num { font-family: var(--font-display); font-weight: 800; font-size: 25px; color: var(--tx-hi); line-height: 1; }
-    .ring-num span { font-size: 13px; color: var(--tx-mut); font-weight: 600; }
-    .ring-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--tx-faint); font-weight: 600; }
+    /* The figure is the mat's own marking, debossed, not a dial floating in a panel. */
+    .counter { display: flex; flex-direction: column; align-items: center; gap: calc(var(--unit) * 0.5); }
+    .counter-well {
+      display: grid; place-items: center;
+      width: 148px; height: 148px; border-radius: 50%;
+      background: var(--felt-deep); box-shadow: var(--press);
+    }
+    .counter-num {
+      font-family: var(--font-display); font-weight: 800;
+      font-size: var(--fs-2xl); line-height: 1; color: var(--ink);
+      font-variant-numeric: tabular-nums;
+    }
+    .counter-num span { font-size: var(--fs-md); color: var(--ink-3); font-weight: 700; }
+    .counter-label {
+      font-size: var(--fs-micro); font-weight: 700; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--ink-3);
+    }
 
-    /* overlap bar */
-    .overlap { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); }
-    .overlap-bar { display: flex; height: 12px; border-radius: 999px; overflow: hidden; gap: 2px; background: var(--ink-0); }
-    .overlap-seg { height: 100%; }
-    .overlap-seg.a { background: var(--a); border-radius: 999px 0 0 999px; }
-    .overlap-seg.s { background: var(--match); }
-    .overlap-seg.b { background: var(--b); border-radius: 0 999px 999px 0; }
-    .overlap-legend { display: flex; justify-content: space-between; margin-top: 11px; font-size: 11.5px; }
-    .lg { display: flex; align-items: center; gap: 6px; color: var(--tx-mut); }
-    .lg .sw { width: 9px; height: 9px; border-radius: 3px; }
-    .lg b { color: var(--tx-hi); font-weight: 600; font-family: var(--font-mono); }
+    /* --- the seam ----------------------------------------------------------------- */
+    .seam { padding-bottom: calc(var(--unit) * 4); border-bottom: 1px solid var(--rule); }
+    .seam-bar { display: flex; height: 10px; border-radius: 999px; overflow: hidden; gap: 2px; background: var(--felt-deep); box-shadow: var(--press); }
+    .seam-seg { height: 100%; }
+    .seam-seg.a { background: var(--a); }
+    .seam-seg.s { background: var(--match); }
+    .seam-seg.b { background: var(--b); }
+    .seam-legend {
+      display: flex; justify-content: space-between; flex-wrap: wrap;
+      gap: var(--unit); margin-top: calc(var(--unit) * 1.5); font-size: var(--fs-xs);
+    }
+    .lg { display: inline-flex; align-items: center; gap: var(--unit); color: var(--ink-3); }
+    .lg .sw { width: 9px; height: 9px; border-radius: 2px; flex: none; }
+    .lg b { color: var(--ink); font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 600; }
     .lg.a .sw { background: var(--a); }
     .lg.s .sw { background: var(--match); }
     .lg.b .sw { background: var(--b); }
 
-    /* controls */
-    .controls { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
-    .segmented { display: inline-flex; background: var(--ink-2); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 3px; gap: 2px; }
-    .seg-btn {
-      border: 0; background: transparent; color: var(--tx-mut); font-family: var(--font-ui);
-      font-size: 12.5px; font-weight: 600; padding: 6px 13px; border-radius: 6px;
-      cursor: pointer; transition: all 0.14s; white-space: nowrap;
+    /* --- controls ----------------------------------------------------------------- */
+    .controls {
+      display: flex; align-items: center; gap: var(--unit); flex-wrap: wrap;
+      padding: calc(var(--unit) * 3) 0;
     }
-    .seg-btn:hover { color: var(--tx); }
-    .seg-btn.active { background: var(--ink-4); color: var(--tx-hi); box-shadow: 0 1px 2px rgba(0,0,0,0.3); }
-    .controls-spacer { flex: 1; }
-    .icon-toggle { display: inline-flex; background: var(--ink-2); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 3px; gap: 2px; }
-    .icon-btn {
-      border: 0; background: transparent; color: var(--tx-mut); width: 30px; height: 28px;
-      border-radius: 6px; cursor: pointer; display: grid; place-items: center; transition: all 0.14s;
+    .controls .spacer { flex: 1; }
+
+    /* --- the table: two sides, and the ground they share --------------------------- */
+    .table-grid {
+      display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: var(--gutter);
+      align-items: start;
     }
-    .icon-btn svg { width: 16px; height: 16px; }
-    .icon-btn:hover { color: var(--tx); }
-    .icon-btn.active { background: var(--ink-4); color: var(--tx-hi); }
+    .sides { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: var(--gutter); }
 
-    /* diff columns */
-    .diff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 22px; }
-    @media (max-width:720px) { .diff-grid { grid-template-columns: 1fr; } }
-    .col { background: var(--ink-1); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
-    .col-head { display: flex; align-items: center; gap: 9px; padding: 13px 16px; border-bottom: 1px solid var(--line); }
-    .col-head .pip { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-    .col-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--tx-hi); }
-    .col-title small { display: block; font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--tx-faint); font-size: 11px; margin-top: 1px; }
-    .col-count { margin-left: auto; font-family: var(--font-mono); font-size: 12px; color: var(--tx-mut); background: var(--ink-3); padding: 2px 9px; border-radius: 999px; }
-    .col.a .pip { background: var(--a); box-shadow: 0 0 8px var(--a); }
-    .col.b .pip { background: var(--b); box-shadow: 0 0 8px var(--b); }
-    .col.a .col-count { color: var(--a); }
-    .col.b .col-count { color: var(--b); }
-    .col-body { padding: 14px; }
-    .col-empty { padding: 30px 16px; text-align: center; color: var(--tx-faint); font-size: 13px; }
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(var(--card-w,clamp(104px,9vw,148px)),1fr)); gap: calc(var(--unit) * 1.2); }
 
-    /* card grid */
-    .card-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(var(--card-w,130px),1fr)); gap: 9px; }
+    /* Cards lie on the felt. Reaching for one lifts it — the light is overhead, so the
+       shadow grows downward; nothing glows. */
     .card-slot {
-      position: relative; cursor: pointer; border-radius: 7px;
-      aspect-ratio: 488/680; transition: transform 0.16s,box-shadow 0.16s;
+      position: relative; aspect-ratio: 488/680; border-radius: 5px;
+      background: var(--felt-deep); overflow: hidden; cursor: pointer;
+      box-shadow: var(--lift-1);
+      transition: transform .14s cubic-bezier(.2,.8,.3,1), box-shadow .14s;
     }
-    .card-slot:hover { transform: translateY(-6px) scale(1.02); z-index: 5; }
-    .card-slot img {
-      width: 100%; height: 100%; object-fit: cover; border-radius: 4.7%/3.4%;
-      display: block; background: var(--ink-3); color: transparent;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.45);
+    .card-slot:hover, .card-slot:focus-visible { transform: translateY(-3px); box-shadow: var(--lift-3); z-index: 2; }
+    .card-slot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .card-slot.is-loading { background: var(--raised); }
+    .card-slot .proxy-name {
+      display: none; position: absolute; inset: 0; padding: calc(var(--unit) * 1.2);
+      align-items: center; justify-content: center; text-align: center;
+      font-size: var(--fs-micro); font-weight: 600; color: var(--ink-2);
+      border: 1px dashed var(--stitch); border-radius: 5px;
     }
-    .card-slot.is-loading img {
-      background: linear-gradient(110deg,var(--ink-2) 28%,var(--ink-3) 48%,var(--ink-2) 68%);
-      background-size: 220% 100%; animation: shimmer 1.5s infinite;
-    }
-    @keyframes shimmer { 0% { background-position: 220% 0; } 100% { background-position: -220% 0; } }
-    .proxy-name { display: none; }
+    .card-slot.is-proxy { background: var(--felt-lit); }
+    .card-slot.is-proxy .proxy-name { display: flex; }
     .card-slot.is-proxy img { display: none; }
-    .card-slot.is-proxy {
-      background: radial-gradient(120% 80% at 50% 0%,var(--ink-3),var(--ink-2));
-      border: 1px solid var(--line-strong);
-      box-shadow: inset 0 0 0 4px var(--ink-1),0 2px 8px rgba(0,0,0,0.45);
+    .qty-badge, .board-tag {
+      position: absolute; z-index: 1;
+      font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+      font-size: var(--fs-micro); font-weight: 700; line-height: 1;
+      padding: 3px 6px; border-radius: 3px;
+      color: var(--ink); background: rgba(13,10,6,.82);
     }
-    .card-slot.is-proxy .proxy-name {
-      display: flex; position: absolute; inset: 7px; align-items: center; justify-content: center;
-      text-align: center; font-family: var(--font-display); font-weight: 600;
-      font-size: 11px; line-height: 1.2; color: var(--tx); padding: 6px; border-radius: 5px;
-      border: 1px dashed var(--line-strong); text-wrap: balance;
-    }
-    .qty-badge {
-      position: absolute; top: 5px; left: 5px; font-family: var(--font-mono);
-      font-size: 11px; font-weight: 700; color: #fff; background: rgba(0,0,0,0.78);
-      padding: 1px 6px; border-radius: 5px; line-height: 1.4;
-      backdrop-filter: blur(2px); border: 1px solid rgba(255,255,255,0.12);
-    }
-    .board-tag {
-      position: absolute; bottom: 5px; right: 5px; font-size: 8.5px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 0.05em; color: var(--tx-hi);
-      background: rgba(0,0,0,0.7); padding: 1px 5px; border-radius: 4px; backdrop-filter: blur(2px);
-    }
-    .hide { display: none !important; }
-
-    /* shared list */
-    .shared { background: var(--ink-1); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
-    .shared-head { display: flex; align-items: center; gap: 9px; padding: 13px 16px; border-bottom: 1px solid var(--line); }
-    .shared-head .pip { width: 9px; height: 9px; border-radius: 50%; background: var(--match); box-shadow: 0 0 8px var(--match); }
-    .shared-head .col-count { color: var(--match); }
-    .shared-note { margin-left: 6px; font-size: 11.5px; color: var(--tx-faint); display: flex; align-items: center; gap: 6px; }
-    .shared-note .warn-dot { width: 8px; height: 8px; border-radius: 2px; background: var(--warn); }
-    .srow-head,.srow { display: grid; grid-template-columns: 56px 1fr auto 56px; align-items: center; gap: 12px; padding: 0 16px; }
-    .srow-head {
-      height: 32px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em;
-      color: var(--tx-faint); font-weight: 600; border-bottom: 1px solid var(--line);
-    }
-    .srow-head .ca, .srow-head .cb { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .srow-head .ca { color: var(--a); }
-    .srow-head .cb { color: var(--b); text-align: right; }
-    .srow-head .cc { text-align: center; }
-    .srow {
-      height: 38px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.025); transition: background 0.1s;
-    }
-    .srow:last-child { border-bottom: 0; }
-    .srow:hover { background: var(--match-soft); }
-    .srow .qa,.srow .qb { font-family: var(--font-mono); font-size: 13px; font-weight: 600; }
-    .srow .qa { color: var(--a); }
-    .srow .qb { color: var(--b); text-align: right; }
-    .srow .nm {
-      font-size: 13.5px; color: var(--tx); white-space: nowrap; overflow: hidden;
-      text-overflow: ellipsis; display: flex; align-items: center; gap: 8px;
-    }
-    .srow .nm .bt {
-      font-size: 8.5px; font-weight: 700; text-transform: uppercase; color: var(--tx-faint);
-      border: 1px solid var(--line); padding: 0 5px; border-radius: 4px; letter-spacing: 0.04em;
-    }
-    .srow .delta {
-      justify-self: center; font-family: var(--font-mono); font-size: 11px; font-weight: 700;
-      padding: 2px 8px; border-radius: 999px; min-width: 42px; text-align: center;
-      color: var(--tx-faint); background: var(--ink-3);
-    }
-    .srow.diff .delta { color: var(--warn); background: var(--warn-soft); }
-    .srow.diff .nm { color: var(--tx-hi); }
-    .srow.diff { background: linear-gradient(90deg,transparent,rgba(230,181,78,0.04)); }
-
-    /* right rail */
-    .rail { position: sticky; top: 84px; display: flex; flex-direction: column; gap: 16px; }
-    .preview-card { background: var(--ink-1); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow-1); }
-    .preview-stage {
-      aspect-ratio: 488/680; border-radius: 11px;
-      background: repeating-linear-gradient(45deg,var(--ink-2) 0 10px,var(--ink-1) 10px 20px);
-      display: grid; place-items: center; overflow: hidden; position: relative;
-    }
-    .preview-stage img { width: 100%; height: 100%; object-fit: contain; display: none; filter: drop-shadow(0 12px 30px rgba(0,0,0,0.6)); }
-    .preview-stage.has-img img { display: block; }
-    .preview-hint { color: var(--tx-faint); font-size: 12px; text-align: center; padding: 0 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-    .preview-hint svg { width: 30px; height: 30px; opacity: 0.5; }
-    .preview-stage.has-img .preview-hint { display: none; }
-    .preview-meta { margin-top: 13px; min-height: 40px; }
-    .preview-name { font-family: var(--font-display); font-weight: 700; font-size: 15px; color: var(--tx-hi); line-height: 1.2; }
-    .preview-qty { margin-top: 7px; display: flex; gap: 8px; font-size: 12px; }
-    .pq { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 6px; font-family: var(--font-mono); font-weight: 600; }
-    .pq.a { background: var(--a-soft); color: var(--a); }
-    .pq.b { background: var(--b-soft); color: var(--b); }
-    .pq i { font-style: normal; opacity: 0.65; font-family: var(--font-ui); font-weight: 600; }
-
-    /* stat panel */
-    .statpanel { background: var(--ink-1); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
-    .statpanel h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--tx-mut); font-weight: 600; padding: 14px 16px 10px; }
-    .stat-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-top: 1px solid var(--line); font-size: 13px; }
-    .stat-row .k { color: var(--tx-mut); display: flex; align-items: center; gap: 9px; }
-    .stat-row .k .sw { width: 9px; height: 9px; border-radius: 3px; }
-    .stat-row .v { font-family: var(--font-mono); font-weight: 600; color: var(--tx-hi); font-size: 14px; }
-    .stat-row.accent-a .v { color: var(--a); }
-    .stat-row.accent-b .v { color: var(--b); }
-    .stat-row.accent-s .v { color: var(--match); }
-    .stat-row.accent-w .v { color: var(--warn); }
-
-    .footnote {
-      max-width: 1320px; margin: 0 auto; padding: 4px 28px 40px;
-      font-size: 11.5px; color: var(--tx-faint);
-      display: flex; align-items: center; gap: 8px;
-    }
-    .footnote-sep { color: var(--line-strong); }
-    .footnote a { color: var(--tx-mut); text-decoration: none; border-bottom: 1px solid var(--line); transition: color 0.14s; }
-    .footnote a:hover { color: var(--brand-hi); }
-
-    #loading { text-align: center; padding: 60px; color: var(--tx-mut); font-size: 16px; }
+    .qty-badge { top: 5px; left: 5px; }
+    .board-tag { bottom: 5px; right: 5px; color: var(--ink-3); font-size: var(--fs-micro); letter-spacing: .06em; }
 
     .type-divider {
-      display: flex; align-items: center; gap: 10px; margin: 14px 0 10px;
+      margin: calc(var(--unit) * 2.5) 0 calc(var(--unit) * 1.5);
+      font-size: var(--fs-micro); font-weight: 700; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--ink-3);
     }
-    .type-divider::before, .type-divider::after {
-      content: ""; flex: 1; height: 1px; background: var(--line);
-    }
-    .type-divider span {
-      font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em;
-      font-weight: 600; color: var(--tx-faint); white-space: nowrap;
-    }
+    .col-empty { padding: calc(var(--unit) * 3) 0; font-size: var(--fs-xs); color: var(--ink-3); }
 
+    /* --- the shared ground -------------------------------------------------------- */
+    .shared { margin-top: calc(var(--unit) * 6); }
+    .shared .zone-name, .shared .zone-count { color: var(--match); }
+    .shared .zone-mark { border-bottom-color: var(--match-wash); }
+    .shared-note { font-size: var(--fs-xs); color: var(--ink-3); display: inline-flex; align-items: center; gap: calc(var(--unit) * 0.8); }
+    .shared-note .warn-dot { width: 7px; height: 7px; border-radius: 2px; background: var(--warn); }
+
+    .srow-head, .srow {
+      display: grid;
+      grid-template-columns: minmax(56px,0.9fr) minmax(0,2.2fr) auto minmax(56px,0.9fr);
+      align-items: center; gap: calc(var(--unit) * 1.5); padding: 0 var(--unit);
+    }
+    .srow-head {
+      height: 30px; font-size: var(--fs-micro); font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3);
+      border-bottom: 1px solid var(--rule);
+    }
+    .srow-head .ca { color: var(--a); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .srow-head .cb { color: var(--b); text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .srow-head .cc { text-align: center; }
+    .srow {
+      height: 36px; cursor: pointer;
+      border-bottom: 1px solid rgba(244,238,227,0.03);
+      transition: background .1s;
+    }
+    .srow:hover, .srow:focus-visible { background: var(--felt-lit); }
+    .srow .qa, .srow .qb { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: var(--fs-sm); font-weight: 600; }
+    .srow .qa { color: var(--a); }
+    .srow .qb { color: var(--b); text-align: right; }
+    .srow .nm { font-size: var(--fs-sm); color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: var(--unit); }
+    .srow .nm .bt { font-size: var(--fs-micro); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-3); }
+    .srow .delta {
+      justify-self: center; min-width: 40px; text-align: center;
+      font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+      font-size: var(--fs-xs); font-weight: 700; color: var(--ink-3);
+    }
+    .srow.diff .delta { color: var(--warn); }
     .srow-type-divider {
-      display: flex; align-items: center; padding: 0 16px; height: 28px;
-      background: var(--ink-0); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
-    }
-    .srow-type-divider span {
-      font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em;
-      font-weight: 600; color: var(--tx-faint);
+      padding: calc(var(--unit) * 2) var(--unit) var(--unit);
+      font-size: var(--fs-micro); font-weight: 700; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--ink-3);
     }
 
-    /* list view */
-    body.view-list .card-grid { display: flex; flex-direction: column; gap: 0; }
+    /* --- the card you picked up ---------------------------------------------------- */
+    .rail { position: sticky; top: calc(var(--unit) * 3); }
+    .held {
+      padding: calc(var(--unit) * 2);
+      background: var(--felt-lit); border: 1px solid var(--stitch);
+      border-radius: 6px; box-shadow: var(--lift-2);
+    }
+    .preview-stage {
+      aspect-ratio: 488/680; border-radius: 5px; overflow: hidden;
+      display: grid; place-items: center; position: relative;
+      background: var(--felt-deep); box-shadow: var(--press);
+    }
+    .preview-stage img { width: 100%; height: 100%; object-fit: contain; display: none; }
+    .preview-stage.has-img img { display: block; }
+    .preview-hint {
+      display: flex; flex-direction: column; align-items: center; gap: var(--unit);
+      padding: 0 calc(var(--unit) * 2); text-align: center;
+      font-size: var(--fs-xs); color: var(--ink-3);
+    }
+    .preview-hint svg { width: 26px; height: 26px; opacity: .45; }
+    .preview-stage.has-img .preview-hint { display: none; }
+    .preview-name { margin-top: calc(var(--unit) * 1.5); font-family: var(--font-display); font-weight: 700; font-size: var(--fs-md); color: var(--ink); line-height: 1.2; }
+    .preview-qty { margin-top: var(--unit); display: flex; flex-wrap: wrap; gap: var(--unit); font-size: var(--fs-xs); min-height: 22px; }
+    .pq { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 3px; font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 600; }
+    .pq.a { background: var(--a-wash); color: var(--a); }
+    .pq.b { background: var(--b-wash); color: var(--b); }
+    .pq i { font-style: normal; opacity: .7; font-family: var(--font-ui); }
+
+    /* --- compare another ----------------------------------------------------------- */
+    .another-pop {
+      position: absolute; right: 0; top: calc(100% + var(--unit)); z-index: 60; width: 300px;
+      display: flex; flex-direction: column; gap: var(--unit);
+      padding: calc(var(--unit) * 1.5);
+      background: var(--felt-lit); border: 1px solid var(--stitch);
+      border-radius: 6px; box-shadow: var(--lift-3);
+    }
+    .another-pop[hidden] { display: none; }
+    select.mat-field[hidden] { display: none; }
+    .tb-msg { font-size: var(--fs-xs); color: var(--ink-3); }
+    .tb-msg:empty { display: none; }
+    .tb-msg.err { color: var(--brand); }
+
+    /* --- list view ----------------------------------------------------------------- */
+    body.view-list .card-grid { display: block; }
     body.view-list .card-slot {
-      aspect-ratio: unset; height: 36px; border-radius: 0;
-      display: flex; align-items: center; padding: 0 10px; gap: 8px;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
+      aspect-ratio: auto; height: 32px; border-radius: 0; box-shadow: none;
+      display: flex; align-items: center; gap: var(--unit); padding: 0 var(--unit);
+      background: transparent; border-bottom: 1px solid rgba(244,238,227,0.03);
     }
-    body.view-list .card-slot:hover { transform: none !important; background: rgba(255,255,255,0.04); z-index: 1; box-shadow: none; }
-    body.view-list .card-slot:first-child { border-radius: 0; }
-    body.view-list .card-slot img { display: none; }
-    body.view-list .card-slot.is-loading { background: none; animation: none; }
+    body.view-list .card-slot:hover { transform: none; box-shadow: none; background: var(--felt-lit); }
+    body.view-list .card-slot img, body.view-list .card-slot .qty-badge { display: none; }
+    body.view-list .card-slot.is-loading { background: transparent; }
     body.view-list .card-slot .proxy-name {
-      display: block; font-size: 13px; color: var(--tx);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;
+      display: flex; position: static; inset: auto; border: 0; padding: 0;
+      justify-content: flex-start; text-align: left; flex: 1;
+      font-size: var(--fs-sm); color: var(--ink-2);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
-    body.view-list .card-slot.is-proxy { background: none; border: none; box-shadow: none; }
-    body.view-list .card-slot .qty-badge {
-      position: static; background: none; border: none; backdrop-filter: none;
-      color: var(--tx-faint); font-size: 12px; padding: 0; min-width: 26px; flex-shrink: 0;
-    }
-    body.view-list .card-slot .board-tag {
-      position: static; background: none; backdrop-filter: none;
-      color: var(--tx-faint); font-size: 10px; order: 3;
-    }
+    body.view-list .card-slot.is-proxy { background: transparent; }
     body.view-list .card-slot::before {
       content: attr(data-qty) "×";
-      font-family: var(--font-mono); font-size: 12px; font-weight: 600;
-      color: var(--tx-faint); min-width: 26px; flex-shrink: 0;
+      font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+      font-size: var(--fs-xs); font-weight: 600; color: var(--ink-3);
+      min-width: 26px; flex: none;
     }
-    body.view-list .card-slot .qty-badge { display: none; }
-    body.view-list .type-divider { margin: 6px 0 2px; }
+    body.view-list .card-slot .board-tag { position: static; background: none; padding: 0; order: 3; }
+
+    #loading { padding: calc(var(--unit) * 10) 0; text-align: center; font-size: var(--fs-md); color: var(--ink-3); }
+    .footnote {
+      max-width: 1320px; margin: 0 auto;
+      padding: calc(var(--unit) * 3) var(--gutter) calc(var(--unit) * 6);
+      display: flex; align-items: center; gap: var(--unit);
+      font-size: var(--fs-xs); color: var(--ink-3);
+    }
+    .footnote a { color: var(--ink-3); }
+
+    @media (max-width: 1080px) {
+      .table-grid { grid-template-columns: minmax(0,1fr); }
+      .rail { position: static; max-width: 320px; }
+    }
+    @media (max-width: 760px) {
+      .matchup { grid-template-columns: 1fr; gap: calc(var(--unit) * 2); text-align: center; }
+      .side.b { text-align: center; }
+      .side.a .deck-edge { background: var(--a); }
+      .side.b .deck-edge { background: var(--b); }
+      .counter { order: -1; }
+      .sides { grid-template-columns: minmax(0,1fr); }
+      .seam-legend { flex-direction: column; }
+    }
   </style>
 </head>
 <body>
-  <div class="topbar">
-    <div class="brand">
-      <img class="brand-mark" src="icons/icon48.png" alt="">
-      <span class="brand-name">Deck<b>Compare</b></span>
-    </div>
-    <div class="topbar-spacer"></div>
+<!--
+  DIRECTION CONTRACT — Deck Compare, results
+  THESIS: A comparison read on the table it would be played on; it refuses the
+    panel-inside-panel dashboard the category ships.
+  OWN-WORLD: Warm felt under one overhead light. Areas are silkscreened with a rule and
+    a name, never boxed and never nested. Deck 1 orange and deck 2 teal are the two sides
+    of the mat, not accents. One button component. No element carries its own halo.
+  STORY: The reader sees how far apart the two decks are before reading a word, walks
+    each side's cards, then changes a deck without leaving the page.
+  FIRST VIEWPORT: The similarity figure debossed into the felt at centre, the two deck
+    names left and right in their own ink, the overlap seam beneath; Compare another at
+    the mat's top edge.
+  FORM: The Table — candidate 3 of 7 by resonance; seed 009366bf.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+-->
+  <div class="mat-edge">
+    <span class="wordmark">
+      <img src="icons/icon48.png" alt="">
+      <span>Deck<b>Compare</b></span>
+    </span>
+    <div class="spacer"></div>
     <a href="https://buymeacoffee.com/mcouzinet" target="_blank" rel="noopener" class="bmc" id="bmc-link">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h11v5a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4V8Z"/><path d="M16 9h2a2.5 2.5 0 0 1 0 5h-2"/><path d="M7 3v2M10.5 3v2M14 3v2"/></svg>
       <span id="bmc-text-compare"></span>
     </a>
-    <div class="topbar-meta">
-      <span>Magic: The Gathering</span>
+    <div class="edge-actions">
+      <button class="mat-btn" id="swap-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16H3m0 0 3-3m-3 3 3 3"/><path d="M17 8h4m0 0-3-3m3 3-3 3"/></svg>
+        <span id="swap-text"></span>
+      </button>
+      <div class="tb-wrap">
+        <button class="mat-btn mat-btn--go" id="another-btn" aria-expanded="false" aria-controls="another-pop">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          <span id="another-text"></span>
+        </button>
+        <div class="another-pop" id="another-pop" hidden>
+          <select class="mat-field" id="another-saved" hidden></select>
+          <input class="mat-field" id="another-url" type="text">
+          <button class="mat-btn mat-btn--go" id="another-go"></button>
+          <div class="tb-msg" id="another-msg" role="status" aria-live="polite"></div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="shell">
-    <main>
-      <div id="loading"></div>
-      <div id="content" style="display:none">
-        <!-- matchup hero -->
-        <section class="matchup">
-          <div class="matchup-decks">
-            <div class="deckcard a">
-              <div class="deck-eyebrow"><span class="pip"></span>Deck 1</div>
-              <a class="deck-name" id="deck-a-name" target="_blank" rel="noopener">—</a>
-              <div class="deck-sub"><span class="src-chip" id="deck-a-src">—</span></div>
-            </div>
-            <div class="similarity">
-              <div class="ring" id="ring">
-                <div class="ring-val"><div class="ring-num" id="ring-num"></div></div>
+  <div class="mat">
+    <div id="loading"></div>
+    <div id="content" style="display:none">
+      <h1 class="sr-only" id="results-heading"></h1>
+
+      <section class="matchup">
+        <div class="side a">
+          <a class="deck-name" id="deck-a-name" target="_blank" rel="noopener">—</a>
+          <div class="deck-edge"></div>
+          <div class="deck-src" id="deck-a-src">—</div>
+        </div>
+        <div class="counter">
+          <div class="counter-well">
+            <div class="counter-num" id="ring-num"></div>
+          </div>
+          <div class="counter-label" id="ring-label"></div>
+        </div>
+        <div class="side b">
+          <a class="deck-name" id="deck-b-name" target="_blank" rel="noopener">—</a>
+          <div class="deck-edge"></div>
+          <div class="deck-src" id="deck-b-src">—</div>
+        </div>
+      </section>
+
+      <section class="seam">
+        <div class="seam-bar" id="ring">
+          <div class="seam-seg a" style="flex-basis:0%"></div>
+          <div class="seam-seg s" style="flex-basis:0%"></div>
+          <div class="seam-seg b" style="flex-basis:0%"></div>
+        </div>
+        <div class="seam-legend">
+          <span class="lg a"><span class="sw"></span><span id="lg-a-label"></span> · <b id="lg-a">0</b></span>
+          <span class="lg s"><span class="sw"></span><span id="lg-s-label"></span> · <b id="lg-s">0</b></span>
+          <span class="lg b"><span class="sw"></span><span id="lg-b-label"></span> · <b id="lg-b">0</b></span>
+        </div>
+      </section>
+
+      <div class="controls">
+        <div class="segments" role="group">
+          <button class="segment" data-board-filter="all" id="filter-all" aria-pressed="true"></button>
+          <button class="segment" data-board-filter="commanders" id="filter-commanders" aria-pressed="false"></button>
+          <button class="segment" data-board-filter="mainboard" id="filter-mainboard" aria-pressed="false"></button>
+          <button class="segment" data-board-filter="sideboard" id="filter-sideboard" aria-pressed="false"></button>
+        </div>
+        <div class="spacer"></div>
+        <div class="segments" role="group">
+          <button class="segment" data-view="compact" id="view-compact" aria-pressed="false">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="3" y="11" width="6" height="6" rx="1"/><rect x="11" y="3" width="6" height="6" rx="1"/><rect x="11" y="11" width="6" height="6" rx="1"/><rect x="19" y="3" width="2" height="6" rx="1"/><rect x="19" y="11" width="2" height="6" rx="1"/></svg>
+          </button>
+          <button class="segment" data-view="grid" id="view-grid" aria-pressed="true">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>
+          </button>
+          <button class="segment" data-view="list" id="view-list" aria-pressed="false">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="1" fill="currentColor" stroke="none"/><circle cx="4" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="4" cy="18" r="1" fill="currentColor" stroke="none"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="table-grid">
+        <div>
+          <h2 class="sr-only" id="exclusive-heading"></h2>
+          <div class="sides">
+            <div class="zone side-a">
+              <div class="zone-mark">
+                <span class="zone-name" id="col-a-title"></span>
+                <span class="zone-count" id="col-a-count">0</span>
               </div>
-              <div class="ring-label" id="ring-label"></div>
+              <div id="col-a-body"></div>
             </div>
-            <div class="deckcard b">
-              <div class="deck-eyebrow"><span class="pip"></span>Deck 2</div>
-              <a class="deck-name" id="deck-b-name" target="_blank" rel="noopener">—</a>
-              <div class="deck-sub"><span class="src-chip" id="deck-b-src">—</span></div>
-            </div>
-          </div>
-          <div class="overlap">
-            <div class="overlap-bar">
-              <div class="overlap-seg a" style="flex-basis:0%"></div>
-              <div class="overlap-seg s" style="flex-basis:0%"></div>
-              <div class="overlap-seg b" style="flex-basis:0%"></div>
-            </div>
-            <div class="overlap-legend">
-              <span class="lg a"><span class="sw"></span><span id="lg-a-label"></span> · <b id="lg-a">0</b></span>
-              <span class="lg s"><span class="sw"></span><span id="lg-s-label"></span> · <b id="lg-s">0</b></span>
-              <span class="lg b"><span class="sw"></span><span id="lg-b-label"></span> · <b id="lg-b">0</b></span>
+            <div class="zone side-b">
+              <div class="zone-mark">
+                <span class="zone-name" id="col-b-title"></span>
+                <span class="zone-count" id="col-b-count">0</span>
+              </div>
+              <div id="col-b-body"></div>
             </div>
           </div>
-        </section>
 
-        <!-- controls -->
-        <div class="controls">
-          <div class="segmented">
-            <button class="seg-btn active" data-board-filter="all" id="filter-all"></button>
-            <button class="seg-btn" data-board-filter="commanders" id="filter-commanders"></button>
-            <button class="seg-btn" data-board-filter="mainboard" id="filter-mainboard"></button>
-            <button class="seg-btn" data-board-filter="sideboard" id="filter-sideboard"></button>
-          </div>
-          <div class="controls-spacer"></div>
-          <div class="icon-toggle">
-            <button class="icon-btn" data-view="small" id="view-small">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="3" y="11" width="6" height="6" rx="1"/><rect x="11" y="3" width="6" height="6" rx="1"/><rect x="11" y="11" width="6" height="6" rx="1"/><rect x="19" y="3" width="2" height="6" rx="1"/><rect x="19" y="11" width="2" height="6" rx="1"/></svg>
-            </button>
-            <button class="icon-btn active" data-view="medium" id="view-medium">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>
-            </button>
-            <button class="icon-btn" data-view="large" id="view-large">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="8" rx="1"/><rect x="3" y="13" width="18" height="8" rx="1"/></svg>
-            </button>
-            <button class="icon-btn" data-view="list" id="view-list">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="1" fill="currentColor" stroke="none"/><circle cx="4" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="4" cy="18" r="1" fill="currentColor" stroke="none"/></svg>
-            </button>
-          </div>
+          <section class="shared zone">
+            <div class="zone-mark">
+              <h2 class="zone-name" id="shared-title"></h2>
+              <span class="shared-note"><span class="warn-dot"></span><span id="qty-diff-note"></span></span>
+              <span class="zone-count" id="shared-count">0</span>
+            </div>
+            <div class="srow-head">
+              <span class="ca" id="srow-head-a"></span>
+              <span id="srow-head-card"></span>
+              <span class="cc">&Delta;</span>
+              <span class="cb" id="srow-head-b"></span>
+            </div>
+            <div id="shared-body"></div>
+          </section>
         </div>
 
-        <!-- diff columns -->
-        <div class="diff-grid">
-          <div class="col a">
-            <div class="col-head"><span class="pip"></span><span class="col-title" id="col-a-title"></span><span class="col-count" id="col-a-count">0</span></div>
-            <div class="col-body" id="col-a-body"></div>
+        <aside class="rail">
+          <div class="held">
+            <div class="preview-stage" id="preview-stage">
+              <img id="preview-img" alt="">
+              <div class="preview-hint">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                <span id="hover-hint"></span>
+              </div>
+            </div>
+            <div class="preview-name" id="preview-name"></div>
+            <div class="preview-qty" id="preview-qty"></div>
           </div>
-          <div class="col b">
-            <div class="col-head"><span class="pip"></span><span class="col-title" id="col-b-title"></span><span class="col-count" id="col-b-count">0</span></div>
-            <div class="col-body" id="col-b-body"></div>
-          </div>
-        </div>
-
-        <!-- shared list -->
-        <section class="shared">
-          <div class="shared-head">
-            <span class="pip"></span>
-            <span class="col-title" id="shared-title"></span>
-            <span class="shared-note"><span class="warn-dot"></span><span id="qty-diff-note"></span></span>
-            <span class="col-count" id="shared-count">0</span>
-          </div>
-          <div class="srow-head">
-            <span class="ca" id="srow-head-a"></span>
-            <span id="srow-head-card"></span>
-            <span class="cc">&Delta;</span>
-            <span class="cb" id="srow-head-b"></span>
-          </div>
-          <div id="shared-body"></div>
-        </section>
+        </aside>
       </div>
-    </main>
-
-    <!-- right rail -->
-    <aside class="rail">
-      <div class="preview-card">
-        <div class="preview-stage" id="preview-stage">
-          <img id="preview-img" alt="">
-          <div class="preview-hint">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-            <span id="hover-hint"></span>
-          </div>
-        </div>
-        <div class="preview-meta">
-          <div class="preview-name" id="preview-name"></div>
-          <div class="preview-qty" id="preview-qty"></div>
-        </div>
-      </div>
-      <div class="statpanel">
-        <h3 id="stat-title"></h3>
-        <div id="stat-rows"></div>
-      </div>
-    </aside>
+    </div>
   </div>
 
   <div class="footnote">
     <span id="footnote"></span>
-    <span class="footnote-sep">·</span>
+    <span>·</span>
     <a id="rate-link" target="_blank" rel="noopener"></a>
   </div>
 

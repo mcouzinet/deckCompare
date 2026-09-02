@@ -1,3 +1,7 @@
 .DS_Store
 *.zip
 node_modules/
+
+# Impeccable: keep the critique snapshots, drop the transient decision-server logs
+.impeccable/questions/
+.impeccable/live/

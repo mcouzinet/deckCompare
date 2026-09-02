@@ -5,6 +5,9 @@
   const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   const $ = (id) => document.getElementById(id);
   const M = (key) => chrome.i18n.getMessage(key);
+  // The page markup used to be pinned to lang="fr"; the real language is the one
+  // Chrome resolved for _locales.
+  Shared.setDocumentLang();
 
   // Stash arrays/multi-line strings for copy/select buttons instead of embedding
   // them in attributes (avoids quote/newline escaping pitfalls). Reset per render.

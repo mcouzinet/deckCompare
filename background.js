@@ -45,16 +45,10 @@ if (IS_DEV) markDevBuild();
 //
 // Each granted origin gets its content script registered here, and unregistered if the
 // permission is revoked.
-const OPTIONAL_SCRIPTS = [
-  { id: 'moxfield-www',    origin: 'https://www.moxfield.com/*',  matches: ['https://www.moxfield.com/decks/*'] },
-  { id: 'moxfield-bare',   origin: 'https://moxfield.com/*',      matches: ['https://moxfield.com/decks/*'] },
-  { id: 'mtgtop8-bare',    origin: 'https://mtgtop8.com/*',       matches: ['https://mtgtop8.com/event*'] },
-  { id: 'mtggoldfish-bare', origin: 'https://mtggoldfish.com/*',  matches: ['https://mtggoldfish.com/deck/*'] },
-  { id: 'magicville-bare', origin: 'https://magic-ville.com/*',   matches: ['https://magic-ville.com/fr/decks/showdeck*'] },
-  { id: 'mtgdecks-www',    origin: 'https://www.mtgdecks.net/*',  matches: ['https://www.mtgdecks.net/*'] }
-];
-
-const OPTIONAL_ORIGINS = OPTIONAL_SCRIPTS.map(s => s.origin);
+// The table itself lives in shared.js — the popup requests these same origins,
+// and a copy per file is how a host gets granted but never injected (or the
+// reverse) with no error anywhere.
+const OPTIONAL_SCRIPTS = Shared.OPTIONAL_SCRIPTS;
 
 async function syncOptionalScripts() {
   let registered;
@@ -71,7 +65,7 @@ async function syncOptionalScripts() {
         await chrome.scripting.registerContentScripts([{
           id: entry.id,
           matches: entry.matches,
-          js: ['dom-parsers.js', 'content.js', 'inject-button.js'],
+          js: ['shared.js', 'dom-parsers.js', 'content.js', 'inject-button.js'],
           runAt: 'document_idle'
         }]);
       } else if (!granted && have.has(entry.id)) {
@@ -132,7 +126,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === 'FETCH_CARD_TYPES') {
     fetchCardTypes(msg.names)
       .then(types => sendResponse(types))
-      .catch(() => sendResponse({ lands: [], creatures: [] }));
+      .catch(() => sendResponse({ lands: [], creatures: [], images: {} }));
     return true;
   }
 });
@@ -163,42 +157,62 @@ async function fetchCardTypes(names) {
   const BATCH = 75;
   const landNames = new Set();
   const creatureNames = new Set();
+  // Card image URLs come free with this batch — /cards/collection returns the whole card.
+  // Without them the results page asked api.scryfall.com for an image on every hover,
+  // which is the API and not the CDN, and got rate-limited within one pass over a grid.
+  const images = {};
 
   // Serve what we can from the persistent cache; only miss names hit Scryfall.
   const cached = await Shared.cacheRead('cardTypeCache', CARD_TYPE_TTL);
   const misses = [];
   for (const name of names) {
     const hit = cached[name.toLowerCase()];
-    if (hit) {
+    // `i` is absent on entries written before images were cached; treat those as misses
+    // so the cache refills itself once. An empty string means "known to have no image".
+    if (hit && hit.i !== undefined) {
       if (hit.l) landNames.add(name);
       if (hit.c) creatureNames.add(name);
+      if (hit.i) images[name] = hit.i;
     } else {
       misses.push(name);
     }
   }
 
-  const fresh = {}; // canonical face name -> { l, c }
+  // Everything is keyed by the REQUESTED name, never Scryfall's canonical one:
+  // the caller looks entries up by the deck's own spelling, and diacritics don't
+  // survive toLowerCase (accent-stripped MTGO exports say "Lorien Revealed" where
+  // Scryfall answers "Lórien Revealed"), so a canonical key would miss on every
+  // load, forever. /cards/collection returns `data` in request order with the
+  // unresolved identifiers in `not_found`, which recovers the mapping exactly.
+  const fresh = {}; // requested name -> { l, c, i }
   for (let i = 0; i < misses.length; i += BATCH) {
     const batch = misses.slice(i, i + BATCH);
     const data = await scryfallCollection(batch.map(name => ({ name })));
     if (!data) continue; // transient failure — cached hits still render, miss retries next time
-    for (const card of (data.data || [])) {
-      const faces = card.card_faces || [card];
-      for (const face of faces) {
-        const tl = face.type_line || card.type_line || '';
-        const nm = face.name || card.name;
-        const isLand = tl.includes('Land');
-        const isCreature = tl.includes('Creature');
-        if (isLand) landNames.add(nm);
-        if (isCreature) creatureNames.add(nm);
-        fresh[nm] = { l: isLand, c: isCreature };
-      }
+    const notFound = new Set((data.not_found || []).map(nf => (nf.name || '').toLowerCase()));
+    const found = batch.filter(name => !notFound.has(name.toLowerCase()));
+    const cards = data.data || [];
+    for (let j = 0; j < Math.min(found.length, cards.length); j++) {
+      const reqName = found[j];
+      const card = cards[j];
+      // Front face: it is the face the deck's (already front-face-normalized)
+      // name designates, same as the /cards/named endpoint resolves to.
+      const face = (card.card_faces && card.card_faces[0]) || card;
+      const tl = face.type_line || card.type_line || '';
+      const isLand = tl.includes('Land');
+      const isCreature = tl.includes('Creature');
+      const img = (face.image_uris && face.image_uris.normal)
+        || (card.image_uris && card.image_uris.normal) || '';
+      if (isLand) landNames.add(reqName);
+      if (isCreature) creatureNames.add(reqName);
+      if (img) images[reqName] = img;
+      fresh[reqName] = { l: isLand, c: isCreature, i: img };
     }
     if (i + BATCH < misses.length) await new Promise(r => setTimeout(r, 100));
   }
 
   await Shared.cacheMerge('cardTypeCache', fresh, CARD_TYPE_TTL);
-  return { lands: [...landNames], creatures: [...creatureNames] };
+  return { lands: [...landNames], creatures: [...creatureNames], images };
 }
 
 // --- Moxfield: list user's public decks ---

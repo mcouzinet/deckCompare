@@ -6,7 +6,8 @@
 // Reuses the popup pipeline: DomParsers for the current page, background FETCH_DECK
 // for the target.
 //
-// Loaded after dom-parsers.js + content.js, so DomParsers is available.
+// Loaded after shared.js + dom-parsers.js + content.js, so Shared and DomParsers
+// are available.
 (function () {
   const STORAGE_KEY = 'injectButton';
   const HOST_ID = 'deckcompare-launcher';
@@ -28,18 +29,29 @@
   // what users see, so it should not carry build state. The dev marker lives on the
   // toolbar icon instead (recoloured + DEV badge in background.js).
 
-  let host = null; // the shadow host element, null when not injected
+  let host = null;        // the shadow host element, null when not injected
+  let enabled = false;    // mirrors the storage toggle, re-checked before any mount
+  let cancelWait = null;  // cancels a pending mountWhenReady observer/timer
+  let unwire = null;      // removes wire()'s window/document listeners
 
   // --- lifecycle: mount/unmount so the popup toggle applies without a page reload ---
 
-  chrome.storage.local.get([STORAGE_KEY]).then(({ [STORAGE_KEY]: on }) => { if (on) mountWhenReady(); });
+  chrome.storage.local.get([STORAGE_KEY]).then(({ [STORAGE_KEY]: on }) => {
+    enabled = !!on;
+    if (enabled) mountWhenReady();
+  });
 
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== 'local' || !changes[STORAGE_KEY]) return;
-    changes[STORAGE_KEY].newValue ? mountWhenReady() : unmount();
+    enabled = !!changes[STORAGE_KEY].newValue;
+    enabled ? mountWhenReady() : unmount();
   });
 
+  // Also cancels a pending anchor wait: toggling OFF during the wait window used
+  // to leave the observer armed, which mounted the button after the setting was off.
   function unmount() {
+    if (cancelWait) cancelWait();
+    if (unwire) { unwire(); unwire = null; }
     if (host) { host.remove(); host = null; }
   }
 
@@ -54,6 +66,7 @@
   }
 
   function mount() {
+    if (!enabled) return;   // the toggle may have flipped during the anchor wait
     if (host || document.getElementById(HOST_ID)) return;
     if (!looksLikeDeckPage()) return;
 
@@ -164,6 +177,7 @@
   // before mounting; that also avoids flashing a floating pill that then jumps.
   // The timeout is the giving-up point: mount floating rather than nothing.
   function mountWhenReady() {
+    if (cancelWait) cancelWait();   // at most one pending wait
     if (!hasAnchorEntry() || anchorFor(document)) { mount(); return; }
 
     let settled = false;
@@ -172,11 +186,18 @@
       settled = true;
       obs.disconnect();
       clearTimeout(timer);
+      cancelWait = null;
       mount();
     };
     const obs = new MutationObserver(() => { if (anchorFor(document)) finish(); });
     obs.observe(document.documentElement, { childList: true, subtree: true });
     const timer = setTimeout(finish, 8000);
+    cancelWait = () => {
+      settled = true;
+      obs.disconnect();
+      clearTimeout(timer);
+      cancelWait = null;
+    };
   }
 
   // --- markup (inside the shadow root, so these class names are private) ---
@@ -205,22 +226,25 @@
          matches the extension rather than inventing a look. Values are inlined because
          the host page never sees those custom properties. */
       :host {
-        --dc-brand: #d9485e;      /* --brand      */
-        --dc-brand-hi: #e76074;   /* --brand-hi   */
+        --dc-brand: #e0654a;
+        --dc-brand-btn: #b8402c; --dc-brand-btn-hi: #c74a33;
         --dc-card-a: #e3a24f;     /* --a, the icon's orange card */
         --dc-card-b: #56b6c9;     /* --b, the icon's teal card   */
-        --dc-ink-1: #12151d; --dc-ink-2: #181c26; --dc-ink-3: #20252f;
-        --dc-tx-hi: #eef0f6; --dc-tx: #c4c9d6; --dc-tx-mut: #868da0;
-        --dc-line: rgba(255,255,255,0.12);
+        --dc-felt: #17120d; --dc-felt-lit: #201a13; --dc-felt-deep: #0d0a06;
+        --dc-raised: #2a221a;
+        --dc-tx-hi: #f4eee3; --dc-tx: #c9bfad; --dc-tx-mut: #9a8f7c;
+        --dc-line: rgba(244,238,227,0.13);
+        --dc-lift: 0 2px 4px rgba(0,0,0,.5), 0 8px 20px rgba(0,0,0,.42);
+        --dc-press: inset 0 2px 5px rgba(0,0,0,.66);
       }
       :host, * { box-sizing: border-box; }
       .fab {
         display: flex; align-items: center; gap: 8px;
         font: 600 13px/1.2 system-ui, -apple-system, "Segoe UI", sans-serif;
-        color: #fff; background: var(--dc-brand); border: 0; border-radius: 999px;
-        padding: 11px 16px; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.3);
+        color: #fff; background: var(--dc-brand-btn); border: 0; border-radius: 999px;
+        padding: 11px 16px; cursor: pointer; box-shadow: var(--dc-lift);
       }
-      .fab:hover { background: var(--dc-brand-hi); }
+      .fab:hover { background: var(--dc-brand-btn-hi); }
       .fab svg { width: 15px; height: 15px; flex: none; }
       /* Monochrome on the coloured button, two-tone on the dark panel header. */
       .fab .c-back { fill: #fff; opacity: .5; }
@@ -233,19 +257,19 @@
       /* --dc-anchor-height is set from the neighbouring button so we match its size;
          it falls back to our own padding when the anchor isn't button-sized. */
       :host(.inline) .fab {
-        border-radius: 6px; padding: 0 12px; font-size: 12.5px;
+        border-radius: 4px; padding: 0 12px; font-size: 12.5px;
         box-shadow: none; white-space: nowrap;
         min-height: var(--dc-anchor-height, 30px);
       }
       /* Neighbours are text links, not buttons — sit on their line, don't tower over it. */
       :host(.compact) .fab {
-        border-radius: 4px; padding: 0 7px; font-size: 11px; gap: 5px;
+        border-radius: 3px; padding: 0 7px; font-size: 11px; gap: 5px;
       }
       :host(.compact) .fab svg { width: 12px; height: 12px; }
       .panel {
         position: fixed; z-index: 2147483647; width: 290px;
-        background: var(--dc-ink-1); color: var(--dc-tx-hi); border: 1px solid var(--dc-line);
-        border-radius: 12px; padding: 14px; box-shadow: 0 10px 34px rgba(0,0,0,.45);
+        background: var(--dc-felt-lit); color: var(--dc-tx-hi); border: 1px solid var(--dc-line);
+        border-radius: 6px; padding: 14px; box-shadow: var(--dc-lift);
         font: 400 13px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
       }
       .panel[hidden] { display: none; }
@@ -260,19 +284,21 @@
         font-size: 10.5px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;
         color: var(--dc-tx-mut); margin-bottom: 10px;
       }
-      .x { border: 0; background: none; color: var(--dc-tx-mut); font-size: 18px; line-height: 1; cursor: pointer; padding: 0 2px; }
+      .x { border: 0; background: none; color: var(--dc-tx-mut); cursor: pointer; padding: 2px; display: inline-flex; }
+      .x svg { width: 15px; height: 15px; }
       .x:hover { color: var(--dc-tx-hi); }
       select, input {
-        width: 100%; font: inherit; color: var(--dc-tx-hi); background: var(--dc-ink-2);
-        border: 1px solid var(--dc-line); border-radius: 8px; padding: 8px 10px; margin-bottom: 8px;
+        width: 100%; font: inherit; color: var(--dc-tx-hi); background: var(--dc-felt-deep);
+        border: 1px solid var(--dc-line); border-radius: 4px; padding: 8px 10px; margin-bottom: 8px;
+        box-shadow: var(--dc-press);
       }
-      select:focus, input:focus { outline: 2px solid var(--dc-brand); outline-offset: -1px; }
+      select:focus, input:focus { outline: 2px solid var(--dc-card-a); outline-offset: -1px; }
       select[hidden] { display: none; }
       .go {
         width: 100%; font: 600 13px/1 system-ui, sans-serif; color: #fff;
-        background: var(--dc-brand); border: 0; border-radius: 8px; padding: 10px; cursor: pointer;
+        background: var(--dc-brand-btn); border: 0; border-radius: 4px; padding: 10px; cursor: pointer;
       }
-      .go:hover:not(:disabled) { background: var(--dc-brand-hi); }
+      .go:hover:not(:disabled) { background: var(--dc-brand-btn-hi); }
       .go:disabled { opacity: .55; cursor: default; }
       /* Collapses entirely when there is nothing to say. It used to reserve a line to
          avoid a jump when a status appears, but that left dead space under the button
@@ -280,16 +306,16 @@
       .msg { margin-top: 8px; font-size: 12px; color: var(--dc-tx-mut); }
       .msg:empty { display: none; }
       /* popup.html styles #status.error with --brand-hi; same convention here. */
-      .msg.err { color: var(--dc-brand-hi); }
+      .msg.err { color: var(--dc-brand); }
     </style>
-    <button class="fab" part="fab">
+    <button class="fab" part="fab" aria-expanded="false" aria-haspopup="dialog">
       ${MARK}
       <span class="fab-label"></span>
     </button>
-    <div class="panel" hidden>
+    <div class="panel" hidden role="dialog" aria-label="Deck Compare">
       <div class="row">
         <span class="brand">${MARK}<span class="brand-name">Deck<b>Compare</b></span></span>
-        <button class="x" aria-label="Close">&times;</button>
+        <button class="x" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       </div>
       <div class="title"></div>
       <select hidden></select>
@@ -308,6 +334,8 @@
     $('.fab-label').textContent = M('compare');
     $('.title').textContent = M('injectPanelTitle');
     input.placeholder = M('pasteADeckUrl');
+    input.setAttribute('aria-label', M('pasteADeckUrl'));
+    select.setAttribute('aria-label', M('selectDeck'));
     go.textContent = M('compare');
 
     const setMsg = (text, isErr) => { msg.textContent = text; msg.className = isErr ? 'msg err' : 'msg'; };
@@ -326,13 +354,33 @@
         : `${Math.round(Math.max(margin, b.top - panel.offsetHeight - margin))}px`;
     }
 
-    fab.addEventListener('click', () => {
-      panel.hidden = !panel.hidden;
-      if (!panel.hidden) { fillSavedDecks(select); placePanel(); input.focus(); }
-    });
-    addEventListener('resize', () => { if (!panel.hidden) placePanel(); });
-    addEventListener('scroll', () => { if (!panel.hidden) placePanel(); }, true);
-    $('.x').addEventListener('click', () => { panel.hidden = true; });
+    // returnFocus is off for outside clicks: the user already clicked somewhere on the
+    // host page, and pulling focus back to our button would steal it from them.
+    const setOpen = (open, returnFocus = true) => {
+      panel.hidden = !open;
+      fab.setAttribute('aria-expanded', String(open));
+      if (open) { fillSavedDecks(select); placePanel(); input.focus(); }
+      else if (returnFocus) fab.focus();
+    };
+
+    fab.addEventListener('click', () => setOpen(panel.hidden));
+    // Window/document listeners share one AbortController so unmount() removes
+    // them all: each popup toggle cycle used to stack another permanent set, each
+    // retaining its detached shadow tree. Shadow-internal listeners need none —
+    // they die with the host element.
+    const ac = new AbortController();
+    unwire = () => ac.abort();
+    addEventListener('resize', () => { if (!panel.hidden) placePanel(); }, { passive: true, signal: ac.signal });
+    // Passive: this only reads the button's rect and writes the panel's own position,
+    // so it must never be allowed to block the host page's scrolling.
+    addEventListener('scroll', () => { if (!panel.hidden) placePanel(); }, { capture: true, passive: true, signal: ac.signal });
+    $('.x').addEventListener('click', () => setOpen(false));
+
+    // Escape and a click outside close it, like every other panel on the page.
+    root.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !panel.hidden) setOpen(false); });
+    document.addEventListener('click', (e) => {
+      if (!panel.hidden && !e.composedPath().includes(host)) setOpen(false, false);
+    }, { signal: ac.signal });
 
     // Picking a saved deck fills the input, so there's a single source of truth.
     select.addEventListener('change', () => { if (select.value) input.value = select.value; });
@@ -353,22 +401,13 @@
 
   // Offer the decks the user already loaded in the popup (Moxfield/Archidekt/Magic-Ville).
   // Stays hidden unless at least one real deck was added: an empty picker showing only
-  // "select a deck" is noise, and looks broken.
+  // "select a deck" is noise, and looks broken. Rebuilt on every open (no fill-once
+  // latch), so decks loaded in the popup after this page loaded still show up.
   async function fillSavedDecks(select) {
-    if (select.dataset.filled) return;
-    let decks = [];
     try {
-      const { deckSource } = await chrome.storage.local.get(['deckSource']);
-      const source = deckSource || 'moxfield';
-      const stored = await chrome.storage.local.get([`${source}Decks`]);
-      decks = (stored[`${source}Decks`] || []).filter(d => d && d.url && d.name);
-    } catch (_) { return; }
-    if (!decks.length) { select.hidden = true; return; }
-
-    select.add(new Option(M('selectDeck'), ''));
-    for (const d of decks) select.add(new Option(d.format ? `${d.name} · ${d.format}` : d.name, d.url));
-    select.dataset.filled = '1';
-    select.hidden = false;   // only once it actually holds decks
+      const decks = await Shared.getSavedDecks();
+      Shared.populateSavedDeckSelect(select, decks, M('selectDeck'));
+    } catch (_) { /* nothing saved — the URL field still works */ }
   }
 
   const send = (msg) => new Promise((resolve, reject) => {
@@ -383,6 +422,13 @@
 
   // Same sequence as popup.js runComparison, minus the popup-only UI bits.
   async function runComparison(targetUrl, setMsg) {
+    // Deck B never depends on deck A, so start it now instead of after A resolves —
+    // popup.js fetches in parallel for the same reason; paying the only real wait
+    // twice in series was the cost of the serial version. The guard keeps an early
+    // return from surfacing as an unhandled rejection.
+    const targetPromise = send({ type: 'FETCH_DECK', url: targetUrl });
+    targetPromise.catch(() => {});
+
     setMsg(M('readingDeck'));
     let deckA = DomParsers.parseDeckFromCurrentSite(document, location.href);
 
@@ -395,7 +441,7 @@
     if (boardsEmpty(deckA)) { setMsg(M('unableToRead'), true); return; }
 
     setMsg(M('fetchingSecond'));
-    const targetResp = await send({ type: 'FETCH_DECK', url: targetUrl });
+    const targetResp = await targetPromise;
     if (targetResp.error) { setMsg(`${M('error')}: ${targetResp.error}`, true); return; }
 
     setMsg(M('openingResults'));

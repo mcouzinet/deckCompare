@@ -1,32 +1,39 @@
+Shared.setDocumentLang();
+
 const statusEl = document.getElementById('status');
 const compareBtn = document.getElementById('compare-btn');
 const deckUrlInput = document.getElementById('deck-url');
+const deckDropdown = document.getElementById('deck-dropdown');
 const detectedEl = document.getElementById('detected');
 const detectedName = document.getElementById('detected-name');
 const detectedSub = document.getElementById('detected-sub');
 const detectedLive = document.getElementById('detected-live');
-const deckSearchInput = document.getElementById('deck-search');
-const deckDropdown = document.getElementById('deck-dropdown');
-const compareMoxfieldBtn = document.getElementById('compare-moxfield-btn');
-const refreshBtn = document.getElementById('refresh-btn');
 const moxHint = document.getElementById('mox-hint');
-const deckSourceSelect = document.getElementById('deck-source');
 const settingsPanel = document.getElementById('settings-panel');
 const settingsUser = document.getElementById('settings-user');
-const settingsSave = document.getElementById('settings-save');
 const settingsHint = document.getElementById('settings-hint');
 const settingsInject = document.getElementById('settings-inject');
+const tabpick = document.getElementById('tabpick');
+const tabpickList = document.getElementById('tabpick-list');
 
+// `pattern` says "this tab is on a supported site" (deck-1 detection, where the
+// content script or the API settles whether it really is a deck); `deckRe` says
+// "this URL is itself a fetchable deck" — the bar for offering another tab as a
+// one-click candidate, where a homepage or event listing could only ever error.
 const SUPPORTED_SITES = [
-  { pattern: 'mtggoldfish.com/deck/', label: 'MTGGoldfish' },
-  { pattern: 'mtgtop8.com/event', label: 'mtgtop8' },
-  { pattern: 'archidekt.com/decks/', label: 'Archidekt' },
-  { pattern: 'moxfield.com/decks/', label: 'Moxfield' },
-  { pattern: 'magic-ville.com/fr/decks/showdeck', label: 'Magic-Ville' },
-  { pattern: 'mtgdecks.net/', label: 'mtgdecks' },
-  { pattern: 'melee.gg/Decklist/View', label: 'Melee' },
-  { pattern: 'getpaird.io/decklists/', label: 'getpaird' }
+  { pattern: 'mtggoldfish.com/deck/', deckRe: /mtggoldfish\.com\/deck\/\d+/, label: 'MTGGoldfish' },
+  { pattern: 'mtgtop8.com/event', deckRe: /mtgtop8\.com\/event\?[^#]*\bd=\d+/, label: 'mtgtop8' },
+  { pattern: 'archidekt.com/decks/', deckRe: /archidekt\.com\/decks\/\d+/, label: 'Archidekt' },
+  { pattern: 'moxfield.com/decks/', deckRe: /moxfield\.com\/decks\/(?!(?:personal|public|liked|following|bookmarks)(?:[/?#]|$))[^/?#]+/, label: 'Moxfield' },
+  { pattern: 'magic-ville.com/fr/decks/showdeck', deckRe: /magic-ville\.com\/fr\/decks\/showdeck\?[^#]*\bref=\d+/, label: 'Magic-Ville' },
+  { pattern: 'mtgdecks.net/', deckRe: /mtgdecks\.net\/[^/?#]+\/[^/?#]/, label: 'mtgdecks' },
+  { pattern: 'melee.gg/Decklist/View', deckRe: /melee\.gg\/Decklist\/View\/[0-9a-fA-F-]{36}/, label: 'Melee' },
+  { pattern: 'getpaird.io/decklists/', deckRe: /getpaird\.io\/decklists\/[^/?#]+/, label: 'getpaird' }
 ];
+
+// Sources that expose a public deck list for a username. The id list lives in
+// shared.js so every surface reads the same storage keys.
+const DECK_SOURCES = Shared.DECK_SOURCE_IDS.map(id => ({ id, msg: `LIST_${id.toUpperCase()}_DECKS` }));
 
 let currentTab = null;
 let detectedSite = null;
@@ -39,46 +46,29 @@ document.getElementById('bmc-text').textContent = chrome.i18n.getMessage('buyMeC
 document.getElementById('lbl-deck1').textContent = `Deck 1 · ${chrome.i18n.getMessage('activeTab')}`;
 document.getElementById('lbl-deck2').textContent = `Deck 2 · ${chrome.i18n.getMessage('compareAgainst')}`;
 document.getElementById('vs-text').textContent = chrome.i18n.getMessage('versus');
-document.getElementById('tab-url-text').textContent = chrome.i18n.getMessage('pasteUrl');
-document.getElementById('tab-mox-text').textContent = chrome.i18n.getMessage('myMoxfield');
 document.getElementById('cmp-url-text').textContent = chrome.i18n.getMessage('compare');
-document.getElementById('cmp-mox-text').textContent = chrome.i18n.getMessage('compare');
 document.getElementById('url-hint').textContent = chrome.i18n.getMessage('worksWithAny');
-deckSearchInput.placeholder = chrome.i18n.getMessage('selectDeck');
 document.getElementById('supports-lbl').textContent = chrome.i18n.getMessage('supports');
 document.getElementById('detected-badge').textContent = chrome.i18n.getMessage('detected');
 document.getElementById('detected-name').textContent = chrome.i18n.getMessage('scanning');
 document.getElementById('settings-title').textContent = chrome.i18n.getMessage('settings');
-document.getElementById('settings-source-label').textContent = chrome.i18n.getMessage('settingsSource');
 document.getElementById('settings-user-label').textContent = chrome.i18n.getMessage('settingsUser');
-document.getElementById('settings-save-text').textContent = chrome.i18n.getMessage('settingsSave');
+document.getElementById('settings-loadfrom-label').textContent = chrome.i18n.getMessage('settingsLoadFrom');
 document.getElementById('settings-inject-label').textContent = chrome.i18n.getMessage('settingsInjectLabel');
 document.getElementById('settings-inject-hint').textContent = chrome.i18n.getMessage('settingsInjectHint');
-deckUrlInput.placeholder = chrome.i18n.getMessage('pasteADeckUrl');
 document.getElementById('onboarding-title').textContent = chrome.i18n.getMessage('onboardingTitle');
 document.getElementById('onboarding-step1').textContent = chrome.i18n.getMessage('onboardingStep1');
 document.getElementById('onboarding-step2').textContent = chrome.i18n.getMessage('onboardingStep2');
 document.getElementById('onboarding-step3').textContent = chrome.i18n.getMessage('onboardingStep3');
 document.getElementById('pool-btn').title = chrome.i18n.getMessage('poolEntryTitle');
 document.getElementById('pool-entry-text').textContent = chrome.i18n.getMessage('poolAnalysis');
-document.getElementById('pool-entry-sub').textContent = chrome.i18n.getMessage('poolEntrySub');
+document.getElementById('pool-entry-sub').textContent = `· ${chrome.i18n.getMessage('poolEntrySub')}`;
+document.getElementById('settings-toggle').title = chrome.i18n.getMessage('settingsBtnTitle');
+document.getElementById('settings-toggle').setAttribute('aria-label', chrome.i18n.getMessage('settingsBtnTitle'));
+document.getElementById('tabpick-label').textContent = chrome.i18n.getMessage('openTabsLabel');
+deckUrlInput.placeholder = chrome.i18n.getMessage('deck2Placeholder');
 
-// --- Source toggle (persisted) ---
-function switchPane(pane) {
-  document.querySelectorAll('.src-toggle button').forEach(b =>
-    b.classList.toggle('active', b.dataset.pane === pane));
-  document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
-  document.getElementById('pane-' + pane).classList.add('active');
-}
-
-document.querySelectorAll('.src-toggle button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    switchPane(btn.dataset.pane);
-    chrome.storage.local.set({ preferredPane: btn.dataset.pane });
-  });
-});
-
-// --- On popup open: detect active tab + restore saved username ---
+// --- On popup open: detect active tab, offer candidates, restore saved decks ---
 (async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   currentTab = tab;
@@ -89,6 +79,8 @@ document.querySelectorAll('.src-toggle button').forEach(btn => {
     detectedName.textContent = chrome.i18n.getMessage('detected');
     detectedSub.innerHTML = `<span class="src-chip">${detectedSite.label}</span>`;
     detectedLive.style.display = '';
+    nameDetectedDeck(tab);
+    listOpenDeckTabs(tab);
   } else {
     detectedName.textContent = chrome.i18n.getMessage('noDetected');
     detectedSub.textContent = '';
@@ -96,45 +88,206 @@ document.querySelectorAll('.src-toggle button').forEach(btn => {
     document.querySelectorAll('.deck2-section').forEach(el => el.style.display = 'none');
   }
 
-  const stored = await chrome.storage.local.get(['moxfieldUser', 'moxfieldDecks', 'archidektUser', 'archidektDecks', 'magicvilleUser', 'magicvilleDecks', 'preferredPane', 'deckSource', 'injectButton']);
-  if (stored.preferredPane) switchPane(stored.preferredPane);
-  settingsInject.checked = !!stored.injectButton;   // opt-in: off unless the user enabled it
+  await loadSavedDecks();
 
-  // Restore deck source and username
-  const source = stored.deckSource || 'moxfield';
-  deckSourceSelect.value = source;
-  const savedUser = stored[`${source}User`];
-  const savedDecks = stored[`${source}Decks`];
-  if (savedUser) settingsUser.value = savedUser;
-  if (savedDecks?.length) populateSelect(savedDecks);
-  updateMoxHint(source, savedUser || '');
+  // Land the caret where the work happens: with a URL already copied, the popup is
+  // open-paste-Enter instead of open-click-paste-click.
+  if (detectedSite) deckUrlInput.focus();
 })();
 
-// --- URL comparison ---
-compareBtn.addEventListener('click', () => runComparison(deckUrlInput.value.trim()));
+// The badge already says "Detected"; the slot below it is styled as the deck's title, so
+// it carries the deck's actual name. Best-effort: the content script may not be injected,
+// and a miss just leaves the generic label in place.
+async function nameDetectedDeck(tab) {
+  try {
+    const resp = await sendToTab(tab.id, { type: 'GET_DECKLIST' });
+    if (resp?.deck?.name) detectedName.textContent = resp.deck.name;
+  } catch (_) { /* no content script on this page — keep the generic label */ }
+}
+
+// --- Deck 2 from an already-open tab ------------------------------------------------
+// The dominant case is two deck pages open at once. tabs.query returns the url for any
+// page the extension already holds host access to, so this costs no new permission and
+// turns "leave, find the tab, copy the address bar, come back, paste" into one click.
+async function listOpenDeckTabs(activeTab) {
+  let tabs = [];
+  try { tabs = await chrome.tabs.query({ currentWindow: true }); } catch (_) { return; }
+
+  const seen = new Set([activeTab?.url]);
+  const candidates = [];
+  for (const t of tabs) {
+    if (!t.url || t.id === activeTab?.id || seen.has(t.url)) continue;
+    // deckRe, not the loose pattern: a homepage or event listing offered here is
+    // a one-click shortcut that can only ever fail.
+    const site = SUPPORTED_SITES.find(x => x.deckRe.test(t.url));
+    if (!site) continue;
+    seen.add(t.url);
+    candidates.push({ url: t.url, label: site.label, title: t.title || t.url });
+  }
+  if (!candidates.length) return;
+
+  tabpickList.innerHTML = candidates.map(c =>
+    `<button type="button" class="tabpick-item" data-url="${esc(c.url)}">` +
+    `<span class="src-chip">${esc(c.label)}</span>` +
+    `<span class="nm">${esc(c.title)}</span></button>`
+  ).join('');
+  tabpick.hidden = false;
+}
+
+tabpickList.addEventListener('click', e => {
+  const item = e.target.closest('.tabpick-item');
+  if (!item) return;
+  tabpickList.querySelectorAll('.tabpick-item').forEach(b => { b.disabled = true; });
+  runComparison(item.dataset.url);
+});
+
+// --- Deck 2 field: one input that takes a URL or searches your saved decks -----------
+// It used to be two panes behind a toggle, with two Compare buttons and a persisted
+// preference — a decision the user had to make before they could act, to feed one field.
+let allDecks = [];      // every source's decks, merged
+let pickedUrl = '';     // set when an option is chosen; cleared as soon as the user types
+let activeIndex = -1;   // keyboard cursor in the dropdown; -1 = none
+let currentSource = 'moxfield';  // the source Enter targets: persisted deckSource, or the last button clicked
+
+// Read every source, not just the last one used: only `${source}Decks` was ever read, so
+// loading Moxfield made previously loaded Archidekt decks unreachable.
+async function loadSavedDecks() {
+  const keys = DECK_SOURCES.map(s => `${s.id}User`);
+  const stored = await chrome.storage.local.get([...keys, 'deckSource', 'injectButton']);
+  settingsInject.checked = !!stored.injectButton;   // opt-in: off unless the user enabled it
+
+  // The merged, source-tagged deck list comes from the same shared reader the
+  // results page and the in-page panel use.
+  allDecks = await Shared.getSavedDecks();
+  const configured = [];
+  for (const s of DECK_SOURCES) {
+    const user = stored[`${s.id}User`];
+    if (user) configured.push({ id: s.id, user });
+  }
+
+  const last = configured.find(c => c.id === (stored.deckSource || 'moxfield')) || configured[0];
+  if (last) { settingsUser.value = last.user; currentSource = last.id; }
+  else if (stored.deckSource) currentSource = stored.deckSource;
+  updateMoxHint(configured);
+}
+
+function matchingDecks(query) {
+  const q = query.trim().toLowerCase();
+  if (!q) return allDecks;
+  return allDecks.filter(d =>
+    d.name.toLowerCase().includes(q) ||
+    (d.format && d.format.toLowerCase().includes(q)) ||
+    d.source.includes(q));
+}
+
+function renderDropdown(list) {
+  activeIndex = -1;
+  deckUrlInput.removeAttribute('aria-activedescendant');
+  deckDropdown.innerHTML = list.map((d, i) => {
+    const fmt = d.format ? `<span class="fmt">${esc(d.format)}</span>` : '';
+    return `<div class="deck-option" role="option" id="deck-opt-${i}" aria-selected="false" data-url="${esc(d.url)}"><span class="nm">${esc(d.name)}</span>${fmt}</div>`;
+  }).join('');
+}
+
+function openDropdown(open) {
+  deckDropdown.classList.toggle('open', open);
+  deckUrlInput.setAttribute('aria-expanded', String(open));
+  if (!open) {
+    activeIndex = -1;
+    deckUrlInput.removeAttribute('aria-activedescendant');
+  }
+}
+
+function setActiveOption(i) {
+  const opts = deckDropdown.querySelectorAll('.deck-option');
+  if (!opts.length) return;
+  activeIndex = (i + opts.length) % opts.length;
+  opts.forEach((o, n) => {
+    const on = n === activeIndex;
+    o.classList.toggle('active', on);
+    o.setAttribute('aria-selected', String(on));
+    if (on) o.scrollIntoView({ block: 'nearest' });
+  });
+  deckUrlInput.setAttribute('aria-activedescendant', opts[activeIndex].id);
+}
+
+// Single commit path, shared by mouse and keyboard.
+function commitOption(opt) {
+  pickedUrl = opt.dataset.url;
+  const nameEl = opt.querySelector('.nm');
+  deckUrlInput.value = nameEl ? nameEl.textContent : '';
+  openDropdown(false);
+}
+
+// A pasted URL is used as typed; a picked deck keeps its name in the field and its URL here.
+const targetUrl = () => pickedUrl || deckUrlInput.value.trim();
+
+function suggest() {
+  const list = matchingDecks(deckUrlInput.value);
+  // A URL is not a search: no point offering deck names to someone who just pasted one.
+  if (!allDecks.length || /^https?:\/\//i.test(deckUrlInput.value.trim())) {
+    openDropdown(false);
+    return;
+  }
+  if (!list.length) {
+    // Zero matches still answers: a silently vanishing dropdown reads as "search
+    // broken" (or as the decks having been lost).
+    activeIndex = -1;
+    deckUrlInput.removeAttribute('aria-activedescendant');
+    // role=presentation: a listbox may only hold options, and this row is a
+    // message, not a choice.
+    deckDropdown.innerHTML = `<div class="deck-dropdown-empty" role="presentation">${esc(chrome.i18n.getMessage('noDeckMatches'))}</div>`;
+    openDropdown(true);
+    return;
+  }
+  renderDropdown(list);
+  openDropdown(true);
+}
+
+deckUrlInput.addEventListener('input', () => { pickedUrl = ''; suggest(); });
+deckUrlInput.addEventListener('focus', suggest);
+
+deckDropdown.addEventListener('click', e => {
+  const opt = e.target.closest('.deck-option');
+  if (opt) commitOption(opt);
+});
+
 deckUrlInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter') runComparison(deckUrlInput.value.trim());
+  const open = deckDropdown.classList.contains('open');
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (!open) { suggest(); setActiveOption(0); return; }
+    setActiveOption(activeIndex + (e.key === 'ArrowDown' ? 1 : -1));
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    const opts = deckDropdown.querySelectorAll('.deck-option');
+    if (open && activeIndex >= 0 && opts[activeIndex]) commitOption(opts[activeIndex]);
+    // No option armed but the user TYPED a query with matches on screen: commit
+    // the first one instead of submitting the search text as a URL, which could
+    // only error. An empty field (the dropdown auto-opens with every deck) must
+    // not commit an arbitrary deck — it falls through to the guidance message.
+    else if (open && opts.length && deckUrlInput.value.trim()) commitOption(opts[0]);
+    // The no-match state is open: the row on screen is the answer — closing it
+    // beats submitting the search text as a URL, which could only error.
+    else if (open && !opts.length) openDropdown(false);
+    else runComparison(targetUrl());
+  } else if (e.key === 'Escape' && open) {
+    e.preventDefault();
+    openDropdown(false);
+  }
 });
 
-// --- My Decks (searchable dropdown) ---
-let allDecks = [];
-let selectedDeckUrl = '';
-
-compareMoxfieldBtn.addEventListener('click', () => {
-  if (selectedDeckUrl) runComparison(selectedDeckUrl);
+document.addEventListener('click', e => {
+  if (!e.target.closest('.deck-search-wrap')) openDropdown(false);
 });
 
-refreshBtn.addEventListener('click', async () => {
-  refreshBtn.disabled = true;
-  await loadUserDecks();
-  refreshBtn.disabled = false;
-});
+compareBtn.addEventListener('click', () => runComparison(targetUrl()));
 
 // --- Settings panel ---
 // Settings replaces the main view rather than stacking on top of it: shown together they
 // made the popup far taller than it needs to be. The header stays so the panel still
 // reads as part of the extension and the gear remains reachable.
-// #status deliberately stays visible: it is where "Save & load" reports progress and
+// #status deliberately stays visible: it is where deck loading reports progress and
 // errors, which happen while the settings panel is the only thing on screen.
 const mainViews = ['.p-body']
   .map(sel => document.querySelector(sel))
@@ -150,28 +303,55 @@ document.getElementById('settings-toggle').addEventListener('click', () => {
 });
 document.getElementById('settings-close').addEventListener('click', () => showSettings(false));
 
+// The "configure your account" notice names the fix and is styled like a button, so it
+// performs it rather than sitting there inert.
+moxHint.addEventListener('click', () => {
+  if (moxHint.classList.contains('hint-configure')) showSettings(true);
+});
+
 // In-page button toggle — the content script watches this key and mounts/unmounts live.
 // Some supported pages need access the extension doesn't hold by default: Moxfield (its
 // decks come from api2.moxfield.com, not the page) and the www/non-www twins of sites
 // declared under only one form. They are optional permissions, asked for here from this
 // click — chrome.permissions.request needs a user gesture — and revoked when the button
 // is switched off. Declining costs only the button on those hosts; the rest keeps working.
-const OPTIONAL_ORIGINS = [
-  'https://www.moxfield.com/*',
-  'https://moxfield.com/*',
-  'https://mtgtop8.com/*',
-  'https://mtggoldfish.com/*',
-  'https://magic-ville.com/*',
-  'https://www.mtgdecks.net/*'
-];
+// One list, in shared.js — background.js registers scripts from the same table,
+// so a host cannot be granted here but never injected there (or the reverse).
+const OPTIONAL_ORIGINS = Shared.OPTIONAL_SCRIPTS.map(s => s.origin);
+
+// A page already open on a freshly granted origin has no content script in it yet:
+// registerContentScripts only applies to later loads, and the storage listener that
+// mounts the button live can only fire where the script is already running.
+const needsReload = (url) => {
+  if (!url) return false;
+  let host;
+  try { host = new URL(url).hostname; } catch (_) { return false; }
+  return OPTIONAL_ORIGINS.some(o => Shared.originMatchesHost(o, host));
+};
 
 settingsInject.addEventListener('change', async () => {
-  const on = settingsInject.checked;
-  chrome.storage.local.set({ injectButton: on });
-  try {
-    if (on) await chrome.permissions.request({ origins: OPTIONAL_ORIGINS });
-    else await chrome.permissions.remove({ origins: OPTIONAL_ORIGINS });
-  } catch (_) { /* declined or unavailable — statically declared sites still work */ }
+  if (!settingsInject.checked) {
+    chrome.storage.local.set({ injectButton: false });
+    try { await chrome.permissions.remove({ origins: OPTIONAL_ORIGINS }); } catch (_) {}
+    setStatus('');
+    return;
+  }
+
+  // Ask before persisting. Writing first left the checkbox on after a decline, with the
+  // button never appearing on those hosts and nothing explaining why.
+  let granted = false;
+  try { granted = await chrome.permissions.request({ origins: OPTIONAL_ORIGINS }); }
+  catch (_) { granted = false; }
+
+  if (!granted) {
+    settingsInject.checked = false;
+    chrome.storage.local.set({ injectButton: false });
+    setStatus(chrome.i18n.getMessage('injectDeclined'), true);
+    return;
+  }
+
+  chrome.storage.local.set({ injectButton: true });
+  setStatus(needsReload(currentTab?.url) ? chrome.i18n.getMessage('injectReload') : '');
 });
 
 // --- Pool analyzer entry ---
@@ -180,134 +360,82 @@ document.getElementById('pool-btn').addEventListener('click', () => {
   window.close();
 });
 
-// When source changes in settings, restore saved username
-deckSourceSelect.addEventListener('change', async () => {
-  const source = deckSourceSelect.value;
-  const stored = await chrome.storage.local.get([`${source}User`]);
-  settingsUser.value = stored[`${source}User`] || '';
+// --- Loading your decks -------------------------------------------------------------
+// One button per source instead of a select plus a Save button: picking the service and
+// confirming were two gestures for one intent.
+document.querySelectorAll('.source-row [data-source]').forEach(btn => {
+  btn.addEventListener('click', () => { currentSource = btn.dataset.source; loadUserDecks(btn.dataset.source); });
 });
-
-// Save & load
-settingsSave.addEventListener('click', loadUserDecks);
+// Enter targets the source the user actually works with (persisted deckSource,
+// or the button they last clicked) — a Magic-Ville pseudo sent to Moxfield either
+// errors or saves a stranger's same-named decks.
 settingsUser.addEventListener('keydown', e => {
-  if (e.key === 'Enter') loadUserDecks();
+  if (e.key !== 'Enter') return;
+  const btn = document.querySelector(`.source-row [data-source="${currentSource}"]`)
+    || document.querySelector('.source-row [data-source]');
+  btn?.click();
 });
 
-async function loadUserDecks() {
+async function loadUserDecks(source) {
   const username = settingsUser.value.trim();
-  const source = deckSourceSelect.value;
-  if (!username) { setStatus(chrome.i18n.getMessage('enterMoxUser'), true); return; }
+  if (!username) { setStatus(chrome.i18n.getMessage('enterMoxUser'), true); settingsUser.focus(); return; }
 
-  settingsSave.disabled = true;
-  setStatus(chrome.i18n.getMessage('loadingMoxDecks'));
+  const buttons = document.querySelectorAll('.source-row [data-source]');
+  buttons.forEach(b => { b.disabled = true; });
+  setStatus(chrome.i18n.getMessage('loadingDecks'));
 
   try {
-    const MSG_TYPES = { moxfield: 'LIST_MOXFIELD_DECKS', archidekt: 'LIST_ARCHIDEKT_DECKS', magicville: 'LIST_MAGICVILLE_DECKS' };
-    const msgType = MSG_TYPES[source] || 'LIST_MOXFIELD_DECKS';
+    const msgType = DECK_SOURCES.find(s => s.id === source).msg;
     const resp = await sendToRuntime({ type: msgType, username });
-    if (resp.error) { setStatus(`${chrome.i18n.getMessage('error')}: ${resp.error}`, true); settingsSave.disabled = false; return; }
-    if (!resp.decks?.length) { setStatus(chrome.i18n.getMessage('noPublicDecks'), true); settingsSave.disabled = false; return; }
+    if (resp.error) { setStatus(`${chrome.i18n.getMessage('error')}: ${resp.error}`, true); return; }
+    if (!resp.decks?.length) { setStatus(chrome.i18n.getMessage('noPublicDecks'), true); return; }
 
     await chrome.storage.local.set({
       deckSource: source,
       [`${source}User`]: username,
       [`${source}Decks`]: resp.decks
     });
-    populateSelect(resp.decks);
+    await loadSavedDecks();
     setStatus('');
-    const now = new Date().toLocaleTimeString();
     settingsHint.innerHTML = `<b>${resp.decks.length}</b> ${chrome.i18n.getMessage('decksLoaded')}`;
-    moxHint.className = 'hint';
-    moxHint.innerHTML = `<b>${source}</b> · ${esc(username)} · <b>${resp.decks.length}</b> decks · ${now}`;
-    // Auto-close settings after success — via showSettings, so the main view comes back;
-    // hiding the panel alone would leave the popup blank.
+    // Back to the main view — hiding the panel alone would leave the popup blank.
     showSettings(false);
+    deckUrlInput.focus();
   } catch (err) {
     setStatus(`${chrome.i18n.getMessage('error')}: ${err.message}`, true);
   } finally {
-    settingsSave.disabled = false;
+    buttons.forEach(b => { b.disabled = false; });
   }
 }
 
-function updateMoxHint(source, username) {
-  if (username) {
+function updateMoxHint(configured) {
+  if (configured.length) {
     moxHint.className = 'hint';
-    moxHint.innerHTML = `<b>${source}</b> · ${esc(username)} · ${chrome.i18n.getMessage('settingsConfigured')}`;
+    moxHint.innerHTML = configured.map(c => `<b>${c.id}</b> · ${esc(c.user)}`).join(' · ') +
+      ` · <b>${allDecks.length}</b> decks`;
   } else {
     moxHint.className = 'hint-configure';
     moxHint.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>${chrome.i18n.getMessage('settingsNotConfigured')}`;
   }
 }
 
-function populateSelect(decks) {
-  allDecks = decks;
-  selectedDeckUrl = '';
-  deckSearchInput.disabled = false;
-  deckSearchInput.value = '';
-  deckSearchInput.placeholder = chrome.i18n.getMessage('selectDeck');
-  compareMoxfieldBtn.disabled = true;
-  refreshBtn.style.display = '';
-  renderDropdown(decks);
-}
-
-function renderDropdown(filtered) {
-  if (!filtered.length) {
-    deckDropdown.innerHTML = `<div class="deck-dropdown-empty">${chrome.i18n.getMessage('noPublicDecks')}</div>`;
-    return;
-  }
-  deckDropdown.innerHTML = filtered.map(d => {
-    const fmt = d.format ? `<span class="fmt">${esc(d.format)}</span>` : '';
-    return `<div class="deck-option" data-url="${esc(d.url)}"><span class="nm">${esc(d.name)}</span>${fmt}</div>`;
-  }).join('');
-}
-
-// Search input: filter + show dropdown
-deckSearchInput.addEventListener('input', () => {
-  const q = deckSearchInput.value.toLowerCase();
-  const filtered = allDecks.filter(d => d.name.toLowerCase().includes(q) || (d.format && d.format.toLowerCase().includes(q)));
-  renderDropdown(filtered);
-  deckDropdown.classList.add('open');
-});
-
-deckSearchInput.addEventListener('focus', () => {
-  if (allDecks.length) {
-    const q = deckSearchInput.value.toLowerCase();
-    const filtered = q ? allDecks.filter(d => d.name.toLowerCase().includes(q) || (d.format && d.format.toLowerCase().includes(q))) : allDecks;
-    renderDropdown(filtered);
-    deckDropdown.classList.add('open');
-  }
-});
-
-// Click on a deck option
-deckDropdown.addEventListener('click', e => {
-  const opt = e.target.closest('.deck-option');
-  if (!opt) return;
-  selectedDeckUrl = opt.dataset.url;
-  const nameEl = opt.querySelector('.nm');
-  deckSearchInput.value = nameEl ? nameEl.textContent : '';
-  deckDropdown.classList.remove('open');
-  compareMoxfieldBtn.disabled = false;
-});
-
-// Close dropdown when clicking outside
-document.addEventListener('click', e => {
-  if (!e.target.closest('.deck-search-wrap')) {
-    deckDropdown.classList.remove('open');
-  }
-});
-
 // --- Shared comparison logic ---
-async function runComparison(targetUrl) {
-  if (!targetUrl) { setStatus(chrome.i18n.getMessage('pasteOrSelect'), true); return; }
+async function runComparison(url) {
+  if (!url) { setStatus(chrome.i18n.getMessage('pasteOrSelect'), true); return; }
   if (!detectedSite) { setStatus(chrome.i18n.getMessage('openSupportedFirst'), true); return; }
 
   compareBtn.disabled = true;
-  compareMoxfieldBtn.disabled = true;
 
   try {
     setStatus(`${chrome.i18n.getMessage('readingDeck')} ${detectedSite.label}…`);
-    let sourceDeck;
 
+    // Deck B never depends on deck A, so start it now instead of after A resolves —
+    // this is the only real wait in the product and it was being paid twice, in series.
+    // The guard keeps an early return from surfacing as an unhandled rejection.
+    const targetPromise = sendToRuntime({ type: 'FETCH_DECK', url });
+    targetPromise.catch(() => {});
+
+    let sourceDeck;
     try {
       const resp = await sendToTab(currentTab.id, { type: 'GET_DECKLIST' });
       sourceDeck = resp?.deck;
@@ -329,12 +457,12 @@ async function runComparison(targetUrl) {
     }
 
     setStatus(chrome.i18n.getMessage('fetchingSecond'));
-    const targetResp = await sendToRuntime({ type: 'FETCH_DECK', url: targetUrl });
+    const targetResp = await targetPromise;
     if (targetResp.error) { setStatus(`${chrome.i18n.getMessage('error')}: ${targetResp.error}`, true); resetButtons(); return; }
 
     setStatus(chrome.i18n.getMessage('openingResults'));
     sourceDeck.url = currentTab.url;
-    targetResp.deck.url = targetUrl;
+    targetResp.deck.url = url;
     await chrome.storage.local.set({ compareData: { deckA: sourceDeck, deckB: targetResp.deck } });
     chrome.tabs.create({ url: chrome.runtime.getURL('compare.html') });
     window.close();
@@ -346,7 +474,7 @@ async function runComparison(targetUrl) {
 
 function resetButtons() {
   compareBtn.disabled = false;
-  compareMoxfieldBtn.disabled = false;
+  tabpickList.querySelectorAll('.tabpick-item').forEach(b => { b.disabled = false; });
 }
 
 function setStatus(msg, isError = false) {
