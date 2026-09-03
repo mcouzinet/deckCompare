@@ -55,6 +55,16 @@
       width:30px; height:30px; border-radius:50%; cursor:pointer; line-height:1; transition:all 0.14s; box-shadow:var(--lift-1); }
     .fields-close:hover { color:var(--brand); background:var(--brand-wash); }
 
+    /* "+ Ajouter des decks" opens the fields as a popin above the analysis, not inline in the
+       page flow — with a pool already on screen the inline version could expand out of view. */
+    .modal-backdrop { position:fixed; inset:0; z-index:90; background:rgba(36,28,24,.45); }
+    .modal-backdrop.hide { display:none; }
+    body.modal-locked { overflow:hidden; }
+    #input-panel.modal-open { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:91;
+      width:min(640px, calc(100vw - 40px)); max-height:calc(100vh - 80px); overflow-y:auto;
+      background:var(--elev); border:1px solid var(--line); border-radius:var(--r-lg); box-shadow:var(--lift-3);
+      padding:24px; margin:0; }
+
     /* open-tab picker — one click drops a deck you already have open into the links box */
     .tabpick { margin-bottom:16px; }
     .tabpick-label { font-size:var(--fs-micro); text-transform:uppercase; letter-spacing:0.12em; font-weight:600; color:var(--ink-3); margin:0 0 8px; }
@@ -234,6 +244,8 @@
     <div class="topbar-spacer"></div>
     <div class="topbar-meta" id="topbar-meta"></div>
   </div>
+
+  <div class="modal-backdrop hide" id="modal-backdrop"></div>
 
   <div class="shell">
     <main>
