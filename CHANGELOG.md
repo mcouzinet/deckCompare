@@ -5,10 +5,11 @@ Le format s'inspire de [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 Les versions du manifeste suivent le schéma **`major.prod.dev`** (voir `CLAUDE.md`) : `prod`
 reste à `0` tant que la version n'est pas publiée, `dev` est bumpé à chaque itération testée.
 
-## [Non publié]
+## [1.0.13] — 2026-09-03
 
-La v1.0.0 taguée le 2026-09-02 a été **annulée en production** ; la vraie 1.0 sortira avec ce
-lot. Manifeste en cours : `1.0.11`. **Aucune permission requise ajoutée.**
+Première version publiée depuis la 0.9.0 : la v1.0.0 taguée le 2026-09-02 avait été annulée
+avant mise en ligne, ce lot la remplace. **Aucune permission d'hôte requise ajoutée** (seule
+l'API `scripting`, sans avertissement à la mise à jour).
 
 ### Ajouté
 
@@ -30,6 +31,18 @@ lot. Manifeste en cours : `1.0.11`. **Aucune permission requise ajoutée.**
   ne sert plus nulle part ; les couleurs deck 1 / deck 2 / commun deviennent orange brûlé, teal
   et vert profonds, lisibles sur fond clair (≥ 4,9:1). L'icône et le wordmark sont inchangés ;
   les boutons injectés sur les sites ne bougent pas. `theme.css` reste le seul monde partagé.
+- **« Analyse de pool » devient « Comparaison croisée »** (EN : Cross-compare) : « pool » désigne
+  un pool de scellé en Magic ; le nouveau nom prolonge la marque (Compare à deux, croisée à N).
+  Entrée du popup, en-tête de la page, bouton archétype mtgtop8 (« Comparer tous les decks »),
+  README et fiche Store suivent.
+- **Les deux encres du logo font le travail de l'interface** : le teal pour tout ce qu'on presse,
+  choisit ou focalise (pilule principale, segment sélectionné, anneau de focus, cases à cocher),
+  l'orange pour le commandant et les graphiques ; le rouge ne reste que pour l'alarme (erreurs,
+  écarts de quantité, exclusions).
+- **Comparaison croisée sans commandant** : pour un format à 60 cartes, le héros montre la carte
+  la plus jouée (hors terrains) avec son image, et les couleurs du consensus remplacent celles du
+  commandant ; le libellé « Commandant » disparaît. Lancée depuis une page archétype mtgtop8,
+  le titre est le nom de l'archétype (« Slivers »).
 - **Aperçus de cartes rognés au vrai rayon de la carte** : certaines images Scryfall (JPG)
   remplissent l'extérieur des coins arrondis en blanc, qui dépassait des coins de 5–6 px.
 - **Boutons injectés redessinés** : noir avec un fin liseré clair et l'icône deux-tons de
@@ -52,6 +65,10 @@ lot. Manifeste en cours : `1.0.11`. **Aucune permission requise ajoutée.**
 - **Bouton Archidekt mal placé** : il s'ancre maintenant à côté du bouton « More » (groupe
   Clone deck / More) au lieu du lien Playtester, qui peut se retrouver loin de ce groupe
   quand le deck contient des erreurs.
+- **« Extension context invalidated » sur le bouton archétype** : après un rechargement de
+  l'extension, l'ancien script injecté restait actif dans l'onglet mtgtop8 et levait une erreur
+  au clic. Il détecte maintenant le contexte perdu, ne touche plus aux API `chrome.*`, et le
+  bouton affiche « Recharge la page pour utiliser ce bouton ».
 - **Bouton mtgtop8 en vue « visuelle »** : il réapparaît et lit correctement le deck (le cookie
   de vue visuelle collant cassait la lecture et masquait le bouton).
 - **Cartes recto/verso partagées entre sources** : `Life // Death` (Moxfield) et `Life/Death`
