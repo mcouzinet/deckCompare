@@ -8,7 +8,7 @@ reste à `0` tant que la version n'est pas publiée, `dev` est bumpé à chaque 
 ## [Non publié]
 
 La v1.0.0 taguée le 2026-09-02 a été **annulée en production** ; la vraie 1.0 sortira avec ce
-lot. Manifeste en cours : `1.0.9`. **56 tests verts. Aucune permission requise ajoutée.**
+lot. Manifeste en cours : `1.0.10`. **56 tests verts. Aucune permission requise ajoutée.**
 
 ### Ajouté
 
@@ -48,6 +48,11 @@ lot. Manifeste en cours : `1.0.9`. **56 tests verts. Aucune permission requise a
 - **Cartes recto/verso partagées entre sources** : `Life // Death` (Moxfield) et `Life/Death`
   (export MTGO mtgtop8) sont reconnues comme la même carte — plus de doublon dans les deux
   colonnes « unique ».
+- **Erreur « Erreur Magic-Ville: 403 » à la comparaison.** Magic-Ville rejette désormais les
+  requêtes sans cookie (même protection anti-bot que MTGGoldfish/mtgdecks) ; la récupération du
+  deck et la liste des decks d'un joueur passent en `credentials:'include'` pour envoyer le
+  cookie de session, avec un message d'erreur explicite (`errMagicVilleBlocked`) si le 403
+  persiste malgré tout.
 
 ## [1.0.0] — 2026-09-02
 

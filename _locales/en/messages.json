@@ -67,6 +67,7 @@
   "errMagicVilleInvalidUrl":   { "message": "Invalid Magic-Ville URL (missing ref= parameter)" },
   "errMagicVilleParseFailed":  { "message": "Could not parse the Magic-Ville page" },
   "errMagicVilleDeckNotFound": { "message": "Magic-Ville deck not found" },
+  "errMagicVilleBlocked":      { "message": "Magic-Ville blocked automated fetching. Open any Magic-Ville page in your browser (log in if needed), then retry — or paste the deck text." },
   "errMtgdecksInvalidUrl":     { "message": "Invalid mtgdecks URL" },
   "errMtgdecksStatus":         { "message": "mtgdecks error:" },
   "errMtgdecksBlocked":        { "message": "mtgdecks blocked automated fetching. Open any mtgdecks.net page in your browser, then retry — or paste the deck text." },
