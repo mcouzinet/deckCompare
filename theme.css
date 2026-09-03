@@ -36,10 +36,12 @@
   --b-wash:     rgba(19,112,131,0.10);
   --match-wash: rgba(30,122,76,0.10);
 
-  /* the one action colour: a deep red, text and fill alike (8:1 on paper, 8.7:1 with white) */
+  /* The logo's two inks do the interface's work: teal is everything you press, pick or
+     focus (the primary pill, the selected segment, the focus ring, the caret); orange is
+     the warm side and the charts. Red is the alarm only: errors, mismatches, exclusions. */
   --brand:        #8a1f16;
-  --brand-btn:    #8a1f16;
-  --brand-btn-hi: #701810;
+  --brand-btn:    #137083;
+  --brand-btn-hi: #0f5d6d;
   --brand-wash:   rgba(138,31,22,0.10);
   --warn:  var(--brand);
   --warn-hi: var(--brand-btn-hi);
@@ -49,7 +51,7 @@
   --lift-2: 0 2px 4px rgba(36,28,24,.05), 0 10px 28px rgba(36,28,24,.08);
   --lift-3: 0 6px 12px rgba(36,28,24,.06), 0 24px 56px rgba(36,28,24,.14);
   --press:  inset 0 1px 2px rgba(36,28,24,.06);
-  --brand-lift: 0 2px 10px rgba(138,31,22,.28);
+  --brand-lift: 0 2px 10px rgba(19,112,131,.30);
 
   /* corners: pills for controls, sheets rounded like the paper they are */
   --r-xs: 6px;
@@ -104,8 +106,8 @@ body {
 
 /* --- browser surfaces ------------------------------------------------------------
    The parts we did not draw still carry the world. */
-::selection { background: var(--brand-wash); color: var(--ink); }
-:root { accent-color: var(--ink); caret-color: var(--ink); color-scheme: light; }
+::selection { background: var(--b-wash); color: var(--ink); }
+:root { accent-color: var(--b); caret-color: var(--b); color-scheme: light; }
 * { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
 *::-webkit-scrollbar { width: 10px; height: 10px; }
 *::-webkit-scrollbar-track { background: transparent; }
@@ -116,7 +118,7 @@ a { color: var(--ink); text-underline-offset: 0.22em; text-decoration-thickness:
 .num, .qty, output { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
 :focus-visible {
-  outline: 2px solid var(--ink);
+  outline: 2px solid var(--b);
   outline-offset: 2px;
   border-radius: var(--r-xs);
 }
@@ -151,7 +153,7 @@ a { color: var(--ink); text-underline-offset: 0.22em; text-decoration-thickness:
 .side-b .zone-mark { border-bottom-color: var(--b-wash); }
 
 /* --- the one button component -----------------------------------------------------
-   A pill. Default is a white pill with a hairline; --go is the deep red one and the only
+   A pill. Default is a white pill with a hairline; --go is the teal one and the only
    thing on the page that casts a coloured shadow; --flat has no edge until reached for. */
 .mat-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: calc(var(--unit) * 0.9);
@@ -163,13 +165,13 @@ a { color: var(--ink); text-underline-offset: 0.22em; text-decoration-thickness:
   box-shadow: none;
   transition: transform .16s cubic-bezier(.22,1,.36,1), box-shadow .16s, background .16s, border-color .16s;
 }
-.mat-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--lift-1); border-color: var(--ink-3); }
+.mat-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--lift-1); border-color: var(--b); }
 .mat-btn:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
 .mat-btn:disabled { opacity: .45; cursor: default; box-shadow: none; }
 .mat-btn svg { width: 15px; height: 15px; flex: none; }
 
 .mat-btn--go { background: var(--brand-btn); border-color: var(--brand-btn); color: #fff; box-shadow: var(--brand-lift); }
-.mat-btn--go:hover:not(:disabled) { background: var(--brand-btn-hi); border-color: var(--brand-btn-hi); box-shadow: 0 4px 14px rgba(138,31,22,.34); }
+.mat-btn--go:hover:not(:disabled) { background: var(--brand-btn-hi); border-color: var(--brand-btn-hi); box-shadow: 0 4px 14px rgba(19,112,131,.36); }
 .mat-btn--go:active:not(:disabled) { box-shadow: var(--brand-lift); }
 
 .mat-btn--flat { background: transparent; border-color: transparent; color: var(--ink-2); }
@@ -187,10 +189,10 @@ a { color: var(--ink); text-underline-offset: 0.22em; text-decoration-thickness:
   transition: border-color .12s, box-shadow .12s;
 }
 .mat-field::placeholder { color: var(--ink-3); }
-.mat-field:focus { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.mat-field:focus { border-color: var(--b); box-shadow: inset 0 0 0 1px var(--b); }
 
 /* --- selectable segments ----------------------------------------------------------
-   A pill group. The selected segment is inked, and says so with aria-pressed. */
+   A pill group. The selected segment is teal, and says so with aria-pressed. */
 .segments { display: inline-flex; gap: 2px; padding: 3px; background: var(--elev); border: 1px solid var(--line); border-radius: var(--r-pill); }
 .segment {
   display: inline-flex; align-items: center; justify-content: center;
@@ -200,7 +202,7 @@ a { color: var(--ink); text-underline-offset: 0.22em; text-decoration-thickness:
   transition: color .12s, background .12s;
 }
 .segment:hover { color: var(--ink); background: var(--bg-deep); }
-.segment[aria-pressed="true"] { color: #fff; background: var(--ink); }
+.segment[aria-pressed="true"] { color: #fff; background: var(--b); }
 
 /* --- the wordmark ------------------------------------------------------------------
    Locked: the icon, and "Deck" + bold "Compare" in Bricolage, warm then cool. */

@@ -16,9 +16,10 @@ colors:
   side-a-wash: "rgba(168,84,15,0.10)"
   side-b-wash: "rgba(19,112,131,0.10)"
   shared-wash: "rgba(30,122,76,0.10)"
-  action: "#8a1f16"
-  action-deep: "#701810"
-  action-wash: "rgba(138,31,22,0.10)"
+  action: "#137083"
+  action-deep: "#0f5d6d"
+  alarm: "#8a1f16"
+  alarm-wash: "rgba(138,31,22,0.10)"
 typography:
   display:
     fontFamily: "Beleren, Iowan Old Style, Georgia, serif"
@@ -107,7 +108,7 @@ components:
     rounded: "{rounded.pill}"
     padding: "7px 14px"
   segment-selected:
-    backgroundColor: "{colors.ink}"
+    backgroundColor: "{colors.action}"
     textColor: "#ffffff"
   chip:
     backgroundColor: "{colors.sheet}"
@@ -128,8 +129,7 @@ components:
 
 The surface is a one-page brief read at a desk in daylight. The ground is cream paper,
 the ink is warm and near-black, and everything that groups information is a white sheet
-laid on the paper with a hairline edge. Controls are pills. One deep red is the action.
-The figures that decide something — the similarity percentage, the commander's name, the
+laid on the paper with a hairline edge. Controls are pills. The logo's teal is the action and the selected state; its orange is the warm side, the commander and the charts; red is kept for the alarm. The figures that decide something — the similarity percentage, the commander's name, the
 two deck names, the counts — are set in a serif, large; everything else is the sheet's
 sans. Nothing glows, nothing blurs, nothing is embossed: paper is flat and light falls on
 it from above.
@@ -144,21 +144,22 @@ a shadow root; they sit on other people's pages and are not this world.
 
 **Key Characteristics:**
 - Cream paper, white sheets, one hairline weight, warm ink in three strengths.
-- Pill controls; the selected one is inked, the primary one is red and casts the page's only coloured shadow.
+- Pill controls; the selected one is teal, the primary one is teal and casts the page's only coloured shadow.
 - Serif for the figures that decide; sans for everything you scan; mono for what you count.
 - Depth is a sheet resting on a desk: soft, wide, downward shadows in three lifts.
 - Side A, side B and shared are functional colours and appear only where they mean something.
 
 ## Colors
 
-A restrained palette: paper and ink, one action red, and three role colours that carry meaning rather than mood.
+A restrained palette: paper and ink, the logo's two inks at work, and red held back for the alarm.
 
 ### Primary
-- **Action Red** (#8a1f16): the one action colour. Fills the primary pill (`.mat-btn--go`) with white text, and is the text colour of anything that needs attention — an error, an excluded deck's chip, a quantity mismatch. Hovers to **Action Deep** (#701810). 8:1 on paper, 8.7:1 with white.
+- **Action Teal** (#137083): the logo's blue, doing the interface's work. Fills the primary pill (`.mat-btn--go`) with white text, the selected segment and pill, the focus ring, the caret, the checkbox accent, and the hover edge of anything pressable. Hovers to **Action Deep** (#0f5d6d). 5.3:1 on paper, 5.5:1 with white.
+- **Alarm Red** (#8a1f16): held back for what needs attention — an error, an excluded deck's chip, a quantity mismatch, a remove ×. Never a button. 8:1 on paper.
 
 ### Secondary
-- **Side A, warm card** (#a8540f): deck 1's name, its counts, its quantities, its zone name. Never a button, never a border.
-- **Side B, cool card** (#137083): deck 2, the same way.
+- **Side A, warm card** (#a8540f): the logo's orange. Deck 1's name, its counts, its quantities, its zone name; on the cross-compare page, the commander's role label and the bars of every chart. Never a button.
+- **Side B, cool card** (#137083): deck 2, the same way — the same teal as the action, told apart by form: a side is text, an action is a filled pill.
 - **Shared Green** (#1e7a4c): the ground the two decks have in common — the shared zone, the "shared cards" count, the "with this card" filter chip, the live "Detected" dot.
 
 Each role has a wash (`--a-wash`, `--b-wash`, `--match-wash`, 10% alpha) for the tinted chips and edges that name a side without shouting.
@@ -171,7 +172,7 @@ Each role has a wash (`--a-wash`, `--b-wash`, `--match-wash`, 10% alpha) for the
 - **Hairline** (#e8dfd8) for sheet edges and rules; **Hairline Strong** (#d6c9bf) for control edges (pills, fields, chips).
 
 ### Named Rules
-**The One Red Rule.** Red is the action and the alarm, and nothing else. It never decorates, never marks a side, never appears in a chart.
+**The Two Inks Rule.** The logo's teal and orange are the interface's working colours — teal for what you press, pick or focus, orange for the warm side, the commander and the charts. Red is the alarm and nothing else: it never fills a button, never marks a side, never appears in a chart.
 
 **The Roles Not Accents Rule.** Side A orange, side B teal and shared green appear only on the thing they mean — a name, a count, a bar segment, a swatch. No headers, no buttons, no backgrounds take them.
 
@@ -206,7 +207,7 @@ One unit: 8px. Gutters are `clamp(20px, 4vw, 48px)`; content is capped at 1280px
 
 The results page is one sheet of paper: a top edge carrying the wordmark and the actions, the matchup (deck A left, the figure centred, deck B right), the overlap bar, the controls, then the two sides as zones over a shared table, with the held card in a sticky rail at 300px. The rail drops under the content below 1080px and the empty stage folds to its hint; the matchup stacks below 760px with the figure first.
 
-The pool page is the same paper with a 320px rail on the right: the deck list (capped at ~7 rows, scrolling on its own), the held card, the mana curve, the sideboard. The rail is capped to the viewport and scrolls as a whole; nothing inside it is squeezed. It hides below 1000px.
+The cross-compare page is the same paper with a 320px rail on the right: the deck list (capped at ~7 rows, scrolling on its own), the held card, the mana curve, the sideboard. The rail is capped to the viewport and scrolls as a whole; nothing inside it is squeezed. It hides below 1000px.
 
 The popup is 400px of the same paper: the wordmark, your deck as a sheet under its side's label, the rule ("versus"), the second deck's field with the red pill, and stays under Chrome's 600px ceiling.
 
@@ -221,7 +222,7 @@ Sheets on a desk, lit from above. Every shadow has a downward offset and a soft,
 - **lift-2** (`0 2px 4px rgba(36,28,24,.05), 0 10px 28px rgba(36,28,24,.08)`): a sheet picked up — the held card, the hero art.
 - **lift-3** (`0 6px 12px rgba(36,28,24,.06), 0 24px 56px rgba(36,28,24,.14)`): above the desk — a hovered card, an open dropdown, the floating selection bar.
 - **press** (`inset 0 1px 2px rgba(36,28,24,.06)`): reserved; the built world presses nothing in.
-- **action lift** (`0 2px 10px rgba(138,31,22,.28)`): the red pill's own shadow, the only coloured one.
+- **action lift** (`0 2px 10px rgba(19,112,131,.30)`): the teal pill's own shadow, the only coloured one.
 
 ### Named Rules
 **The Paper Does Not Blur Rule.** No backdrop-filter, no glass. A sticky bar is opaque paper with a hairline.
@@ -236,19 +237,19 @@ Pills for anything you press or select (999px). Sheets are rounded like paper: 1
 
 ### Buttons
 - **Shape:** pill (999px), 13px/600, 10px 18px.
-- **Default (`.mat-btn`):** white with a Hairline Strong edge; hover lifts 1px, takes lift-1 and an Ink Mute edge.
-- **Primary (`.mat-btn--go`):** Action Red, white text, the action lift; hover to Action Deep.
+- **Default (`.mat-btn`):** white with a Hairline Strong edge; hover lifts 1px, takes lift-1 and a teal edge.
+- **Primary (`.mat-btn--go`):** Action Teal, white text, the action lift; hover to Action Deep.
 - **Flat (`.mat-btn--flat`):** no edge until reached for; hover fills Paper Well.
 - **Icon (`.mat-btn--icon`):** the same pill at 10px padding — the popup's settings gear, the pool's close.
 - **Dashed (`.add-toggle`, `.hint-configure`):** a dashed Hairline Strong pill or sheet for "add" affordances.
 
 ### Segments
 - **Style:** a white pill group with a Hairline edge and 3px padding.
-- **State:** the selected segment is inked (Ink fill, white text) and carries `aria-pressed`; the rest are Ink Mute, hovering to Paper Well. The pool's category pills follow the same rule as standalone pills.
+- **State:** the selected segment is teal (Action Teal fill, white text) and carries `aria-pressed`; the rest are Ink Mute, hovering to Paper Well. The pool's category pills follow the same rule as standalone pills.
 
 ### Chips
 - **Style:** white pill, Hairline Strong edge, 12px text; the deck-source chip is a Paper Well pill in 11px tracked caps.
-- **State:** a filter chip prefixes its rule in Shared Green ("with") or Action Red ("without") and carries its own ×.
+- **State:** a filter chip prefixes its rule in Shared Green ("with") or Alarm Red ("without") and carries its own ×.
 
 ### Sheets
 - **Corner Style:** 14px (18px for the held card).
@@ -259,8 +260,8 @@ Pills for anything you press or select (999px). Sheets are rounded like paper: 1
 
 ### Inputs / Fields
 - **Style:** white, Hairline Strong edge, 10px radius, 10px 14px; mono for pasted decklists.
-- **Focus:** the edge turns Ink and doubles (inset 1px Ink), no glow.
-- **Error:** the message under it in Action Red.
+- **Focus:** the edge turns teal and doubles (inset 1px teal), no glow.
+- **Error:** the message under it in Alarm Red.
 
 ### Navigation
 - The top edge: wordmark left, actions right as pills, one Hairline under it. Opaque paper; sticky on the pool page.
@@ -275,7 +276,7 @@ A Scryfall image on a 10px sheet corner, lift-1 at rest, lifted 3px to lift-3 on
 
 ### Do:
 - **Do** paint the ground on `html` as Paper and put every grouping on one Sheet with a Hairline; rows inside it are hairlines apart.
-- **Do** set a side's name, count and quantities in that side's ink, and nothing else in it.
+- **Do** set a side's name, count and quantities in that side's ink; teal fills only what you press or pick, orange only the warm side, the commander and the charts.
 - **Do** put a label *under* a headline (source under the deck name, "Commander" under the commander) — the headline carries its own weight.
 - **Do** keep numbers in Geist Mono with tabular figures, right-aligned in their column.
 - **Do** honour `prefers-reduced-motion`: the overlap bar's draw-in is the only authored motion and it collapses to nothing.

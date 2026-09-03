@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Deck Compare</title>
+  <title>Deck Compare — Cross-compare</title>
   <meta name="color-scheme" content="light">
   <!-- Critical: theme.css is external, so the popup would paint white for one
        frame before it lands. One ground colour, kept in step with --bg. -->
@@ -41,7 +41,7 @@
     textarea { width:100%; background:var(--elev); border:1px solid var(--line-strong); border-radius:var(--r-sm);
       padding:12px 14px; color:var(--ink); font-family:var(--font-mono); font-size:var(--fs-sm); resize:vertical; transition:border-color .12s, box-shadow .12s; }
     textarea::placeholder { color:var(--ink-3); }
-    textarea:focus { outline:none; border-color:var(--ink); box-shadow:inset 0 0 0 1px var(--ink); }
+    textarea:focus { outline:none; border-color:var(--b); box-shadow:inset 0 0 0 1px var(--b); }
     .or { display:flex; align-items:center; gap:12px; margin:16px 0; color:var(--ink-3); font-size:var(--fs-xs); }
     .or::before,.or::after { content:""; flex:1; height:1px; background:var(--line); }
     .run-row { display:flex; align-items:center; justify-content:space-between; margin-top:16px; }
@@ -49,7 +49,7 @@
     .err { color:var(--brand); font-size:var(--fs-sm); margin-top:10px; }
     .add-toggle { width:100%; padding:12px; border:1px dashed var(--line-strong); background:transparent; color:var(--ink-2);
       border-radius:var(--r-pill); cursor:pointer; font-family:var(--font-ui); font-weight:600; font-size:var(--fs-sm); transition:all 0.14s; box-shadow:none; }
-    .add-toggle:hover { border-color:var(--ink-3); color:var(--ink); background:var(--elev); transform:none; box-shadow:none; }
+    .add-toggle:hover { border-color:var(--b); color:var(--b); background:var(--elev); transform:none; box-shadow:none; }
     #input-panel { position:relative; }
     .fields-close { position:absolute; top:16px; right:0; z-index:2; border:0; background:var(--elev); color:var(--ink-3);
       width:30px; height:30px; border-radius:50%; cursor:pointer; line-height:1; transition:all 0.14s; box-shadow:var(--lift-1); }
@@ -74,7 +74,7 @@
     .tabpick-item { display:flex; align-items:center; gap:10px; width:100%; text-align:left; cursor:pointer;
       padding:10px 12px; font-family:var(--font-ui); font-size:var(--fs-xs); color:var(--ink);
       background:var(--elev); border:1px solid var(--line); border-radius:var(--r-sm); transition:all 0.14s; }
-    .tabpick-item:hover:not(:disabled) { border-color:var(--ink-3); box-shadow:var(--lift-1); transform:translateY(-1px); }
+    .tabpick-item:hover:not(:disabled) { border-color:var(--b); box-shadow:var(--lift-1); transform:translateY(-1px); }
     .tabpick-item:disabled { opacity:.45; cursor:default; }
     .tabpick-item .nm { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .src-chip { flex:none; font-size:var(--fs-micro); font-weight:600; letter-spacing:0.06em; padding:2px 8px;
@@ -85,7 +85,7 @@
     .hero-art { width:150px; aspect-ratio:488/680; border-radius:var(--r-sm); flex-shrink:0; overflow:hidden; background:var(--bg-deep); box-shadow:var(--lift-2); }
     .hero-art img { width:100%; height:100%; object-fit:cover; display:none; border-radius:4.7% / 3.4%; }
     .hero-art.has img { display:block; }
-    .hero-role { font-size:var(--fs-micro); text-transform:uppercase; letter-spacing:0.14em; font-weight:600; color:var(--ink-3); margin-top:8px; }
+    .hero-role { font-size:var(--fs-micro); text-transform:uppercase; letter-spacing:0.14em; font-weight:600; color:var(--a); margin-top:8px; }
     .hero h2 { font-family:var(--font-display); font-weight:400; font-size:clamp(22px,2.8vw,36px); color:var(--ink); letter-spacing:-0.01em; line-height:1.1; }
     .cpips { display:inline-flex; gap:5px; margin-top:10px; }
     .cpip { width:16px; height:16px; border-radius:50%; border:1px solid var(--line-strong); }
@@ -122,7 +122,7 @@
     .dp-item:last-child { border-bottom:0; }
     .dp-item:hover { background:var(--bg); }
     .dp-link { flex:1; min-width:0; text-decoration:none; color:var(--ink); display:flex; align-items:baseline; gap:7px; }
-    a.dp-link:hover .dp-n { color:var(--brand); }
+    a.dp-link:hover .dp-n { color:var(--b); }
     .dp-n { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:var(--fs-sm); }
     .dp-hash { color:var(--ink-3); font-family:var(--font-mono); font-size:var(--fs-micro); flex-shrink:0; }
     .dp-src { font-size:var(--fs-micro); text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-3); margin-left:auto; flex-shrink:0; }
@@ -141,12 +141,12 @@
     .seg-btn { border:0; background:transparent; color:var(--ink-3); font-family:var(--font-ui); font-size:var(--fs-xs); font-weight:600;
       padding:7px 14px; border-radius:var(--r-pill); cursor:pointer; transition:all .12s; white-space:nowrap; }
     .seg-btn:hover { color:var(--ink); background:var(--bg-deep); }
-    .seg-btn.active { background:var(--ink); color:#fff; }
+    .seg-btn.active { background:var(--b); color:#fff; }
     .pills { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px; }
     .pill { border:1px solid var(--line-strong); background:var(--elev); color:var(--ink-2); font-size:var(--fs-xs); font-weight:600; padding:6px 13px;
       border-radius:var(--r-pill); cursor:pointer; transition:all .14s; }
-    .pill:hover { color:var(--ink); border-color:var(--ink-3); }
-    .pill.active { background:var(--ink); color:#fff; border-color:var(--ink); }
+    .pill:hover { color:var(--b); border-color:var(--b); }
+    .pill.active { background:var(--b); color:#fff; border-color:var(--b); }
 
     /* sections — white sheets */
     .sect { background:var(--elev); border:1px solid var(--line); border-radius:var(--r-md); overflow:hidden; margin-bottom:20px; box-shadow:var(--lift-1); }
@@ -162,7 +162,7 @@
     .prow { display:flex; align-items:center; gap:10px; padding:8px 16px; border-bottom:1px solid var(--line); }
     .prow:last-child { border-bottom:0; }
     .prow:hover { background:var(--bg); }
-    .prow input[type=checkbox] { accent-color:var(--ink); cursor:pointer; flex-shrink:0; }
+    .prow input[type=checkbox] { accent-color:var(--b); cursor:pointer; flex-shrink:0; }
     .prow .nm { flex:1; min-width:0; font-size:var(--fs-sm); color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:default; }
     .prow .xq { font-size:var(--fs-micro); color:var(--ink-3); margin-left:5px; }
     .prow .cp, .prow .fa { background:none; border:0; color:var(--ink-3); cursor:pointer; flex-shrink:0; display:inline-flex; padding:0; }
@@ -178,9 +178,9 @@
     .pbadges { display:flex; flex-wrap:wrap; gap:4px; padding:0 16px 10px 40px; border-bottom:1px solid var(--line); }
     .pbadges:last-child { border-bottom:0; }
     .pbadge { font-family:var(--font-mono); font-size:var(--fs-micro); padding:2px 6px; border-radius:var(--r-xs); background:var(--bg-deep); color:var(--ink-2); text-decoration:none; }
-    a.pbadge:hover { background:var(--ink); color:#fff; }
+    a.pbadge:hover { background:var(--b); color:#fff; }
     .bar { flex:1; height:6px; border-radius:3px; background:var(--bg-deep); overflow:hidden; max-width:120px; }
-    .bar > i { display:block; height:100%; background:var(--ink-3); border-radius:3px; }
+    .bar > i { display:block; height:100%; background:var(--a); border-radius:3px; }
     .type-divider { display:flex; align-items:center; gap:10px; padding:12px 16px 4px; }
     .type-divider span { font-size:var(--fs-micro); text-transform:uppercase; letter-spacing:0.12em; font-weight:600; color:var(--ink-3); }
     .empty { padding:28px; text-align:center; color:var(--ink-3); }
@@ -191,7 +191,7 @@
     .bars { display:flex; align-items:flex-end; gap:6px; height:110px; }
     .bars .col { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; gap:4px; }
     .bars .col .v { font-size:var(--fs-micro); color:var(--ink-3); font-family:var(--font-mono); }
-    .bars .col .b { width:100%; background:var(--ink-3); border-radius:3px 3px 0 0; min-height:2px; opacity:.9; }
+    .bars .col .b { width:100%; background:var(--a); border-radius:3px 3px 0 0; min-height:2px; opacity:.85; }
     .bars .col .x { font-size:var(--fs-micro); color:var(--ink-3); font-family:var(--font-mono); }
     .curve .cap { font-size:var(--fs-micro); color:var(--ink-3); text-align:center; margin-top:10px; }
 
@@ -230,7 +230,7 @@
   THESIS: One pool of decks read as a brief: what every list agrees on, then the flex
     slots. It refuses the dashboard tile grid and the gold-lit table this product used to be.
   OWN-WORLD: Cream paper, warm near-black ink, a white sheet for every list, pill controls
-    with the chosen one inked, one deep red for the action and for what is excluded, green
+    with the chosen one inked, the logo's teal for the action, red for what is excluded, green
     for what is shared. The serif carries the commander's name and the counts.
   STORY: The reader sees the commander, how much of the pool agrees with it, which cards
     are consensus and which are flex, and narrows the pool by card without losing a deck.
