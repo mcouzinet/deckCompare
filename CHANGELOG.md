@@ -40,6 +40,9 @@ lot. Manifeste en cours : `1.0.10`. **56 tests verts. Aucune permission requise 
   de carte reste toujours visible (un gros pool la poussait hors écran). Les decks affichent leur
   vrai nom au lieu de leur source.
 - **Liste des onglets ouverts du popup** plafonnée (scroll au-delà de ~4 lignes).
+- **Pastilles de couleur de l'analyseur de pool** : les cinq pastilles WUBRG utilisent désormais
+  les vraies couleurs Magic (blanc ivoire, bleu, noir, rouge, vert) au lieu d'un violet
+  approximatif pour le noir.
 - **« + Ajouter des decks » dans l'analyseur de pool s'ouvre en popin** (fond assombri, boîte
   centrée sur l'écran, fermeture par la croix, un clic hors de la boîte ou Échap) au lieu de
   se déplier en ligne en haut de page — repérable même en étant scrollé loin dans l'analyse.
