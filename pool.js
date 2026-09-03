@@ -39,6 +39,8 @@
   const ENRICH_TTL = 30 * 24 * 60 * 60 * 1000;  // 30 days — Scryfall card data is stable
 
   // Collapse the big input once a pool exists; keep it open while empty / when expanded.
+  // Once a pool exists, expanding it opens the fields as a popin over the page (rather than
+  // inline above the analysis) so it stays reachable no matter how far the user has scrolled.
   function applyInputState() {
     const hasPool = pooledDecks.length > 0;
     $("intro").classList.toggle("hide", hasPool);
@@ -46,6 +48,10 @@
     $("input-fields").classList.toggle("hide", !showFields);
     $("add-toggle").classList.toggle("hide", !hasPool || inputExpanded);
     $("fields-close").classList.toggle("hide", !(hasPool && inputExpanded));
+    const asModal = hasPool && inputExpanded;
+    $("input-panel").classList.toggle("modal-open", asModal);
+    $("modal-backdrop").classList.toggle("hide", !asModal);
+    document.body.classList.toggle("modal-locked", asModal);
     renderTabPicker();   // refresh whenever the input (re)appears; async, fire-and-forget
   }
 
@@ -610,6 +616,10 @@
     });
     $("add-toggle").addEventListener("click", () => { inputExpanded = true; applyInputState(); $("urls").focus(); });
     $("fields-close").addEventListener("click", () => { inputExpanded = false; applyInputState(); });
+    $("modal-backdrop").addEventListener("click", () => { inputExpanded = false; applyInputState(); });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && pooledDecks.length && inputExpanded) { inputExpanded = false; applyInputState(); }
+    });
     updateCount();
     applyInputState();
 
