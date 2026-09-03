@@ -8,7 +8,7 @@ reste à `0` tant que la version n'est pas publiée, `dev` est bumpé à chaque 
 ## [Non publié]
 
 La v1.0.0 taguée le 2026-09-02 a été **annulée en production** ; la vraie 1.0 sortira avec ce
-lot. Manifeste en cours : `1.0.10`. **56 tests verts. Aucune permission requise ajoutée.**
+lot. Manifeste en cours : `1.0.11`. **Aucune permission requise ajoutée.**
 
 ### Ajouté
 
@@ -49,6 +49,9 @@ lot. Manifeste en cours : `1.0.10`. **56 tests verts. Aucune permission requise 
 
 ### Corrigé
 
+- **Bouton Archidekt mal placé** : il s'ancre maintenant à côté du bouton « More » (groupe
+  Clone deck / More) au lieu du lien Playtester, qui peut se retrouver loin de ce groupe
+  quand le deck contient des erreurs.
 - **Bouton mtgtop8 en vue « visuelle »** : il réapparaît et lit correctement le deck (le cookie
   de vue visuelle collant cassait la lecture et masquait le bouton).
 - **Cartes recto/verso partagées entre sources** : `Life // Death` (Moxfield) et `Life/Death`

@@ -151,6 +151,7 @@ test("anchors: resolve against real fixtures", () => {
     ["magicville-dc.html", "https://www.magic-ville.com/fr/decks/showdeck?ref=1", "DIV"],
     ["magicville-dc.html", "https://magic-ville.com/fr/decks/showdeck?ref=1", "DIV"],  // www-less
     ["mtgdecks.html",     "https://mtgdecks.net/x",                  "LI"],
+    ["dom-archidekt.html", "https://archidekt.com/decks/x",          "DIV"],
     ["moxfield.html",     "https://moxfield.com/decks/x",            "DIV"],
     ["moxfield.html",     "https://www.moxfield.com/decks/x",        "DIV"],  // www twin
   ];

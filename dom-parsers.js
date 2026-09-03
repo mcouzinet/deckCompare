@@ -256,10 +256,14 @@
     // action bar, verified live
     { host: 'melee.gg',      sel: '.view-decklist-screenshot' },
     { host: 'getpaird.io',   sel: 'a[href$="/goldfish"]' },
-    // Archidekt renders BOTH a desktop and a hidden mobile Playtester link, hence the
+    // Next to Clone deck / More, in the primary actions group — the ellipsis-vertical
+    // icon is a stable FontAwesome hook, unlike the CSS-modules classes around it (those
+    // carry a build hash, e.g. contextMenu_wrapper__81GsE, that a redeploy can change).
+    // Archidekt renders BOTH a desktop and a hidden mobile "More" control, hence the
     // visibility filter below — anchoring to the hidden one would make our button
-    // invisible, which is worse than the floating fallback.
-    { host: 'archidekt.com', sel: 'a[href*="/playtester"]' },
+    // invisible, which is worse than the floating fallback. Step up 2 (svg -> button ->
+    // its wrapper div) so the button lands beside the group instead of inside it.
+    { host: 'archidekt.com', sel: 'svg[data-icon="ellipsis-vertical"]', up: 2 },
     // Next to the list/visual view toggle — mtgtop8's equivalent of melee's Visual View,
     // so the button sits in the same place on both. Sitting in the export cluster instead
     // put it in the middle of a dense run of MTGO/.dec links. The switch= query is the
