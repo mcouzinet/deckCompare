@@ -54,6 +54,11 @@ lot. Manifeste en cours : `1.0.10`. **56 tests verts. Aucune permission requise 
 - **Cartes recto/verso partagées entre sources** : `Life // Death` (Moxfield) et `Life/Death`
   (export MTGO mtgtop8) sont reconnues comme la même carte — plus de doublon dans les deux
   colonnes « unique ».
+- **Erreur « Erreur Magic-Ville: 403 » à la comparaison.** Magic-Ville rejette désormais les
+  requêtes sans cookie (même protection anti-bot que MTGGoldfish/mtgdecks) ; la récupération du
+  deck et la liste des decks d'un joueur passent en `credentials:'include'` pour envoyer le
+  cookie de session, avec un message d'erreur explicite (`errMagicVilleBlocked`) si le 403
+  persiste malgré tout.
 
 ## [1.0.0] — 2026-09-02
 

@@ -318,8 +318,13 @@ async function listArchidektDecks(username) {
 // --- Magic-Ville: list user's decks by pseudo ---
 
 async function listMagicVilleDecks(username) {
-  const res = await fetch(`https://www.magic-ville.com/fr/decks/resultats?joueur=${encodeURIComponent(username)}`);
-  if (!res.ok) throw new Error(`${chrome.i18n.getMessage('errMagicVilleStatus')} ${res.status}`);
+  // Magic-Ville now 403s cookie-less requests (same anti-bot pattern as MTGGoldfish/
+  // mtgdecks) — credentials:'include' attaches the user's Magic-Ville session cookie.
+  const res = await fetch(`https://www.magic-ville.com/fr/decks/resultats?joueur=${encodeURIComponent(username)}`, { credentials: 'include' });
+  if (!res.ok) {
+    if (res.status === 403) throw new Error(chrome.i18n.getMessage('errMagicVilleBlocked'));
+    throw new Error(`${chrome.i18n.getMessage('errMagicVilleStatus')} ${res.status}`);
+  }
 
   const buf = await res.arrayBuffer();
   const html = new TextDecoder('iso-8859-1').decode(buf);
@@ -440,8 +445,13 @@ async function fetchMagicVilleDeck(url) {
   const match = url.match(/ref=(\d+)/);
   if (!match) throw new Error(chrome.i18n.getMessage('errMagicVilleInvalidUrl'));
 
-  const res = await fetch(`https://www.magic-ville.com/fr/decks/showdeck?ref=${match[1]}&decklanglocal=eng`);
-  if (!res.ok) throw new Error(`${chrome.i18n.getMessage('errMagicVilleStatus')} ${res.status}`);
+  // credentials:'include' attaches the user's Magic-Ville session/clearance cookie —
+  // without it the site now 403s the service worker's cookie-less request.
+  const res = await fetch(`https://www.magic-ville.com/fr/decks/showdeck?ref=${match[1]}&decklanglocal=eng`, { credentials: 'include' });
+  if (!res.ok) {
+    if (res.status === 403) throw new Error(chrome.i18n.getMessage('errMagicVilleBlocked'));
+    throw new Error(`${chrome.i18n.getMessage('errMagicVilleStatus')} ${res.status}`);
+  }
 
   const buf = await res.arrayBuffer();
   const html = new TextDecoder('iso-8859-1').decode(buf);
