@@ -24,7 +24,9 @@
   const anchorFor = (doc) => {
     try { return DomParsers.findActionBarAnchor(doc, location.href, isRendered); } catch (_) { return null; }
   };
-  const M = (k, s) => chrome.i18n.getMessage(k, s) || k;
+  // Guarded: after an extension reload this script's chrome.* is gone ("Extension context
+  // invalidated"); a label must never throw for that.
+  const M = (k, s) => { try { return chrome.i18n.getMessage(k, s) || k; } catch (_) { return k; } };
   // NOTE: the in-page button looks the same in dev and in production on purpose — it is
   // what users see, so it should not carry build state. The dev marker lives on the
   // toolbar icon instead (recoloured + DEV badge in background.js).
