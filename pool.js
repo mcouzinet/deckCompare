@@ -27,8 +27,15 @@
   const pastedTextsSeen = new Set(); // raw text of pasted decks currently in the pool (dedup)
   const enrichMap = new Map(); // persists across adds; only new names are fetched
   let poolErrors = [];
+  const filters = [];   // card filters (mtgtop8 compare): [{ name, board, mode: "with" | "without" }]
+  let activeIdx = [];   // pooledDecks indices the filters keep, in pool order; analysis deck k ↔ pooledDecks[activeIdx[k]]
+  const BOARDS = ["mainboard", "sideboard", "commanders"];
   let inputExpanded = true; // once a pool exists, the input collapses to a "+ Ajouter" bar
+  let seedMode = false;     // launched from an archetype button: fresh, ephemeral, not persisted
+  let seedNameByUrl = null; // url -> pilot/event name, applied to the seeded decks after fetch
   const POOL_KEY = "poolDecks";                 // persisted pool (survives tab close / restart)
+  const FILTER_KEY = "poolFilters";             // the card filters that go with the saved pool
+  const SEED_KEY = "poolSeed";                  // one-shot {url,name} list from the archetype button
   const ENRICH_TTL = 30 * 24 * 60 * 60 * 1000;  // 30 days — Scryfall card data is stable
 
   // Collapse the big input once a pool exists; keep it open while empty / when expanded.
@@ -39,6 +46,36 @@
     $("input-fields").classList.toggle("hide", !showFields);
     $("add-toggle").classList.toggle("hide", !hasPool || inputExpanded);
     $("fields-close").classList.toggle("hide", !(hasPool && inputExpanded));
+    renderTabPicker();   // refresh whenever the input (re)appears; async, fire-and-forget
+  }
+
+  // ---- open-tab picker: reuse a deck you already have open, same scan as the popup ----
+  // One click appends the tab's URL to the links box; the pool is multi-deck, so several
+  // tabs can be stacked before Analyze. Tabs already pooled or already staged are dropped,
+  // so a chip never adds a duplicate.
+  async function renderTabPicker() {
+    let tabs;
+    try { tabs = await Shared.getOpenDeckTabs(location.href); } catch { tabs = []; }
+    const pooled = new Set(pooledDecks.map((d) => d.url).filter(Boolean));
+    const staged = new Set(parseUrls());
+    const avail = tabs.filter((t) => !pooled.has(t.url) && !staged.has(t.url));
+    if (!avail.length) { $("tabpick").classList.add("hide"); $("tabpick-list").innerHTML = ""; return; }
+    $("tabpick-list").innerHTML = avail.map((t) =>
+      `<button type="button" class="tabpick-item" data-tab-url="${esc(t.url)}">` +
+      `<span class="src-chip">${esc(t.label)}</span>` +
+      `<span class="nm">${esc(t.title)}</span></button>`
+    ).join("");
+    $("tabpick").classList.remove("hide");
+  }
+
+  function stageTabUrl(url) {
+    const box = $("urls");
+    const cur = box.value.trim();
+    box.value = cur ? cur + "\n" + url : url;
+    inputExpanded = true;
+    applyInputState();   // also re-renders the picker, dropping the chip we just staged
+    updateCount();
+    box.focus();
   }
 
   // ---- category rules (Land wins over Artifact/Enchantment) ----
@@ -76,7 +113,9 @@
   const AVG_ORDER = [M("creatures"), M("catInstants"), M("catArtifacts"), M("catEnchantments"), M("catPlaneswalkers"), M("lands"), M("catOther")];
 
   function deckDisplayName(d) {
-    const t = (d.label || "").trim();
+    // Takes either a pooled deck (`name`, where the archetype rename lands) or an
+    // analysis deck ref (pool-analyze.js copies that name into `label`).
+    const t = (d.label || d.name || "").trim();
     if (!t) return d.source;
     if (/^(moxfield|archidekt|mtgtop8|mtggoldfish|magic-ville|mtgdecks|melee|paird|text) deck$/i.test(t)) return d.source;
     if (/^deck \d+$/i.test(t)) return d.source;
@@ -134,7 +173,11 @@
     const newUrls = urls.filter((u) => !existing.has(u));
     if (newUrls.length) {
       const res = await sendToBackground({ type: "FETCH_DECKS", urls: newUrls });
-      if (res && res.decks) newDecks.push(...res.decks);
+      if (res && res.decks) {
+        // Archetype seed: the MTGO export is nameless, so name each deck by pilot/event.
+        if (seedNameByUrl) for (const d of res.decks) { const nm = seedNameByUrl.get(d.url); if (nm) d.name = nm; }
+        newDecks.push(...res.decks);
+      }
       if (res && res.errors) poolErrors.push(...res.errors);
     }
     texts.forEach((txt) => {
@@ -172,6 +215,7 @@
   // Enrich any new names, analyze the current pool, render.
   async function reanalyze() {
     if (!pooledDecks.length) {
+      if (filters.length) { filters.length = 0; savePool(); }   // nothing left to filter
       analysis = null;
       $("results").classList.add("hide");
       $("loading").classList.add("hide");
@@ -183,7 +227,7 @@
     $("loading").classList.remove("hide");
     $("loading").textContent = M("poolEnriching");
     const names = new Set();
-    for (const d of pooledDecks) for (const b of ["mainboard", "sideboard", "commanders"]) for (const n of Object.keys(d[b])) names.add(n);
+    for (const d of pooledDecks) for (const b of BOARDS) for (const n of Object.keys(d[b] || {})) names.add(n);
     let missing = [...names].filter((n) => !window.Enrich.enrichmentFor(enrichMap, n));
     if (missing.length) {
       // 1) seed from the persistent cross-session cache before hitting Scryfall
@@ -201,7 +245,12 @@
         await Shared.cacheMerge("poolEnrichCache", toCache, ENRICH_TTL);
       }
     }
-    analysis = window.PoolAnalyze.analyzePool(pooledDecks, enrichMap, poolErrors.slice());
+    // The filters pick the subset that gets analyzed; the rest stays in the pool, struck
+    // through in the rail, one chip away from coming back. Enrichment above covers the
+    // whole pool, so toggling a filter never fetches.
+    activeIdx = [];
+    pooledDecks.forEach((d, i) => { if (window.PoolAnalyze.matchesFilters(d, filters)) activeIdx.push(i); });
+    analysis = window.PoolAnalyze.analyzePool(activeIdx.map((i) => pooledDecks[i]), enrichMap, poolErrors.slice());
 
     imgByName.clear();
     for (const c of [...analysis.cardStats, ...analysis.sideboardStats]) if (c.image_uri) imgByName.set(c.name, c.image_uri);
@@ -221,20 +270,62 @@
     }
   }
 
+  // ---- card filters (mtgtop8 compare's ✔ / ✖) ----
+  // Re-filtering a card replaces its rule (with ↔ without) instead of stacking a
+  // contradiction that would empty the pool.
+  function addFilter(name, board, mode) {
+    const i = filters.findIndex((f) => f.name === name && f.board === board);
+    if (i >= 0) filters.splice(i, 1);
+    filters.push({ name, board, mode });
+    savePool();
+    reanalyze();
+  }
+  function removeFilter(idx) {
+    if (idx < 0 || idx >= filters.length) return;
+    filters.splice(idx, 1);
+    savePool();
+    reanalyze();
+  }
+  function clearFilters() {
+    if (!filters.length) return;
+    filters.length = 0;
+    savePool();
+    reanalyze();
+  }
+
   // ---- pool persistence (chrome.storage.local) ----
   // Decks carry their parsed boards, so a restored pool needs no site refetch —
   // only Scryfall enrichment, which the poolEnrichCache serves from disk.
   function savePool() {
-    try { chrome.storage.local.set({ [POOL_KEY]: pooledDecks }); } catch (e) { /* quota — ignore */ }
+    if (seedMode) return;   // an archetype pool is ephemeral — never overwrite the saved pool
+    try { chrome.storage.local.set({ [POOL_KEY]: pooledDecks, [FILTER_KEY]: filters }); } catch (e) { /* quota — ignore */ }
+  }
+
+  // A one-shot seed left by the archetype button: consume it (remove immediately so a reload
+  // falls back to the saved pool) and return its deck URLs, or null when there is none.
+  async function consumePoolSeed() {
+    let stored;
+    try { stored = await chrome.storage.local.get(SEED_KEY); } catch (e) { return null; }
+    const seed = stored && stored[SEED_KEY];
+    if (!seed || !Array.isArray(seed.decks) || !seed.decks.length) return null;
+    try { await chrome.storage.local.remove(SEED_KEY); } catch (e) { /* best effort */ }
+    return seed.decks;   // [{ url, name }]
   }
 
   async function restorePool() {
     let stored;
-    try { stored = await chrome.storage.local.get(POOL_KEY); } catch (e) { return false; }
+    try { stored = await chrome.storage.local.get([POOL_KEY, FILTER_KEY]); } catch (e) { return false; }
     const saved = stored && stored[POOL_KEY];
     if (!Array.isArray(saved) || !saved.length) return false;
     pooledDecks.push(...saved);
     for (const d of saved) if (d._rawText) pastedTextsSeen.add(d._rawText);
+    // The filters are a view on that pool: restore them with it (shape-checked — storage
+    // is ours, but a stale or hand-edited entry must not break the page).
+    for (const f of Array.isArray(stored[FILTER_KEY]) ? stored[FILTER_KEY] : []) {
+      if (f && typeof f.name === "string" && BOARDS.includes(f.board) && (f.mode === "with" || f.mode === "without")) {
+        filters.push({ name: f.name, board: f.board, mode: f.mode });
+      }
+    }
     inputExpanded = false;
     return true;
   }
@@ -242,6 +333,7 @@
   // ---- render ----
   function renderAll() {
     renderHero();
+    renderFilters();
     renderDeckList();
     renderCats();
     renderView();
@@ -271,8 +363,10 @@
       ? pips.map((c) => `<span class="cpip ${c}"></span>`).join("")
       : `<span class="cpip C"></span>`;
 
+    // Filtered: "12/20" — the pool is still 20 decks, 12 of them are on the table.
+    const decksN = filters.length ? `${total}<span class="of">/${pooledDecks.length}</span>` : String(total);
     $("hero-stats").innerHTML = [
-      [total, M("poolDecksAnalyzed"), false],
+      [decksN, M("poolDecksAnalyzed"), false],
       [commons, M("poolSharedCardsStat"), true],
       [analysis.cardStats.length, M("poolDistinctCards"), false],
     ].map(([n, l, a]) => `<div class="stat"><div class="n ${a ? "accent" : ""}">${n}</div><div class="l">${l}</div></div>`).join("");
@@ -285,30 +379,68 @@
   }
 
   // Persistent list of the decks in the pool (right rail): name → opens URL, × → removes.
+  // Rendered from the pool itself, not the analysis, so decks the filters set aside stay
+  // listed — struck through, still removable — and #n is the pool's own numbering.
   function renderDeckList() {
-    const decks = analysis.decks;
-    let html = `<div class="dp-head">${M("poolDecksInPool")} <span class="dp-c">${decks.length}</span></div>`;
-    html += decks.map((d) => {
+    const kept = new Set(activeIdx);
+    const count = filters.length ? `${activeIdx.length}/${pooledDecks.length}` : String(pooledDecks.length);
+    // Header stays pinned; only the deck rows (.dp-list) scroll, so a 100-deck pool can't
+    // push the card preview below the fold. Errors sit under the scroll area, still in view.
+    const head = `<div class="dp-head">${M("poolDecksInPool")} <span class="dp-c">${count}</span></div>`;
+    const rows = pooledDecks.map((d, i) => {
       const name = esc(deckDisplayName(d));
-      const inner = `<span class="dp-hash">#${d.index}</span><span class="dp-n">${name}</span><span class="dp-src">${esc(d.source)}</span>`;
+      const off = !kept.has(i);
+      const inner = `<span class="dp-hash">#${i + 1}</span><span class="dp-n">${name}</span><span class="dp-src">${esc(d.source)}</span>`;
       const link = d.url
         ? `<a class="dp-link" href="${esc(d.url)}" target="_blank" rel="noopener" title="${M("poolOpen")} ${name}">${inner}</a>`
         : `<span class="dp-link">${inner}</span>`;
-      return `<div class="dp-item">${link}<button class="dp-x" data-rmdeck="${d.index - 1}" title="${M("poolRemoveFromPool")}">×</button></div>`;
+      return `<div class="dp-item${off ? " off" : ""}"${off ? ` title="${M("poolFilteredOut")}"` : ""}>${link}<button class="dp-x" data-rmdeck="${i}" title="${M("poolRemoveFromPool")}">×</button></div>`;
     }).join("");
 
+    let errsHtml = "";
     const errs = analysis.errors || [];
     if (errs.length) {
       const ignoredLabel = errs.length > 1 ? M("poolDeckIgnoredPlural") : M("poolDeckIgnoredSingular");
-      html += `<div class="dp-errs"><b>${errs.length} ${ignoredLabel}</b>` +
+      errsHtml = `<div class="dp-errs"><b>${errs.length} ${ignoredLabel}</b>` +
         errs.slice(0, 8).map((e) => `<div class="dp-err" title="${esc((e.url || "?") + " — " + e.error)}">${esc(e.url || "?")} — ${esc(e.error)}</div>`).join("") + `</div>`;
     }
-    $("deck-panel").innerHTML = html;
+    $("deck-panel").innerHTML = head + `<div class="dp-list">${rows}</div>` + errsHtml;
   }
 
   function renderCats() {
     $("cat-pills").innerHTML = CATS.map((c) => `<button class="pill ${c.key === cat ? "active" : ""}" data-cat="${c.key}">${c.label}</button>`).join("");
   }
+
+  // Keep / drop the decks a row counted — mtgtop8 compare's ✔ / ✖. Both go inert once
+  // every deck plays the card: keep would change nothing, drop would empty the pool.
+  const ICON_KEEP = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>`;
+  const ICON_DROP = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>`;
+  function filterButtons(c, board) {
+    const off = c.deck_count >= c.total_decks ? " disabled" : "";
+    const btn = (mode, cls, icon, label) =>
+      `<button class="fa ${cls}" data-flt="${mode}" data-fname="${esc(c.name)}" data-fboard="${board}" title="${label}" aria-label="${label}"${off}>${icon}</button>`;
+    return btn("with", "keep", ICON_KEEP, M("poolKeepWithCard")) + btn("without", "drop", ICON_DROP, M("poolDropWithCard"));
+  }
+
+  // Active filters as chips above the results: × lifts one, the link lifts them all.
+  function renderFilters() {
+    const bar = $("filters");
+    if (!filters.length) { bar.classList.add("hide"); bar.innerHTML = ""; return; }
+    bar.innerHTML = `<span class="lbl">${M("poolFiltersLabel")}</span>` +
+      filters.map((f, i) =>
+        `<span class="chip ${f.mode}"><span class="mode">${f.mode === "with" ? M("poolFilterWith") : M("poolFilterWithout")}</span>` +
+        `<span class="chip-name" data-name="${esc(f.name)}">${esc(f.name)}</span>` +
+        (f.board === "sideboard" ? `<span class="hsh">· ${M("poolSideboardTitle")}</span>` : "") +
+        `<button class="chip-x" data-rmfilter="${i}" title="${M("poolFilterRemove")}" aria-label="${M("poolFilterRemove")}">×</button></span>`
+      ).join("") +
+      `<button class="lnk" data-clearfilters="1">${M("poolClearFilters")}</button>`;
+    bar.classList.remove("hide");
+  }
+
+  // Filters that leave no deck on the table (only reachable by removing decks by hand
+  // after filtering): say so where the list would be, with the way out.
+  const emptyFiltered = () =>
+    `<div class="sect"><div class="empty">${M("poolNoDeckMatches")} <button class="lnk" data-clearfilters="1" style="color:var(--a)">${M("poolClearFilters")}</button></div></div>`;
 
   // a card row
   function row(c, opts) {
@@ -324,18 +456,23 @@
     } else {
       right = `<span class="pct">${c.percentage}%</span>`;
     }
+    const flt = opts.filter ? filterButtons(c, opts.filter) : "";
     let badges = "";
     if (opts.badges && c.deck_indices) {
-      badges = `<div class="pbadges">` + c.deck_indices.map((i) => {
-        const d = analysis.decks[i - 1];
-        const title = d ? esc(`#${i} — ${deckDisplayName(d)}`) : `#${i}`;
+      // deck_indices count within the analyzed subset; badges show the pool's own #n so
+      // a badge and the rail always name the same deck, filters or not.
+      badges = `<div class="pbadges">` + c.deck_indices.map((k) => {
+        const pi = activeIdx[k - 1];
+        const d = pi == null ? null : pooledDecks[pi];
+        const n = pi == null ? k : pi + 1;
+        const title = d ? esc(`#${n} — ${deckDisplayName(d)}`) : `#${n}`;
         return d && d.url
-          ? `<a class="pbadge" href="${esc(d.url)}" target="_blank" rel="noopener" title="${title}">#${i}</a>`
-          : `<span class="pbadge" title="${title}">#${i}</span>`;
+          ? `<a class="pbadge" href="${esc(d.url)}" target="_blank" rel="noopener" title="${title}">#${n}</a>`
+          : `<span class="pbadge" title="${title}">#${n}</span>`;
       }).join("") + `</div>`;
     }
     return `<div class="prow"><input type="checkbox" data-sel="${esc(c.name)}" ${checked}>` +
-      `<span class="nm" data-name="${esc(c.name)}">${esc(c.name)}${xq}</span>${copy}${right}</div>${badges}`;
+      `<span class="nm" data-name="${esc(c.name)}">${esc(c.name)}${xq}</span>${copy}${flt}${right}</div>${badges}`;
   }
 
   function sectionHead(title, count, note, cards) {
@@ -358,6 +495,7 @@
 
   function renderUsage() {
     payloadId = 0; payloads = {};
+    if (!analysis.total_decks) { $("sections").innerHTML = emptyFiltered(); return; }
     const total = analysis.total_decks;
     const filtered = analysis.cardStats.filter((c) => matchCat(c.type_line, cat));
     const commons = filtered.filter((c) => c.deck_count === total);
@@ -370,7 +508,7 @@
     if (variable.length) {
       const note = analysis.decks.length > 1 ? M("poolVariableNote") : "";
       html += `<div class="sect">${sectionHead(M("poolVariable"), variable.length, note, variable)}` +
-        variable.map((c) => row(c, { frac: true, badges: true })).join("") + `</div>`;
+        variable.map((c) => row(c, { frac: true, badges: true, filter: "mainboard" })).join("") + `</div>`;
     }
     if (!commons.length && !variable.length) html = `<div class="sect"><div class="empty">${M("poolNoCardsInCategory")}</div></div>`;
     $("sections").innerHTML = html;
@@ -378,6 +516,7 @@
 
   function renderAverage() {
     payloadId = 0; payloads = {};
+    if (!analysis.total_decks) { $("average-view").innerHTML = emptyFiltered(); return; }
     const avg = analysis.averageDecklist;
     const avgCount = avg.reduce((s, c) => s + c.avg_copies, 0);
     const cmdNames = analysis.commanders[0] ? analysis.commanders[0].name.split(" + ") : [];
@@ -421,7 +560,7 @@
     const s = analysis.sideboardStats || [];
     if (!s.length) { $("side-slot").innerHTML = ""; return; }
     $("side-slot").innerHTML = `<div class="sect"><div class="sect-head"><span class="sect-title">${M("poolSideboardTitle")} <span class="c">(${s.length})</span></span></div>` +
-      s.slice(0, 20).map((c) => `<div class="prow"><span class="nm" data-name="${esc(c.name)}" style="margin-left:0">${esc(c.name)}</span><span class="frac">${c.deck_count}/${c.total_decks}</span></div>`).join("") + `</div>`;
+      s.slice(0, 20).map((c) => `<div class="prow"><span class="nm" data-name="${esc(c.name)}" style="margin-left:0">${esc(c.name)}</span>${filterButtons(c, "sideboard")}<span class="frac">${c.deck_count}/${c.total_decks}</span></div>`).join("") + `</div>`;
   }
 
   // ---- selection ----
@@ -452,6 +591,7 @@
     $("intro-sub").textContent = M("poolIntro");
     $("add-toggle").textContent = M("poolAddDecksBtn");
     $("fields-close").title = M("poolCloseInput");
+    $("tabpick-label").textContent = M("openTabsLabel");
     $("links-label").textContent = M("poolLinksLabel");
     $("or-paste-text").textContent = M("poolOrPasteText");
     $("view-usage-text").textContent = M("poolUsageView");
@@ -464,6 +604,10 @@
     $("urls").addEventListener("input", updateCount);
     $("texts").addEventListener("input", updateCount);
     $("run").addEventListener("click", addToPool);
+    $("tabpick-list").addEventListener("click", (e) => {
+      const item = e.target.closest(".tabpick-item");
+      if (item) stageTabUrl(item.dataset.tabUrl);
+    });
     $("add-toggle").addEventListener("click", () => { inputExpanded = true; applyInputState(); $("urls").focus(); });
     $("fields-close").addEventListener("click", () => { inputExpanded = false; applyInputState(); });
     updateCount();
@@ -485,6 +629,11 @@
     document.addEventListener("click", (e) => {
       const rm = e.target.closest("[data-rmdeck]");
       if (rm) { removeDeck(parseInt(rm.dataset.rmdeck, 10)); return; }
+      const fa = e.target.closest("[data-flt]");
+      if (fa) { addFilter(fa.dataset.fname, fa.dataset.fboard, fa.dataset.flt); return; }
+      const rf = e.target.closest("[data-rmfilter]");
+      if (rf) { removeFilter(parseInt(rf.dataset.rmfilter, 10)); return; }
+      if (e.target.closest("[data-clearfilters]")) { clearFilters(); return; }
       const cp = e.target.closest("[data-copy]");
       if (cp) { copy(cp.dataset.copy); return; }
       const ct = e.target.closest("[data-copyid]");
@@ -507,9 +656,23 @@
       updateSelbar();
     });
 
-    // Restore a previously saved pool, then re-analyze (enrichment served from cache).
-    restorePool().then((restored) => {
-      if (restored) { updateCount(); applyInputState(); reanalyze(); }
+    // An archetype seed wins over the saved pool: start fresh in ephemeral seed mode (nothing
+    // is persisted, so the user's saved pool survives untouched), stage the URLs and analyze.
+    // With no seed, restore the saved pool as usual.
+    consumePoolSeed().then((seedDecks) => {
+      if (seedDecks) {
+        seedMode = true;
+        seedNameByUrl = new Map(seedDecks.filter((d) => d.name).map((d) => [d.url, d.name]));
+        $("urls").value = seedDecks.map((d) => d.url).join("\n");
+        updateCount();
+        inputExpanded = true;
+        applyInputState();
+        addToPool();   // fetches, names by pilot/event, analyzes; savePool() is a no-op in seed mode
+        return;
+      }
+      restorePool().then((restored) => {
+        if (restored) { updateCount(); applyInputState(); reanalyze(); }
+      });
     });
   }
 

@@ -25,6 +25,52 @@ test("mtgtop8 (DOM): O14 COMMANDER header + sb_ ids", () => {
   assert.equal(sum(d.mainboard), 24);        // Goblin Guide 4 + Mountain 20
   assert.equal(sum(d.sideboard), 2);         // Abrade via id="sb_1"
   assert.match(d.name, /Duel Commander/);
+  assert.ok(!d._needsApiFetch);              // text view parses inline, no refetch
+});
+
+test("mtgtop8 (DOM): visual view (no deck_line) defers to the /mtgo?d= fetch", () => {
+  // The sticky mtgtop8_deck_display=visual cookie renders cards as images with no
+  // deck_line/L14 text; the "Switch to Text" toggle marks it as a real deck page so the
+  // button still mounts and the deck is read via the background's view-independent fetch.
+  const dom = new JSDOM('<html><body>' +
+    '<div class="event_title">Some Event</div>' +
+    '<a href="?e=1&d=2&f=EDH&switch=text">Switch to Text</a>' +
+    '</body></html>');
+  const d = D.parseMtgTop8(dom.window.document);
+  assert.equal(d._needsApiFetch, true);
+  assert.equal(sum(d.mainboard) + sum(d.commanders) + sum(d.sideboard), 0);
+});
+
+test("mtgtop8 archetype: reads id + player + event per deck row", () => {
+  const row = (ref, player, event) =>
+    `<tr class="hover_tr"><td><input type="hidden" name="deck_ref[1]" value="${ref}"></td>` +
+    `<td><a href="/event?e=1&d=${ref}&f=EDH">Brigid</a></td>` +
+    `<td>${player}</td><td>${event}</td><td>lvl</td><td>rank</td><td>date</td></tr>`;
+  const dom = new JSDOM('<html><body><table class="Stable"><tbody>' +
+    row("885642", "Mário Chaib", "Liga Sword") + row("886088", "Rafikh", "DC") +
+    '</tbody></table></body></html>');
+  assert.deepEqual(D.parseArchetypeDecks(dom.window.document), [
+    { id: "885642", player: "Mário Chaib", event: "Liga Sword" },
+    { id: "886088", player: "Rafikh", event: "DC" },
+  ]);
+});
+
+test("mtgtop8 archetype: skips rows without a numeric deck_ref", () => {
+  const dom = new JSDOM('<html><body><table class="Stable"><tbody>' +
+    '<tr class="hover_tr"><td><input name="deck_ref[1]" value=""></td><td><a href="?d=">x</a></td><td>P</td><td>E</td></tr>' +
+    '<tr class="hover_tr"><td><input name="deck_ref[2]" value="42"></td><td><a href="?d=42">y</a></td><td>Pilote</td><td>Event</td></tr>' +
+    '</tbody></table></body></html>');
+  assert.deepEqual(D.parseArchetypeDecks(dom.window.document), [
+    { id: "42", player: "Pilote", event: "Event" },
+  ]);
+});
+
+test("mtgtop8 (DOM): a non-deck page does not falsely defer", () => {
+  // No cards and no switch toggle → an event listing, not a deck. Must NOT claim to be a
+  // deck page, or the button would mount on pages where a comparison can only fail.
+  const dom = new JSDOM('<html><body><div class="event_title">Metagame</div></body></html>');
+  const d = D.parseMtgTop8(dom.window.document);
+  assert.ok(!d._needsApiFetch);
 });
 
 test("Archidekt (DOM): __NEXT_DATA__ cardMap, categories, maybeboard skipped", () => {

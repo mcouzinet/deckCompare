@@ -75,6 +75,17 @@
 
     const titleEl = doc.querySelector('div.event_title');
     deck.name = titleEl ? titleEl.textContent.trim() : 'mtgtop8 Deck';
+
+    // Visual view (the sticky mtgtop8_deck_display=visual cookie) renders the deck as card
+    // images with no deck_line/L14 text, so the loop above finds nothing. Its "Switch to
+    // Text" toggle exists only on a deck page, so use it to flag a real deck whose cards
+    // must come from the background's view-independent /mtgo?d= fetch — the same
+    // _needsApiFetch path Archidekt uses before its embedded JSON has loaded.
+    const empty = !Object.keys(deck.mainboard).length
+      && !Object.keys(deck.commanders).length
+      && !Object.keys(deck.sideboard).length;
+    if (empty && doc.querySelector('a[href*="switch=text"]')) deck._needsApiFetch = true;
+
     return deck;
   }
 
@@ -249,11 +260,13 @@
     // visibility filter below — anchoring to the hidden one would make our button
     // invisible, which is worse than the floating fallback.
     { host: 'archidekt.com', sel: 'a[href*="/playtester"]' },
-    // Next to "Switch to Visual" — mtgtop8's equivalent of melee's Visual View, so the
-    // button sits in the same place on both. Sitting in the export cluster instead put
-    // it in the middle of a dense run of MTGO/.dec links. The switch=visual query is the
-    // stable hook (the label is a plain string, and the row has no ids or classes).
-    { host: 'mtgtop8.com',   sel: 'a[href*="switch=visual"]', up: 1 },
+    // Next to the list/visual view toggle — mtgtop8's equivalent of melee's Visual View,
+    // so the button sits in the same place on both. Sitting in the export cluster instead
+    // put it in the middle of a dense run of MTGO/.dec links. The switch= query is the
+    // stable hook (the label is a plain string, and the row has no ids or classes); match
+    // BOTH labels because the toggle reads "Switch to Visual" in text view and "Switch to
+    // Text" in visual view — anchoring on one alone loses the button in the other view.
+    { host: 'mtgtop8.com',   sel: 'a[href*="switch=visual"], a[href*="switch=text"]', up: 1 },
     // title-anchored: these sites sit behind bot checks/consent walls, so the hook is a
     // selector the shipped parser relies on (see parseMagicVille / parseMtgGoldfish /
     // parseMtgDecks) rather than a guess.
@@ -290,7 +303,30 @@
     return null;
   }
 
-  const api = { parseMoxfield, parseMtgGoldfish, parseMtgTop8, parseArchidekt, parseMagicVille, parseMtgDecks, parseMelee, parseGetpaird, parseDeckFromCurrentSite, findActionBarAnchor, ANCHORS };
+  // mtgtop8 archetype pages list every deck of one archetype as a POST-form table: each
+  // `tr.hover_tr` row carries a `deck_ref[N]` hidden input (the deck id the /mtgo?d= export
+  // takes) plus a Player and an Event cell. Returns {id, player, event} per row so the pool
+  // can name the decks by pilot/event instead of the nameless MTGO export. One page only —
+  // the injector paginates by re-fetching and calling this per page.
+  function parseArchetypeDecks(doc) {
+    const decks = [];
+    for (const tr of doc.querySelectorAll('table.Stable tr.hover_tr')) {
+      const ref = tr.querySelector('input[name^="deck_ref"]');
+      const id = ref ? (ref.value || '').trim() : '';
+      if (!/^\d+$/.test(id)) continue;
+      // Anchor on the deck-link cell so player/event stay correct even if a leading column
+      // (checkbox, flag) shifts; fall back to fixed offsets when there is no link.
+      const linkTd = tr.querySelector('td a[href*="d="]');
+      const base = (linkTd && linkTd.closest('td')) || tr.querySelectorAll('td')[1] || null;
+      const playerCell = base ? base.nextElementSibling : null;
+      const eventCell = playerCell ? playerCell.nextElementSibling : null;
+      const text = (el) => (el ? el.textContent.trim().replace(/\s+/g, ' ') : '');
+      decks.push({ id, player: text(playerCell), event: text(eventCell) });
+    }
+    return decks;
+  }
+
+  const api = { parseMoxfield, parseMtgGoldfish, parseMtgTop8, parseArchidekt, parseMagicVille, parseMtgDecks, parseMelee, parseGetpaird, parseDeckFromCurrentSite, findActionBarAnchor, parseArchetypeDecks, ANCHORS };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else global.DomParsers = api;
 })(typeof self !== 'undefined' ? self : globalThis);

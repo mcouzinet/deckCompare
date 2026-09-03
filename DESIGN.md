@@ -1,63 +1,72 @@
 ---
-name: Deck Compare — The Table
-description: A Magic deck comparison read on the mat it would be played on, under one overhead light.
+name: Deck Compare — The Memo
+description: A Magic deck comparison read as a one-page brief on cream paper, in daylight.
 colors:
-  felt: "#17120d"
-  felt-lit: "#201a13"
-  felt-deep: "#0d0a06"
-  raised: "#2a221a"
-  raised-hi: "#33291f"
-  warn-hi: "#ffc933"
-  ink: "#f4eee3"
-  ink-2: "#c9bfad"
-  ink-3: "#9a8f7c"
-  side-a: "#e3a24f"
-  side-b: "#56b6c9"
-  shared: "#74bd84"
-  warn: "#e6b54e"
-  brand: "#e0654a"
-  brand-btn: "#b8402c"
-  brand-btn-hi: "#c74a33"
-  brand-wash: "rgba(224,101,74,0.15)"
-  stitch: "rgba(244,238,227,0.13)"
-  rule: "rgba(244,238,227,0.07)"
+  paper: "#f8f5f2"
+  paper-well: "#efe9e3"
+  sheet: "#ffffff"
+  ink: "#241c18"
+  ink-soft: "#5e524b"
+  ink-mute: "#7a6d64"
+  hairline: "#e8dfd8"
+  hairline-strong: "#d6c9bf"
+  side-a: "#a8540f"
+  side-b: "#137083"
+  shared: "#1e7a4c"
+  side-a-wash: "rgba(168,84,15,0.10)"
+  side-b-wash: "rgba(19,112,131,0.10)"
+  shared-wash: "rgba(30,122,76,0.10)"
+  action: "#8a1f16"
+  action-deep: "#701810"
+  action-wash: "rgba(138,31,22,0.10)"
 typography:
   display:
-    fontFamily: "Bricolage Grotesque, Geist, system-ui, sans-serif"
-    fontSize: "34px"
-    fontWeight: 800
+    fontFamily: "Beleren, Iowan Old Style, Georgia, serif"
+    fontSize: "clamp(40px, 6vw, 80px)"
+    fontWeight: 400
     lineHeight: 1
+    letterSpacing: "-0.01em"
+  headline:
+    fontFamily: "Beleren, Iowan Old Style, Georgia, serif"
+    fontSize: "clamp(22px, 2.8vw, 36px)"
+    fontWeight: 400
+    lineHeight: 1.1
+    letterSpacing: "-0.01em"
+  title:
+    fontFamily: "Beleren, Iowan Old Style, Georgia, serif"
+    fontSize: "17px"
+    fontWeight: 400
+    lineHeight: 1.25
     letterSpacing: "normal"
-  deck-name:
-    fontFamily: "Bricolage Grotesque, Geist, system-ui, sans-serif"
-    fontSize: "clamp(18px, 2.6vw, 24px)"
-    fontWeight: 700
-    lineHeight: 1.15
-    letterSpacing: "-0.02em"
-  zone-name:
-    fontFamily: "Bricolage Grotesque, Geist, system-ui, sans-serif"
-    fontSize: "11px"
-    fontWeight: 700
-    lineHeight: 1.2
-    letterSpacing: "0.16em"
   body:
-    fontFamily: "Geist, system-ui, -apple-system, sans-serif"
+    fontFamily: "Archivo, system-ui, -apple-system, Segoe UI, Helvetica, sans-serif"
     fontSize: "13px"
     fontWeight: 400
     lineHeight: 1.5
     letterSpacing: "normal"
+  label:
+    fontFamily: "Archivo, system-ui, -apple-system, Segoe UI, Helvetica, sans-serif"
+    fontSize: "11px"
+    fontWeight: 600
+    lineHeight: 1.2
+    letterSpacing: "0.14em"
   measurement:
     fontFamily: "Geist Mono, ui-monospace, SFMono-Regular, monospace"
     fontSize: "13px"
     fontWeight: 600
     lineHeight: 1
     letterSpacing: "normal"
+  wordmark:
+    fontFamily: "Bricolage Grotesque, Archivo, system-ui, sans-serif"
+    fontSize: "15px"
+    fontWeight: 700
+    lineHeight: 1
+    letterSpacing: "-0.01em"
 rounded:
-  hair: "2px"
-  xs: "3px"
-  sm: "4px"
-  md: "5px"
-  lg: "6px"
+  xs: "6px"
+  sm: "10px"
+  md: "14px"
+  lg: "18px"
   pill: "999px"
 spacing:
   unit: "8px"
@@ -65,156 +74,215 @@ spacing:
   md: "16px"
   lg: "24px"
   xl: "40px"
+  gutter: "clamp(20px, 4vw, 48px)"
 components:
   mat-btn:
-    backgroundColor: "{colors.raised}"
+    backgroundColor: "{colors.sheet}"
     textColor: "{colors.ink}"
     typography: "{typography.body}"
-    rounded: "{rounded.sm}"
-    padding: "11px 16px"
-  mat-btn-hover:
-    backgroundColor: "{colors.raised-hi}"
-    textColor: "{colors.ink}"
+    rounded: "{rounded.pill}"
+    padding: "10px 18px"
   mat-btn-go:
-    backgroundColor: "{colors.brand-btn}"
+    backgroundColor: "{colors.action}"
     textColor: "#ffffff"
-    rounded: "{rounded.sm}"
-    padding: "11px 16px"
+    rounded: "{rounded.pill}"
+    padding: "10px 18px"
   mat-btn-go-hover:
-    backgroundColor: "{colors.brand-btn-hi}"
+    backgroundColor: "{colors.action-deep}"
     textColor: "#ffffff"
   mat-btn-flat:
     backgroundColor: "transparent"
-    textColor: "{colors.ink-2}"
-    rounded: "{rounded.sm}"
-    padding: "10px 16px"
+    textColor: "{colors.ink-soft}"
+    rounded: "{rounded.pill}"
+    padding: "10px 18px"
   mat-field:
-    backgroundColor: "{colors.felt-deep}"
+    backgroundColor: "{colors.sheet}"
     textColor: "{colors.ink}"
     typography: "{typography.body}"
     rounded: "{rounded.sm}"
-    padding: "11px 13px"
+    padding: "10px 14px"
   segment:
     backgroundColor: "transparent"
-    textColor: "{colors.ink-3}"
-    rounded: "{rounded.xs}"
-    padding: "9px 14px"
+    textColor: "{colors.ink-mute}"
+    rounded: "{rounded.pill}"
+    padding: "7px 14px"
   segment-selected:
-    backgroundColor: "{colors.raised}"
+    backgroundColor: "{colors.ink}"
+    textColor: "#ffffff"
+  chip:
+    backgroundColor: "{colors.sheet}"
     textColor: "{colors.ink}"
-  card-slot:
-    backgroundColor: "{colors.felt-deep}"
+    rounded: "{rounded.pill}"
+    padding: "4px 11px"
+  sheet:
+    backgroundColor: "{colors.sheet}"
     rounded: "{rounded.md}"
+    padding: "16px"
 ---
 
-# Design System: Deck Compare — The Table
+# Design System: Deck Compare — The Memo
 
 ## Overview
 
-The surface is a playmat seen from directly above, under one overhead light. Everything
-in the system is a consequence of that premise rather than a decoration applied to it:
-the ground is warm felt, elevation is a real downward shadow, and an area of the mat is
-silkscreened onto it with a printed rule and a printed name.
+**Creative North Star: "The Memo"**
 
-The direction was chosen by roll (seed `009366bf`, candidate 3 of 7 by resonance) over
-six catalogue challengers. None won, and four donated a discipline that was raised into
-the built world — the grid everything snaps to, the monumental figure, labelled states,
-the ban on enclosure, and the single light source.
+The surface is a one-page brief read at a desk in daylight. The ground is cream paper,
+the ink is warm and near-black, and everything that groups information is a white sheet
+laid on the paper with a hairline edge. Controls are pills. One deep red is the action.
+The figures that decide something — the similarity percentage, the commander's name, the
+two deck names, the counts — are set in a serif, large; everything else is the sheet's
+sans. Nothing glows, nothing blurs, nothing is embossed: paper is flat and light falls on
+it from above.
 
-`theme.css` is the world. The three extension pages link it. `inject-button.js` mirrors
-its values inside a shadow root, where a stylesheet link cannot reach; that copy is the
-one place the shared file cannot own, and it is marked at its declaration.
+The world was pinned by the maintainer on 2026-09-03 from an investment one-pager
+(memos.sourceventures.vc) and replaced "The Table", the dark felt world lit in amber. The
+amber accent is gone: the deck colours — warm card, cool card, green in between — are the
+icon's own encoding, deepened until they read on paper, and they are roles, never accents.
+The icon and the wordmark ("Deck" + bold "Compare" in Bricolage Grotesque) are unchanged.
+The two buttons injected into the deck sites keep their own black-on-site treatment inside
+a shadow root; they sit on other people's pages and are not this world.
+
+**Key Characteristics:**
+- Cream paper, white sheets, one hairline weight, warm ink in three strengths.
+- Pill controls; the selected one is inked, the primary one is red and casts the page's only coloured shadow.
+- Serif for the figures that decide; sans for everything you scan; mono for what you count.
+- Depth is a sheet resting on a desk: soft, wide, downward shadows in three lifts.
+- Side A, side B and shared are functional colours and appear only where they mean something.
 
 ## Colors
 
-Three grounds and three inks, plus the locked brand encoding.
+A restrained palette: paper and ink, one action red, and three role colours that carry meaning rather than mood.
 
-- **Grounds.** `felt` is the mat. `felt-lit` is where the overhead light falls — used for
-  objects resting on the mat. `felt-deep` is what is pressed *into* the mat. `raised` is a
-  chip lying on top of it. The grounds are warm; blue-black is off-world.
-- **Inks.** `ink` for what must be read first, `ink-2` for body, `ink-3` for what a reader
-  can skip. All three clear WCAG AA on every ground: `ink-3` measures 4.91:1 at its worst
-  (on `raised`) and 5.84:1 on the felt.
-- **The two sides.** `side-a` orange and `side-b` teal are the deck-1/deck-2 encoding,
-  locked as a brand commitment. They are the two players' sides of the table, not accents:
-  a side's zone name, its counts, its stitched edge and its quantities all take its ink.
-  `shared` green is the ground the two sides have in common.
-- **The red.** A lacquer red at hue 9–12°, in the same light as the felt and side-A. The
-  world's first version kept the old crimson at hue 351° and it read as imported from a
-  cooler palette. `brand` is text-only (5.43:1 on felt); filled buttons take `brand-btn`
-  (5.51:1 with white) and hover to `brand-btn-hi` (4.71:1). It stays clear of side-A
-  orange by 25° of hue as well as by saturation and lightness.
+### Primary
+- **Action Red** (#8a1f16): the one action colour. Fills the primary pill (`.mat-btn--go`) with white text, and is the text colour of anything that needs attention — an error, an excluded deck's chip, a quantity mismatch. Hovers to **Action Deep** (#701810). 8:1 on paper, 8.7:1 with white.
+
+### Secondary
+- **Side A, warm card** (#a8540f): deck 1's name, its counts, its quantities, its zone name. Never a button, never a border.
+- **Side B, cool card** (#137083): deck 2, the same way.
+- **Shared Green** (#1e7a4c): the ground the two decks have in common — the shared zone, the "shared cards" count, the "with this card" filter chip, the live "Detected" dot.
+
+Each role has a wash (`--a-wash`, `--b-wash`, `--match-wash`, 10% alpha) for the tinted chips and edges that name a side without shouting.
+
+### Neutral
+- **Paper** (#f8f5f2): the desk. Painted on `html`, never on a component.
+- **Paper Well** (#efe9e3): what is pressed into the paper — bar tracks, quiet fills, hover on white, the empty card stage.
+- **Sheet** (#ffffff): a sheet laid on the paper — every panel, list, popup card, held card.
+- **Ink** (#241c18) for what must be read first; **Ink Soft** (#5e524b) for body; **Ink Mute** (#7a6d64) for labels and what a reader can skip (4.6:1 on paper, 5.0:1 on a sheet).
+- **Hairline** (#e8dfd8) for sheet edges and rules; **Hairline Strong** (#d6c9bf) for control edges (pills, fields, chips).
+
+### Named Rules
+**The One Red Rule.** Red is the action and the alarm, and nothing else. It never decorates, never marks a side, never appears in a chart.
+
+**The Roles Not Accents Rule.** Side A orange, side B teal and shared green appear only on the thing they mean — a name, a count, a bar segment, a swatch. No headers, no buttons, no backgrounds take them.
+
+**The Gold Is Gone Rule.** The amber of the previous world (#e3a24f, #e6b54e) is not a UI colour. It survives only inside the icon and the injected button's icon.
 
 ## Typography
 
-Bricolage Grotesque is the display voice (locked by the wordmark); Geist carries the UI;
-Geist Mono carries measurement — quantities, deltas, counts, coordinates — never as a
-costume for "technical".
+**Display Font:** Beleren — the Magic card face, bundled in `fonts/` (with Iowan Old Style, Georgia, serif)
+**Body Font:** Archivo (with system-ui, -apple-system, Segoe UI, Helvetica, sans-serif)
+**Label/Mono Font:** Geist Mono (with ui-monospace, SFMono-Regular, monospace)
+**Wordmark:** Bricolage Grotesque 700/800 — the wordmark only, locked by the brand.
 
-The ramp is seven named steps: 11 / 12 / 13 / 15 / 18 / 24 / 34px, an amplitude of 3.1:1.
-It replaced eighteen ad-hoc sizes of which seventy-six declarations out of a hundred and
-seventeen sat between 10 and 13px. 11px is a floor, not a step to go below.
+**Character:** A memo's pairing with the game's own lettering — Beleren, the face printed on every card, for the few things set large; a plain workhorse grotesque for the tool; a mono where numbers must line up. Beleren ships in one bold weight and is never faux-bolded; it is spent, not sprinkled.
 
-The popup uses only the first five steps. A 400px surface has nowhere to put display type,
-and forcing a 24px title there truncates real deck names — the compressed range is honest,
-not an oversight.
+### Hierarchy
+- **Display** (400, clamp(40px, 6vw, 80px), 1, -0.01em): the similarity figure alone. The `%` inside it is 0.42em in Ink Mute.
+- **Headline** (400, clamp(22px, 2.8vw, 36px), 1.1, -0.01em): the two deck names in the matchup, the commander's name in the pool hero, the pool page's title. Deck names take their side's ink.
+- **Stat** (400, 30px, 1, -0.01em, Beleren): the pool hero counts; "shared cards" takes Shared Green.
+- **Title** (400, 17–19px, 1.15–1.25, 0, Beleren): the held card's name, the popup's detected deck name.
+- **Body** (400, 13px, 1.5, Archivo): every row, hint and control; 15px on the pool page's reading text.
+- **Label** (600, 11px, 0.14em, uppercase, Archivo): zone names, section titles, field labels, source names, stat captions. 11px is a floor.
+- **Measurement** (600, 13px / 11px, Geist Mono, tabular): quantities, deltas, percentages, counts, deck numbers.
+
+### Named Rules
+**The Figures Decide Rule.** The serif appears only on the figures and names a reader decides by; a serif on a label, a control or a row is a lapse.
+
+**The Ramp Rule.** Eight named sizes — 11 / 12 / 13 / 15 / 18 / 24 / 34 / 56 (plus the two display clamps). Nothing below 11px; nothing in between.
 
 ## Layout
 
-One unit: 8px. Zones, cards, counters and gutters are multiples of it.
+One unit: 8px. Gutters are `clamp(20px, 4vw, 48px)`; content is capped at 1280px and centred.
 
-The results page is a single mat, not a card on a background: `mat-edge` at the top, the
-matchup, the seam, the controls, then a two-column table with the held card in a sticky
-rail. The rail drops below 1080px; the two sides stack below 760px, where the hero also
-stacks with the counter first.
+The results page is one sheet of paper: a top edge carrying the wordmark and the actions, the matchup (deck A left, the figure centred, deck B right), the overlap bar, the controls, then the two sides as zones over a shared table, with the held card in a sticky rail at 300px. The rail drops under the content below 1080px and the empty stage folds to its hint; the matchup stacks below 760px with the figure first.
 
-The popup is 400px of the same mat — your side, the seam, the opponent's side — and must
-stay under Chrome's 600px popup ceiling in its tallest state.
+The pool page is the same paper with a 320px rail on the right: the deck list (capped at ~7 rows, scrolling on its own), the held card, the mana curve, the sideboard. The rail is capped to the viewport and scrolls as a whole; nothing inside it is squeezed. It hides below 1000px.
+
+The popup is 400px of the same paper: the wordmark, your deck as a sheet under its side's label, the rule ("versus"), the second deck's field with the red pill, and stays under Chrome's 600px ceiling.
+
+Spacing rhythm: 8px inside a row, 16px between related blocks, 24px between sections, 40–56px around the matchup. More space above a section title than below it.
 
 ## Elevation & Depth
 
-There is one light and it is overhead. Every shadow therefore has a downward offset and a
-soft blur, and no element carries a coloured halo of its own. Three lifts and one press:
+Sheets on a desk, lit from above. Every shadow has a downward offset and a soft, wide blur; there are no glows, no halos, no inset embossing. Three lifts and one press.
 
-- `lift-1` — resting on the mat (cards, chips, buttons).
-- `lift-2` — picked up (hover on a button, the held card, the compare-another panel).
-- `lift-3` — held above the table (a card under the pointer, an open dropdown).
-- `press` — an inset shadow for what is pressed *into* the felt: the similarity well, the
-  seam bar, input fields, the selected segment.
+### Shadow Vocabulary
+- **lift-1** (`0 1px 2px rgba(36,28,24,.06), 0 2px 6px rgba(36,28,24,.04)`): a sheet at rest — sections, the deck list, the detected deck, a hovered pill.
+- **lift-2** (`0 2px 4px rgba(36,28,24,.05), 0 10px 28px rgba(36,28,24,.08)`): a sheet picked up — the held card, the hero art.
+- **lift-3** (`0 6px 12px rgba(36,28,24,.06), 0 24px 56px rgba(36,28,24,.14)`): above the desk — a hovered card, an open dropdown, the floating selection bar.
+- **press** (`inset 0 1px 2px rgba(36,28,24,.06)`): reserved; the built world presses nothing in.
+- **action lift** (`0 2px 10px rgba(138,31,22,.28)`): the red pill's own shadow, the only coloured one.
 
-A zero-offset coloured glow is off-world. Eleven of them were removed when this world
-replaced the previous one.
+### Named Rules
+**The Paper Does Not Blur Rule.** No backdrop-filter, no glass. A sticky bar is opaque paper with a hairline.
+
+**The One Sheet Rule.** A sheet rests on the paper, never on another sheet. Rows inside a sheet are separated by hairlines, not by more sheets.
 
 ## Shapes
 
-Small radii throughout: 2–6px, with `pill` reserved for the seam bar and the injected
-button. `hair` is for a 2px rule end — the stitched deck edge and the legend swatches. Cards keep the 488/680 ratio of the real object.
+Pills for anything you press or select (999px). Sheets are rounded like paper: 14px for a list or section, 18px for the held card, 10px for a field, an image or a hero art, 6px for a small tag or a focus ring. Cards keep the real object's 488/680 ratio and are clipped at the card's own corner radius (4.7% / 3.4%), so the white or black corner fill of a Scryfall JPG never shows. Hairlines are 1px in `--line` (sheets) or `--line-strong` (controls); nothing carries a 2px border except a field in focus.
 
 ## Components
 
-- **`mat-btn`** is the only button. Four variants — default, `--go` (the filled red
-  primary), `--flat` (no lift until reached for), `--icon`. It replaced nine separate
-  treatments invented across three files.
-- **`zone`** is an area of the mat: a `zone-mark` carrying a printed name, an optional
-  note, and a right-aligned count, over a hairline rule. It has no fill, no border box and
-  no rounded corners, and **zones never nest**. Two zones side by side are peers, not a
-  stack, so the vertical gap between stacked zones is scoped away in that case.
-- **`segments`** carry selection by being pressed into the felt plus `aria-pressed`, so
-  the control still reads with colour removed.
-- **`card-slot`** lies on the mat and lifts on hover, focus or click. It is focusable and
-  labelled; the preview it opens is reachable by pointer, keyboard and touch.
-- **Browser surfaces are themed**: selection, caret, accent colour, scrollbars, focus ring,
-  underline offset, and tabular numerals on every measurement.
+### Buttons
+- **Shape:** pill (999px), 13px/600, 10px 18px.
+- **Default (`.mat-btn`):** white with a Hairline Strong edge; hover lifts 1px, takes lift-1 and an Ink Mute edge.
+- **Primary (`.mat-btn--go`):** Action Red, white text, the action lift; hover to Action Deep.
+- **Flat (`.mat-btn--flat`):** no edge until reached for; hover fills Paper Well.
+- **Icon (`.mat-btn--icon`):** the same pill at 10px padding — the popup's settings gear, the pool's close.
+- **Dashed (`.add-toggle`, `.hint-configure`):** a dashed Hairline Strong pill or sheet for "add" affordances.
+
+### Segments
+- **Style:** a white pill group with a Hairline edge and 3px padding.
+- **State:** the selected segment is inked (Ink fill, white text) and carries `aria-pressed`; the rest are Ink Mute, hovering to Paper Well. The pool's category pills follow the same rule as standalone pills.
+
+### Chips
+- **Style:** white pill, Hairline Strong edge, 12px text; the deck-source chip is a Paper Well pill in 11px tracked caps.
+- **State:** a filter chip prefixes its rule in Shared Green ("with") or Action Red ("without") and carries its own ×.
+
+### Sheets
+- **Corner Style:** 14px (18px for the held card).
+- **Background:** Sheet white on Paper.
+- **Shadow Strategy:** lift-1 at rest, lift-2 when it is the thing you are holding.
+- **Border:** 1px Hairline.
+- **Internal Padding:** 16px; list rows 8px 16px with hairlines between them, hovering to Paper.
+
+### Inputs / Fields
+- **Style:** white, Hairline Strong edge, 10px radius, 10px 14px; mono for pasted decklists.
+- **Focus:** the edge turns Ink and doubles (inset 1px Ink), no glow.
+- **Error:** the message under it in Action Red.
+
+### Navigation
+- The top edge: wordmark left, actions right as pills, one Hairline under it. Opaque paper; sticky on the pool page.
+
+### The Overlap Bar
+An 8px pill track in Paper Well with three segments — side A, shared, side B — and a legend of swatch, name and mono count. It is the page's one authored motion: the segments draw in once, left to right (`scaleX` from 0, 0.9s, `cubic-bezier(.22,1,.36,1)`, staggered 120ms), the instant the result is revealed.
+
+### The Card
+A Scryfall image on a 10px sheet corner, lift-1 at rest, lifted 3px to lift-3 on hover or focus; a quantity badge in the top-left corner (mono, white on 82% Ink). Cards without an image become a dashed proxy carrying the name.
 
 ## Do's and Don'ts
 
-- **Do** derive every new element from the premise: is it printed on the mat, resting on
-  it, or pressed into it? That answers its ground, its shadow and its radius.
-- **Do** give a state a printed label as well as its colour.
-- **Don't** put a label above a heading. The heading carries its own weight — the one
-  place this information survived (pool's main-commander role) sits *below* the name.
-- **Don't** enclose. No panel inside a panel, no card inside a card; use a zone.
-- **Don't** add a coloured `border-left` accent stripe, a glow, or a backdrop blur.
-- **Don't** hardcode a pixel value that the `--unit` or type ramp already names. The static
-  detector cannot resolve `calc(var(--unit) * n)` and will report cramped padding and
-  monotonous spacing that the computed values disprove; read the computed values.
+### Do:
+- **Do** paint the ground on `html` as Paper and put every grouping on one Sheet with a Hairline; rows inside it are hairlines apart.
+- **Do** set a side's name, count and quantities in that side's ink, and nothing else in it.
+- **Do** put a label *under* a headline (source under the deck name, "Commander" under the commander) — the headline carries its own weight.
+- **Do** keep numbers in Geist Mono with tabular figures, right-aligned in their column.
+- **Do** honour `prefers-reduced-motion`: the overlap bar's draw-in is the only authored motion and it collapses to nothing.
+
+### Don't:
+- **Don't** use amber, gold or the old felt greys anywhere in the pages.
+- **Don't** blur, glow, emboss or halo; no backdrop-filter, no zero-offset coloured shadow, no inset relief.
+- **Don't** put a sheet inside a sheet, or a coloured stripe on a card, row or callout.
+- **Don't** set anything in the serif except the figures and names a reader decides by.
+- **Don't** add a required host permission or touch the injected buttons' black-on-site treatment from this world.

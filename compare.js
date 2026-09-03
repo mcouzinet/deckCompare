@@ -203,11 +203,9 @@
   }
 
   // ===== name normalization =====
-  // Strips the back-face of DFCs so "Brazen Borrower // Petty Theft" → "Brazen Borrower",
-  // which matches the front-face name Scryfall returns in /cards/named and /cards/collection.
-  function normalizeName(name) {
-    return name.split(' // ')[0].trim();
-  }
+  // Front-face keying (split/DFC + cross-source separator handling) lives in shared.js,
+  // so the results page and any future consumer merge cards the same way.
+  const normalizeName = Shared.normalizeName;
 
   // Normalize a board's card map: merge entries that share the same front-face name
   function normalizeBoard(cards) {
@@ -294,15 +292,13 @@
   }
 
   // ===== card grids =====
-  // The one image-URL policy, for every consumer. The batch cache stores the CDN
-  // `normal` url; Scryfall CDN paths are size-substitutable, so the grid derives
-  // `small` on 1x displays where normal's extra bytes buy no sharpness (a ~150px
-  // slot on a 2x display genuinely needs normal's 488px source).
-  const GRID_CDN_SIZE = (window.devicePixelRatio || 1) > 1.3 ? "normal" : "small";
-  function imageFor(name, want) {
-    const cdn = CARD_IMAGES.get(name);
-    if (!cdn) return null;
-    return want === "grid" ? cdn.replace("/normal/", `/${GRID_CDN_SIZE}/`) : cdn;
+  // One image-URL policy for grid and preview alike: the CDN `normal` (488px) the
+  // /cards/collection batch cached. We used to downsize the grid to Scryfall `small`
+  // (146px) on 1x displays to save bytes, but the slots render ~150–210px wide, so
+  // `small` was upscaled — soft cards, unreadable text — on every non-retina monitor.
+  // `normal` is sharp everywhere for ~2–3MB across the page, and matches the hover.
+  function imageFor(name) {
+    return CARD_IMAGES.get(name) || null;
   }
 
   function cardSlot(e, qtyKey) {
@@ -312,9 +308,9 @@
     // While the type batch is in flight, a cache miss defers its rate-limited API
     // fallback (data-fallback-src) instead of firing a request the repaint would
     // discard; render() promotes the fallbacks only if the batch fails.
-    const cdn = imageFor(e.name, "grid");
-    const src = cdn || (TYPES_READY ? imgUrl(e.name, "small") : null);
-    const imgAttr = src ? `data-src="${src}"` : `data-fallback-src="${imgUrl(e.name, "small")}"`;
+    const cdn = imageFor(e.name);
+    const src = cdn || (TYPES_READY ? imgUrl(e.name, "normal") : null);
+    const imgAttr = src ? `data-src="${src}"` : `data-fallback-src="${imgUrl(e.name, "normal")}"`;
     return `<div class="card-slot is-loading board-${e.board}" tabindex="0" role="button"
         aria-label="${esc(e.name)}"
         data-name="${esc(e.name)}" data-a="${e.aQty}" data-b="${e.bQty}" data-board="${e.board}" data-qty="${qty}">
@@ -458,7 +454,7 @@
       // Prefer the CDN url resolved by the /cards/collection batch. The api.scryfall.com
       // endpoint is the fallback only: it is the rate-limited API, not the image host,
       // and one request per hover is what exhausted it partway across a grid.
-      const cdn = imageFor(name, "preview");
+      const cdn = imageFor(name);
       load(cdn || imgUrl(name, "normal"), name, !cdn);
     }
 

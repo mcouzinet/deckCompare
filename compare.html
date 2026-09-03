@@ -4,18 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Deck Compare — Results</title>
-  <meta name="color-scheme" content="dark">
+  <meta name="color-scheme" content="light">
   <!-- Critical: theme.css is external, so the popup would paint white for one
-       frame before it lands. One ground colour, kept in step with --felt. -->
-  <style>html{background-color:#17120d}</style>
+       frame before it lands. One ground colour, kept in step with --bg. -->
+  <style>html{background-color:#f8f5f2}</style>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Geist+Mono:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="theme.css">
   <style>
-    /* --- the mat ------------------------------------------------------------------ */
+    /* --- the sheet ---------------------------------------------------------------- */
     .mat {
-      max-width: 1320px; margin: 0 auto;
+      max-width: 1280px; margin: 0 auto;
       padding: calc(var(--unit) * 3) var(--gutter) calc(var(--unit) * 6);
     }
 
@@ -23,78 +23,77 @@
       display: flex; align-items: center; gap: calc(var(--unit) * 2);
       flex-wrap: wrap; row-gap: calc(var(--unit) * 1.5);
       padding: calc(var(--unit) * 2) var(--gutter);
-      border-bottom: 1px solid var(--rule);
-      max-width: 1320px; margin: 0 auto;
+      border-bottom: 1px solid var(--line);
+      max-width: 1280px; margin: 0 auto;
     }
     .mat-edge .spacer { flex: 1; }
     .edge-actions { display: flex; align-items: center; gap: var(--unit); }
     .tb-wrap { position: relative; }
 
-    /* Buy me a coffee: it keeps its place and its link, and stops outshouting the
-       primary action it sits next to. */
+    /* Buy me a coffee: a quiet pill beside the actions. */
     .bmc {
       display: inline-flex; align-items: center; gap: var(--unit);
-      padding: calc(var(--unit) * 1.2) calc(var(--unit) * 1.6);
+      padding: calc(var(--unit) * 1.1) calc(var(--unit) * 1.75);
       font-size: var(--fs-xs); font-weight: 600; text-decoration: none; white-space: nowrap;
-      color: var(--warn); background: transparent;
-      border: 1px solid var(--stitch); border-radius: 4px;
-      transition: color .12s, border-color .12s;
+      color: var(--ink-2); background: transparent;
+      border: 1px solid var(--line-strong); border-radius: var(--r-pill);
+      transition: color .12s, border-color .12s, background .12s;
     }
     .bmc svg { width: 15px; height: 15px; }
-    .bmc:hover { color: var(--warn-hi); border-color: var(--warn); }
+    .bmc:hover { color: var(--ink); border-color: var(--ink-3); background: var(--elev); }
 
-    /* --- the matchup, pressed into the felt --------------------------------------- */
+    /* --- the matchup: two names, and the figure between them ----------------------- */
     .matchup {
       display: grid; grid-template-columns: 1fr auto 1fr;
       align-items: center; gap: var(--gutter);
-      padding: calc(var(--unit) * 6) 0 calc(var(--unit) * 4);
+      padding: calc(var(--unit) * 7) 0 calc(var(--unit) * 4);
     }
     .side { min-width: 0; }
     .side.b { text-align: right; }
 
-    /* No eyebrow above the name: the deck's own ink says which side it is, and the
-       stitched edge under it repeats that without a second label. */
+    /* The deck's own ink says which side it is; the short rule under it repeats that. */
     .deck-name {
       display: block;
-      font-family: var(--font-display); font-weight: 700;
-      font-size: clamp(var(--fs-lg), 2.6vw, var(--fs-xl));
-      line-height: 1.15; letter-spacing: -0.02em;
+      font-family: var(--font-display); font-weight: 400;
+      font-size: clamp(22px, 2.8vw, 36px);
+      line-height: 1.1; letter-spacing: -0.01em;
       text-decoration: none; overflow-wrap: break-word;
     }
     .side.a .deck-name { color: var(--a); }
     .side.b .deck-name { color: var(--b); }
-    a.deck-name:hover { text-decoration: underline; }
-    .deck-edge { height: 2px; margin-top: calc(var(--unit) * 1.5); border-radius: 2px; }
-    .side.a .deck-edge { background: linear-gradient(90deg, var(--a), transparent); }
-    .side.b .deck-edge { background: linear-gradient(270deg, var(--b), transparent); }
+    a.deck-name:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.12em; }
+    .deck-edge { width: 40px; height: 2px; margin-top: calc(var(--unit) * 2); border-radius: 2px; }
+    .side.a .deck-edge { background: var(--a); }
+    .side.b .deck-edge { background: var(--b); margin-left: auto; }
     .deck-src {
-      margin-top: var(--unit);
-      font-size: var(--fs-micro); font-weight: 600; letter-spacing: 0.1em;
+      margin-top: calc(var(--unit) * 1.25);
+      font-size: var(--fs-micro); font-weight: 600; letter-spacing: 0.12em;
       text-transform: uppercase; color: var(--ink-3);
     }
 
-    /* The figure is the mat's own marking, debossed, not a dial floating in a panel. */
-    .counter { display: flex; flex-direction: column; align-items: center; gap: calc(var(--unit) * 0.5); }
-    .counter-well {
-      display: grid; place-items: center;
-      width: 148px; height: 148px; border-radius: 50%;
-      background: var(--felt-deep); box-shadow: var(--press);
-    }
+    /* The figure sits on the paper like a memo's headline number. */
+    .counter { display: flex; flex-direction: column; align-items: center; gap: calc(var(--unit) * 0.75); padding: 0 calc(var(--unit) * 3); }
+    .counter-well { display: grid; place-items: center; }
     .counter-num {
-      font-family: var(--font-display); font-weight: 800;
-      font-size: var(--fs-2xl); line-height: 1; color: var(--ink);
+      font-family: var(--font-display); font-weight: 400;
+      font-size: clamp(40px, 6vw, 80px); line-height: 1; letter-spacing: -0.01em; color: var(--ink);
       font-variant-numeric: tabular-nums;
     }
-    .counter-num span { font-size: var(--fs-md); color: var(--ink-3); font-weight: 700; }
+    .counter-num span { font-size: 0.42em; color: var(--ink-3); letter-spacing: 0; margin-left: 2px; }
     .counter-label {
-      font-size: var(--fs-micro); font-weight: 700; letter-spacing: 0.18em;
+      font-size: var(--fs-micro); font-weight: 600; letter-spacing: 0.16em;
       text-transform: uppercase; color: var(--ink-3);
     }
 
-    /* --- the seam ----------------------------------------------------------------- */
-    .seam { padding-bottom: calc(var(--unit) * 4); border-bottom: 1px solid var(--rule); }
-    .seam-bar { display: flex; height: 10px; border-radius: 999px; overflow: hidden; gap: 2px; background: var(--felt-deep); box-shadow: var(--press); }
-    .seam-seg { height: 100%; }
+    /* --- the overlap bar ---------------------------------------------------------- */
+    .seam { padding-bottom: calc(var(--unit) * 4); border-bottom: 1px solid var(--line); }
+    .seam-bar { display: flex; height: 8px; border-radius: var(--r-pill); overflow: hidden; gap: 2px; background: var(--bg-deep); }
+    /* The page's one authored moment: the bar draws in once, left to right, the instant the
+       result is revealed — the gap between the decks is seen before a word is read. */
+    .seam-seg { height: 100%; transform-origin: left center; animation: seam-draw .9s cubic-bezier(.22,1,.36,1) both; }
+    .seam-seg.s { animation-delay: .12s; }
+    .seam-seg.b { animation-delay: .24s; }
+    @keyframes seam-draw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
     .seam-seg.a { background: var(--a); }
     .seam-seg.s { background: var(--match); }
     .seam-seg.b { background: var(--b); }
@@ -103,7 +102,7 @@
       gap: var(--unit); margin-top: calc(var(--unit) * 1.5); font-size: var(--fs-xs);
     }
     .lg { display: inline-flex; align-items: center; gap: var(--unit); color: var(--ink-3); }
-    .lg .sw { width: 9px; height: 9px; border-radius: 2px; flex: none; }
+    .lg .sw { width: 9px; height: 9px; border-radius: 3px; flex: none; }
     .lg b { color: var(--ink); font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 600; }
     .lg.a .sw { background: var(--a); }
     .lg.s .sw { background: var(--match); }
@@ -123,41 +122,40 @@
     }
     .sides { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: var(--gutter); }
 
-    .card-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(var(--card-w,clamp(104px,9vw,148px)),1fr)); gap: calc(var(--unit) * 1.2); }
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(var(--card-w,clamp(104px,9vw,148px)),1fr)); gap: calc(var(--unit) * 1.25); }
 
-    /* Cards lie on the felt. Reaching for one lifts it — the light is overhead, so the
-       shadow grows downward; nothing glows. */
+    /* Cards lie on the paper. Reaching for one lifts it; the shadow grows downward. */
     .card-slot {
-      position: relative; aspect-ratio: 488/680; border-radius: 5px;
-      background: var(--felt-deep); overflow: hidden; cursor: pointer;
+      position: relative; aspect-ratio: 488/680; border-radius: var(--r-sm);
+      background: var(--bg-deep); overflow: hidden; cursor: pointer;
       box-shadow: var(--lift-1);
-      transition: transform .14s cubic-bezier(.2,.8,.3,1), box-shadow .14s;
+      transition: transform .18s cubic-bezier(.22,1,.36,1), box-shadow .18s;
     }
     .card-slot:hover, .card-slot:focus-visible { transform: translateY(-3px); box-shadow: var(--lift-3); z-index: 2; }
-    .card-slot img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .card-slot.is-loading { background: var(--raised); }
+    .card-slot img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 4.7% / 3.4%; }
+    .card-slot.is-loading { background: var(--bg-deep); }
     .card-slot .proxy-name {
       display: none; position: absolute; inset: 0; padding: calc(var(--unit) * 1.2);
       align-items: center; justify-content: center; text-align: center;
       font-size: var(--fs-micro); font-weight: 600; color: var(--ink-2);
-      border: 1px dashed var(--stitch); border-radius: 5px;
+      border: 1px dashed var(--line-strong); border-radius: inherit;
     }
-    .card-slot.is-proxy { background: var(--felt-lit); }
+    .card-slot.is-proxy { background: var(--elev); }
     .card-slot.is-proxy .proxy-name { display: flex; }
     .card-slot.is-proxy img { display: none; }
     .qty-badge, .board-tag {
       position: absolute; z-index: 1;
       font-family: var(--font-mono); font-variant-numeric: tabular-nums;
       font-size: var(--fs-micro); font-weight: 700; line-height: 1;
-      padding: 3px 6px; border-radius: 3px;
-      color: var(--ink); background: rgba(13,10,6,.82);
+      padding: 3px 7px; border-radius: var(--r-xs);
+      color: #fff; background: rgba(36,28,24,.82);
     }
-    .qty-badge { top: 5px; left: 5px; }
-    .board-tag { bottom: 5px; right: 5px; color: var(--ink-3); font-size: var(--fs-micro); letter-spacing: .06em; }
+    .qty-badge { top: 6px; left: 6px; }
+    .board-tag { bottom: 6px; right: 6px; color: rgba(255,255,255,.8); font-size: var(--fs-micro); letter-spacing: .06em; }
 
     .type-divider {
       margin: calc(var(--unit) * 2.5) 0 calc(var(--unit) * 1.5);
-      font-size: var(--fs-micro); font-weight: 700; letter-spacing: 0.14em;
+      font-size: var(--fs-micro); font-weight: 600; letter-spacing: 0.14em;
       text-transform: uppercase; color: var(--ink-3);
     }
     .col-empty { padding: calc(var(--unit) * 3) 0; font-size: var(--fs-xs); color: var(--ink-3); }
@@ -167,7 +165,7 @@
     .shared .zone-name, .shared .zone-count { color: var(--match); }
     .shared .zone-mark { border-bottom-color: var(--match-wash); }
     .shared-note { font-size: var(--fs-xs); color: var(--ink-3); display: inline-flex; align-items: center; gap: calc(var(--unit) * 0.8); }
-    .shared-note .warn-dot { width: 7px; height: 7px; border-radius: 2px; background: var(--warn); }
+    .shared-note .warn-dot { width: 7px; height: 7px; border-radius: 2px; background: var(--brand); }
 
     .srow-head, .srow {
       display: grid;
@@ -175,33 +173,33 @@
       align-items: center; gap: calc(var(--unit) * 1.5); padding: 0 var(--unit);
     }
     .srow-head {
-      height: 30px; font-size: var(--fs-micro); font-weight: 700;
+      height: 30px; font-size: var(--fs-micro); font-weight: 600;
       letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3);
-      border-bottom: 1px solid var(--rule);
+      border-bottom: 1px solid var(--line);
     }
     .srow-head .ca { color: var(--a); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .srow-head .cb { color: var(--b); text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .srow-head .cc { text-align: center; }
     .srow {
-      height: 36px; cursor: pointer;
-      border-bottom: 1px solid rgba(244,238,227,0.03);
+      height: 38px; cursor: pointer; border-radius: var(--r-xs);
+      border-bottom: 1px solid var(--line);
       transition: background .1s;
     }
-    .srow:hover, .srow:focus-visible { background: var(--felt-lit); }
+    .srow:hover, .srow:focus-visible { background: var(--elev); }
     .srow .qa, .srow .qb { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: var(--fs-sm); font-weight: 600; }
     .srow .qa { color: var(--a); }
     .srow .qb { color: var(--b); text-align: right; }
-    .srow .nm { font-size: var(--fs-sm); color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: var(--unit); }
-    .srow .nm .bt { font-size: var(--fs-micro); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-3); }
+    .srow .nm { font-size: var(--fs-sm); color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: var(--unit); }
+    .srow .nm .bt { font-size: var(--fs-micro); font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-3); }
     .srow .delta {
       justify-self: center; min-width: 40px; text-align: center;
       font-family: var(--font-mono); font-variant-numeric: tabular-nums;
       font-size: var(--fs-xs); font-weight: 700; color: var(--ink-3);
     }
-    .srow.diff .delta { color: var(--warn); }
+    .srow.diff .delta { color: var(--brand); }
     .srow-type-divider {
       padding: calc(var(--unit) * 2) var(--unit) var(--unit);
-      font-size: var(--fs-micro); font-weight: 700; letter-spacing: 0.14em;
+      font-size: var(--fs-micro); font-weight: 600; letter-spacing: 0.14em;
       text-transform: uppercase; color: var(--ink-3);
     }
 
@@ -209,15 +207,15 @@
     .rail { position: sticky; top: calc(var(--unit) * 3); }
     .held {
       padding: calc(var(--unit) * 2);
-      background: var(--felt-lit); border: 1px solid var(--stitch);
-      border-radius: 6px; box-shadow: var(--lift-2);
+      background: var(--elev); border: 1px solid var(--line);
+      border-radius: var(--r-lg); box-shadow: var(--lift-2);
     }
     .preview-stage {
-      aspect-ratio: 488/680; border-radius: 5px; overflow: hidden;
+      aspect-ratio: 488/680; border-radius: var(--r-sm); overflow: hidden;
       display: grid; place-items: center; position: relative;
-      background: var(--felt-deep); box-shadow: var(--press);
+      background: var(--bg-deep);
     }
-    .preview-stage img { width: 100%; height: 100%; object-fit: contain; display: none; }
+    .preview-stage img { width: 100%; height: 100%; object-fit: contain; display: none; border-radius: 4.7% / 3.4%; }
     .preview-stage.has-img img { display: block; }
     .preview-hint {
       display: flex; flex-direction: column; align-items: center; gap: var(--unit);
@@ -226,20 +224,20 @@
     }
     .preview-hint svg { width: 26px; height: 26px; opacity: .45; }
     .preview-stage.has-img .preview-hint { display: none; }
-    .preview-name { margin-top: calc(var(--unit) * 1.5); font-family: var(--font-display); font-weight: 700; font-size: var(--fs-md); color: var(--ink); line-height: 1.2; }
+    .preview-name { margin-top: calc(var(--unit) * 1.75); font-family: var(--font-display); font-weight: 400; font-size: 17px; letter-spacing: 0; color: var(--ink); line-height: 1.25; }
     .preview-qty { margin-top: var(--unit); display: flex; flex-wrap: wrap; gap: var(--unit); font-size: var(--fs-xs); min-height: 22px; }
-    .pq { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 3px; font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 600; }
+    .pq { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: var(--r-pill); font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 600; }
     .pq.a { background: var(--a-wash); color: var(--a); }
     .pq.b { background: var(--b-wash); color: var(--b); }
-    .pq i { font-style: normal; opacity: .7; font-family: var(--font-ui); }
+    .pq i { font-style: normal; opacity: .75; font-family: var(--font-ui); }
 
     /* --- compare another ----------------------------------------------------------- */
     .another-pop {
       position: absolute; right: 0; top: calc(100% + var(--unit)); z-index: 60; width: 300px;
       display: flex; flex-direction: column; gap: var(--unit);
       padding: calc(var(--unit) * 1.5);
-      background: var(--felt-lit); border: 1px solid var(--stitch);
-      border-radius: 6px; box-shadow: var(--lift-3);
+      background: var(--elev); border: 1px solid var(--line);
+      border-radius: var(--r-md); box-shadow: var(--lift-3);
     }
     .another-pop[hidden] { display: none; }
     select.mat-field[hidden] { display: none; }
@@ -250,17 +248,17 @@
     /* --- list view ----------------------------------------------------------------- */
     body.view-list .card-grid { display: block; }
     body.view-list .card-slot {
-      aspect-ratio: auto; height: 32px; border-radius: 0; box-shadow: none;
+      aspect-ratio: auto; height: 34px; border-radius: var(--r-xs); box-shadow: none;
       display: flex; align-items: center; gap: var(--unit); padding: 0 var(--unit);
-      background: transparent; border-bottom: 1px solid rgba(244,238,227,0.03);
+      background: transparent; border-bottom: 1px solid var(--line);
     }
-    body.view-list .card-slot:hover { transform: none; box-shadow: none; background: var(--felt-lit); }
+    body.view-list .card-slot:hover { transform: none; box-shadow: none; background: var(--elev); }
     body.view-list .card-slot img, body.view-list .card-slot .qty-badge { display: none; }
     body.view-list .card-slot.is-loading { background: transparent; }
     body.view-list .card-slot .proxy-name {
       display: flex; position: static; inset: auto; border: 0; padding: 0;
       justify-content: flex-start; text-align: left; flex: 1;
-      font-size: var(--fs-sm); color: var(--ink-2);
+      font-size: var(--fs-sm); color: var(--ink);
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
     body.view-list .card-slot.is-proxy { background: transparent; }
@@ -270,11 +268,11 @@
       font-size: var(--fs-xs); font-weight: 600; color: var(--ink-3);
       min-width: 26px; flex: none;
     }
-    body.view-list .card-slot .board-tag { position: static; background: none; padding: 0; order: 3; }
+    body.view-list .card-slot .board-tag { position: static; background: none; padding: 0; order: 3; color: var(--ink-3); }
 
     #loading { padding: calc(var(--unit) * 10) 0; text-align: center; font-size: var(--fs-md); color: var(--ink-3); }
     .footnote {
-      max-width: 1320px; margin: 0 auto;
+      max-width: 1280px; margin: 0 auto;
       padding: calc(var(--unit) * 3) var(--gutter) calc(var(--unit) * 6);
       display: flex; align-items: center; gap: var(--unit);
       font-size: var(--fs-xs); color: var(--ink-3);
@@ -284,12 +282,14 @@
     @media (max-width: 1080px) {
       .table-grid { grid-template-columns: minmax(0,1fr); }
       .rail { position: static; max-width: 320px; }
+      /* Below the rail breakpoint the held card sits at the page's end: fold the empty
+         stage to its hint so a page with no card picked does not end on a blank sheet. */
+      .preview-stage:not(.has-img) { aspect-ratio: auto; padding: calc(var(--unit) * 3) 0; }
     }
     @media (max-width: 760px) {
-      .matchup { grid-template-columns: 1fr; gap: calc(var(--unit) * 2); text-align: center; }
+      .matchup { grid-template-columns: 1fr; gap: calc(var(--unit) * 2.5); text-align: center; padding-top: calc(var(--unit) * 4); }
       .side.b { text-align: center; }
-      .side.a .deck-edge { background: var(--a); }
-      .side.b .deck-edge { background: var(--b); }
+      .side.a .deck-edge, .side.b .deck-edge { margin-left: auto; margin-right: auto; }
       .counter { order: -1; }
       .sides { grid-template-columns: minmax(0,1fr); }
       .seam-legend { flex-direction: column; }
@@ -299,17 +299,17 @@
 <body>
 <!--
   DIRECTION CONTRACT — Deck Compare, results
-  THESIS: A comparison read on the table it would be played on; it refuses the
-    panel-inside-panel dashboard the category ships.
-  OWN-WORLD: Warm felt under one overhead light. Areas are silkscreened with a rule and
-    a name, never boxed and never nested. Deck 1 orange and deck 2 teal are the two sides
-    of the mat, not accents. One button component. No element carries its own halo.
-  STORY: The reader sees how far apart the two decks are before reading a word, walks
-    each side's cards, then changes a deck without leaving the page.
-  FIRST VIEWPORT: The similarity figure debossed into the felt at centre, the two deck
-    names left and right in their own ink, the overlap seam beneath; Compare another at
-    the mat's top edge.
-  FORM: The Table — candidate 3 of 7 by resonance; seed 009366bf.
+  THESIS: A one-page brief on two decks, read on paper in daylight; it refuses the dark
+    dashboard the category ships and the gold-lit table this product used to be.
+  OWN-WORLD: Cream paper, warm near-black ink, white sheets with a hairline, pill controls,
+    one deep red for the action. Side A burnt orange, side B teal, shared green are roles,
+    never accents. The serif is set large only for the figures that decide.
+  STORY: The reader sees how far apart the decks are before reading a word, walks each
+    side's cards, then changes a deck without leaving the page.
+  FIRST VIEWPORT: The two deck names left and right in their own ink, the similarity
+    figure in serif between them, the overlap bar beneath, drawing in once left to right
+    as the result lands; Compare another at the top edge.
+  FORM: The Memo — brief-pinned by the maintainer (memos.sourceventures.vc); no roll.
   FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
 -->
   <div class="mat-edge">

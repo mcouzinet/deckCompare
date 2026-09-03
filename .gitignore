@@ -5,3 +5,6 @@ node_modules/
 # Impeccable: keep the critique snapshots, drop the transient decision-server logs
 .impeccable/questions/
 .impeccable/live/
+
+# Impeccable: finish-review captures are transient evidence
+.impeccable/review/

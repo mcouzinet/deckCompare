@@ -18,6 +18,13 @@ test("nameKeys trims surrounding whitespace", () => {
   assert.deepEqual(nameKeys("  Sol Ring  "), ["sol ring"]);
 });
 
+test("nameKeys splits the bare-slash form from mtgtop8's MTGO export", () => {
+  // "Life/Death" (mtgtop8) must key to the same front face as "Life // Death" (Scryfall),
+  // so an enriched split card resolves for a deck imported from either source.
+  assert.deepEqual(nameKeys("Life/Death"), ["life/death", "life"]);
+  assert.equal(nameKeys("Life/Death")[1], nameKeys("Life // Death")[1]);
+});
+
 test("enrichmentFor resolves by full name and by DFC front face", () => {
   const map = new Map();
   const borrower = { name: "Brazen Borrower // Petty Theft", type_line: "Creature — Faerie // Instant" };

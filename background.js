@@ -94,6 +94,18 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return true;
   }
 
+  // A content script (the archetype button) can't open an extension page itself, so it hands
+  // us the deck URLs; we stash them for pool.js to pick up once, then open the analyzer. The
+  // seed is transient (pool.js removes it on read) and capped, so nothing unbounded persists.
+  if (msg.type === 'OPEN_POOL') {
+    const decks = Array.isArray(msg.decks) ? msg.decks.slice(0, 100) : [];
+    chrome.storage.local.set({ poolSeed: { decks, ts: Date.now() } })
+      .then(() => chrome.tabs.create({ url: chrome.runtime.getURL('pool.html') }))
+      .then(() => sendResponse({ ok: true }))
+      .catch(err => sendResponse({ error: (err && err.message) || String(err) }));
+    return true;
+  }
+
   if (msg.type === 'LIST_MOXFIELD_DECKS') {
     listMoxfieldDecks(msg.username)
       .then(decks => sendResponse({ decks }))

@@ -77,8 +77,11 @@ Locked by the maintainer; a visual replacement must build around these, not over
 - **The icon** — two overlapping cards, orange and teal. It is the Web Store identity.
   `icons/icon16|48|128.png`, redrawn as inline SVG in `inject-button.js`.
 - **The wordmark** — "Deck" + bold "Compare", orange then teal, in Bricolage Grotesque.
-- **The A/B/shared colour encoding** — deck 1 orange `#e3a24f`, deck 2 teal `#56b6c9`,
-  shared green `#74bd84`. It carries identical meaning across all four surfaces including
+- **The A/B/shared colour encoding** — deck 1 warm orange, deck 2 teal, shared green: the
+  icon's own encoding. The exact values follow the visual world (on the light "Memo" world of
+  2026-09-03: `#a8540f` / `#137083` / `#1e7a4c`; the injected in-page button keeps the icon's
+  original `#e3a24f` / `#56b6c9` inside its shadow root). The maintainer dropped the amber/gold
+  accent in that pass: it is no longer a UI colour. It carries identical meaning across all four surfaces including
   the injected shadow DOM, and it is the one system the product already has.
 
 Name: Deck Compare — MTG. Published on the Chrome Web Store.

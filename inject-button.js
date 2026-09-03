@@ -227,7 +227,8 @@
          the host page never sees those custom properties. */
       :host {
         --dc-brand: #e0654a;
-        --dc-brand-btn: #b8402c; --dc-brand-btn-hi: #c74a33;
+        --dc-brand-btn: #b8402c; --dc-brand-btn-hi: #c74a33;   /* panel CTA (inside our own dark panel) */
+        --dc-btn: #141414; --dc-btn-hi: #1e1e1e; --dc-btn-line: rgba(255,255,255,.18);  /* on-site button */
         --dc-card-a: #e3a24f;     /* --a, the icon's orange card */
         --dc-card-b: #56b6c9;     /* --b, the icon's teal card   */
         --dc-felt: #17120d; --dc-felt-lit: #201a13; --dc-felt-deep: #0d0a06;
@@ -241,14 +242,14 @@
       .fab {
         display: flex; align-items: center; gap: 8px;
         font: 600 13px/1.2 system-ui, -apple-system, "Segoe UI", sans-serif;
-        color: #fff; background: var(--dc-brand-btn); border: 0; border-radius: 999px;
+        color: #fff; background: var(--dc-btn); border: 1px solid var(--dc-btn-line); border-radius: 999px;
         padding: 11px 16px; cursor: pointer; box-shadow: var(--dc-lift);
       }
-      .fab:hover { background: var(--dc-brand-btn-hi); }
+      .fab:hover { background: var(--dc-btn-hi); }
       .fab svg { width: 15px; height: 15px; flex: none; }
-      /* Monochrome on the coloured button, two-tone on the dark panel header. */
-      .fab .c-back { fill: #fff; opacity: .5; }
-      .fab .c-front { fill: #fff; }
+      /* Two-tone brand icon on the black button — the colour lives in the icon now. */
+      .fab .c-back { fill: var(--dc-card-a); }
+      .fab .c-front { fill: var(--dc-card-b); }
       .brand .c-back { fill: var(--dc-card-a); }
       .brand .c-front { fill: var(--dc-card-b); }
       /* Inline mode: sit in the site's own action bar. Deliberately keeps our brand

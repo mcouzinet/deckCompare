@@ -20,16 +20,9 @@ const tabpickList = document.getElementById('tabpick-list');
 // content script or the API settles whether it really is a deck); `deckRe` says
 // "this URL is itself a fetchable deck" — the bar for offering another tab as a
 // one-click candidate, where a homepage or event listing could only ever error.
-const SUPPORTED_SITES = [
-  { pattern: 'mtggoldfish.com/deck/', deckRe: /mtggoldfish\.com\/deck\/\d+/, label: 'MTGGoldfish' },
-  { pattern: 'mtgtop8.com/event', deckRe: /mtgtop8\.com\/event\?[^#]*\bd=\d+/, label: 'mtgtop8' },
-  { pattern: 'archidekt.com/decks/', deckRe: /archidekt\.com\/decks\/\d+/, label: 'Archidekt' },
-  { pattern: 'moxfield.com/decks/', deckRe: /moxfield\.com\/decks\/(?!(?:personal|public|liked|following|bookmarks)(?:[/?#]|$))[^/?#]+/, label: 'Moxfield' },
-  { pattern: 'magic-ville.com/fr/decks/showdeck', deckRe: /magic-ville\.com\/fr\/decks\/showdeck\?[^#]*\bref=\d+/, label: 'Magic-Ville' },
-  { pattern: 'mtgdecks.net/', deckRe: /mtgdecks\.net\/[^/?#]+\/[^/?#]/, label: 'mtgdecks' },
-  { pattern: 'melee.gg/Decklist/View', deckRe: /melee\.gg\/Decklist\/View\/[0-9a-fA-F-]{36}/, label: 'Melee' },
-  { pattern: 'getpaird.io/decklists/', deckRe: /getpaird\.io\/decklists\/[^/?#]+/, label: 'getpaird' }
-];
+// Deck-page URL matching lives in shared.js so the popup and the pool analyzer's tab
+// picker scan open tabs by the exact same rules.
+const SUPPORTED_SITES = Shared.SUPPORTED_SITES;
 
 // Sources that expose a public deck list for a username. The id list lives in
 // shared.js so every surface reads the same storage keys.

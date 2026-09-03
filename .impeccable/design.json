@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-03T16:40:00Z",
+  "title": "Design System: Deck Compare — The Memo",
+  "extensions": {
+    "colorMeta": {
+      "paper":  { "role": "neutral", "displayName": "Paper", "canonical": "#f8f5f2" },
+      "sheet":  { "role": "neutral", "displayName": "Sheet", "canonical": "#ffffff" },
+      "ink":    { "role": "neutral", "displayName": "Ink", "canonical": "#241c18" },
+      "action": { "role": "primary", "displayName": "Action Red", "canonical": "#8a1f16" },
+      "side-a": { "role": "secondary", "displayName": "Side A, warm card", "canonical": "#a8540f" },
+      "side-b": { "role": "secondary", "displayName": "Side B, cool card", "canonical": "#137083" },
+      "shared": { "role": "secondary", "displayName": "Shared Green", "canonical": "#1e7a4c" }
+    },
+    "typographyMeta": {
+      "display":     { "displayName": "Display", "purpose": "The similarity figure alone." },
+      "headline":    { "displayName": "Headline", "purpose": "Deck names and the commander's name, in their side's ink." },
+      "label":       { "displayName": "Label", "purpose": "Zone and section names, field labels, sources; 11px is the floor." },
+      "measurement": { "displayName": "Measurement", "purpose": "Quantities, deltas, percentages, counts — tabular." }
+    },
+    "shadows": [
+      { "name": "lift-1", "value": "0 1px 2px rgba(36,28,24,.06), 0 2px 6px rgba(36,28,24,.04)", "purpose": "A sheet at rest." },
+      { "name": "lift-2", "value": "0 2px 4px rgba(36,28,24,.05), 0 10px 28px rgba(36,28,24,.08)", "purpose": "A sheet picked up: the held card, the hero art." },
+      { "name": "lift-3", "value": "0 6px 12px rgba(36,28,24,.06), 0 24px 56px rgba(36,28,24,.14)", "purpose": "Above the desk: hovered card, open dropdown, floating bar." },
+      { "name": "action-lift", "value": "0 2px 10px rgba(138,31,22,.28)", "purpose": "The red pill's own shadow, the only coloured one." }
+    ],
+    "motion": [
+      { "name": "ease-out", "value": "cubic-bezier(.22,1,.36,1)", "purpose": "Every hover lift and the overlap bar's draw-in." },
+      { "name": "seam-draw", "value": "scaleX 0→1, .9s, staggered 120ms", "purpose": "The one authored moment: the overlap bar fills once on reveal." }
+    ],
+    "breakpoints": [
+      { "name": "rail-drop", "value": "1080px" },
+      { "name": "pool-rail-hide", "value": "1000px" },
+      { "name": "matchup-stack", "value": "760px" }
+    ]
+  },
+  "components": [
+    { "name": "Primary Button", "kind": "button", "refersTo": "mat-btn-go", "description": "The one red action pill.",
+      "html": "<button class=\"ds-btn-go\">Compare</button>",
+      "css": ".ds-btn-go { font: 600 13px/1 Archivo, system-ui, sans-serif; color: #fff; background: #8a1f16; border: 1px solid #8a1f16; border-radius: 999px; padding: 10px 18px; box-shadow: 0 2px 10px rgba(138,31,22,.28); cursor: pointer; transition: transform .16s cubic-bezier(.22,1,.36,1), background .16s; } .ds-btn-go:hover { background: #701810; transform: translateY(-1px); } .ds-btn-go:focus-visible { outline: 2px solid #241c18; outline-offset: 2px; }" },
+    { "name": "Default Button", "kind": "button", "refersTo": "mat-btn", "description": "A white pill with a hairline.",
+      "html": "<button class=\"ds-btn\">Swap decks</button>",
+      "css": ".ds-btn { font: 600 13px/1 Archivo, system-ui, sans-serif; color: #241c18; background: #fff; border: 1px solid #d6c9bf; border-radius: 999px; padding: 10px 18px; cursor: pointer; transition: transform .16s cubic-bezier(.22,1,.36,1), box-shadow .16s, border-color .16s; } .ds-btn:hover { transform: translateY(-1px); border-color: #7a6d64; box-shadow: 0 1px 2px rgba(36,28,24,.06), 0 2px 6px rgba(36,28,24,.04); } .ds-btn:focus-visible { outline: 2px solid #241c18; outline-offset: 2px; }" },
+    { "name": "Segments", "kind": "nav", "refersTo": "segment", "description": "A pill group; the selected segment is inked.",
+      "html": "<div class=\"ds-segments\"><button class=\"ds-segment\" aria-pressed=\"true\">All</button><button class=\"ds-segment\">Mainboard</button><button class=\"ds-segment\">Sideboard</button></div>",
+      "css": ".ds-segments { display: inline-flex; gap: 2px; padding: 3px; background: #fff; border: 1px solid #e8dfd8; border-radius: 999px; } .ds-segment { font: 600 12px/1 Archivo, system-ui, sans-serif; color: #7a6d64; background: transparent; border: 0; border-radius: 999px; padding: 7px 14px; cursor: pointer; } .ds-segment:hover { color: #241c18; background: #efe9e3; } .ds-segment[aria-pressed=\"true\"] { color: #fff; background: #241c18; }" },
+    { "name": "Field", "kind": "input", "refersTo": "mat-field", "description": "A white field; focus doubles the edge in ink.",
+      "html": "<input class=\"ds-field\" placeholder=\"Paste a URL or search your decks…\">",
+      "css": ".ds-field { width: 100%; font: 400 13px/1.4 Archivo, system-ui, sans-serif; color: #241c18; background: #fff; border: 1px solid #d6c9bf; border-radius: 10px; padding: 10px 14px; outline: none; } .ds-field::placeholder { color: #7a6d64; } .ds-field:focus { border-color: #241c18; box-shadow: inset 0 0 0 1px #241c18; }" },
+    { "name": "Filter Chip", "kind": "chip", "refersTo": "chip", "description": "A card filter: its rule in green or red, its own ×.",
+      "html": "<span class=\"ds-chip\"><b class=\"ds-chip-with\">with</b> Lightning Bolt <button class=\"ds-chip-x\" aria-label=\"Remove this filter\">×</button></span>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; gap: 5px; font: 400 12px/1 Archivo, system-ui, sans-serif; color: #241c18; background: #fff; border: 1px solid #d6c9bf; border-radius: 999px; padding: 4px 5px 4px 11px; } .ds-chip-with { font-weight: 600; color: #1e7a4c; } .ds-chip-x { border: 0; background: none; color: #7a6d64; font-size: 15px; line-height: 1; padding: 0 6px; border-radius: 50%; cursor: pointer; } .ds-chip-x:hover { color: #8a1f16; background: rgba(138,31,22,.10); }" },
+    { "name": "Sheet", "kind": "card", "refersTo": "sheet", "description": "A white sheet on the paper; rows are hairlines apart.",
+      "html": "<div class=\"ds-sheet\"><div class=\"ds-sheet-head\">Shared · 100% <span>(18)</span></div><div class=\"ds-row\">Arid Mesa <b>100%</b></div><div class=\"ds-row\">Brainstorm <b>100%</b></div></div>",
+      "css": ".ds-sheet { background: #fff; border: 1px solid #e8dfd8; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 2px rgba(36,28,24,.06), 0 2px 6px rgba(36,28,24,.04); font: 400 13px/1.5 Archivo, system-ui, sans-serif; color: #241c18; } .ds-sheet-head { padding: 13px 16px; border-bottom: 1px solid #e8dfd8; font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; } .ds-sheet-head span { color: #7a6d64; } .ds-row { display: flex; justify-content: space-between; padding: 8px 16px; border-bottom: 1px solid #e8dfd8; } .ds-row:last-child { border-bottom: 0; } .ds-row:hover { background: #f8f5f2; } .ds-row b { font: 600 13px/1 'Geist Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }" }
+  ],
+  "narrative": {
+    "northStar": "The Memo",
+    "overview": "The surface is a one-page brief read at a desk in daylight. The ground is cream paper, the ink is warm and near-black, and everything that groups information is a white sheet laid on the paper with a hairline edge. Controls are pills. One deep red is the action. The figures that decide something are set in a serif, large; everything else is the sheet's sans.",
+    "keyCharacteristics": [
+      "Cream paper, white sheets, one hairline weight, warm ink in three strengths.",
+      "Pill controls; the selected one is inked, the primary one is red and casts the page's only coloured shadow.",
+      "Serif for the figures that decide; sans for everything you scan; mono for what you count.",
+      "Depth is a sheet resting on a desk: soft, wide, downward shadows in three lifts.",
+      "Side A, side B and shared are functional colours and appear only where they mean something."
+    ],
+    "rules": [
+      { "name": "The One Red Rule", "body": "Red is the action and the alarm, and nothing else. It never decorates, never marks a side, never appears in a chart.", "section": "colors" },
+      { "name": "The Roles Not Accents Rule", "body": "Side A orange, side B teal and shared green appear only on the thing they mean — a name, a count, a bar segment, a swatch.", "section": "colors" },
+      { "name": "The Gold Is Gone Rule", "body": "The amber of the previous world is not a UI colour. It survives only inside the icon and the injected button's icon.", "section": "colors" },
+      { "name": "The Figures Decide Rule", "body": "The serif appears only on the figures and names a reader decides by; a serif on a label, a control or a row is a lapse.", "section": "typography" },
+      { "name": "The Ramp Rule", "body": "Eight named sizes — 11 / 12 / 13 / 15 / 18 / 24 / 34 / 56 (plus the two display clamps). Nothing below 11px; nothing in between.", "section": "typography" },
+      { "name": "The Paper Does Not Blur Rule", "body": "No backdrop-filter, no glass. A sticky bar is opaque paper with a hairline.", "section": "elevation" },
+      { "name": "The One Sheet Rule", "body": "A sheet rests on the paper, never on another sheet. Rows inside a sheet are separated by hairlines, not by more sheets.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do paint the ground on html as Paper and put every grouping on one Sheet with a Hairline; rows inside it are hairlines apart.",
+      "Do set a side's name, count and quantities in that side's ink, and nothing else in it.",
+      "Do put a label under a headline — the headline carries its own weight.",
+      "Do keep numbers in Geist Mono with tabular figures, right-aligned in their column.",
+      "Do honour prefers-reduced-motion: the overlap bar's draw-in is the only authored motion and it collapses to nothing."
+    ],
+    "donts": [
+      "Don't use amber, gold or the old felt greys anywhere in the pages.",
+      "Don't blur, glow, emboss or halo; no backdrop-filter, no zero-offset coloured shadow, no inset relief.",
+      "Don't put a sheet inside a sheet, or a coloured stripe on a card, row or callout.",
+      "Don't set anything in the serif except the figures and names a reader decides by.",
+      "Don't add a required host permission or touch the injected buttons' black-on-site treatment from this world."
+    ]
+  }
+}

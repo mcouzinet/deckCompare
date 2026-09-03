@@ -1,8 +1,53 @@
 # Journal des modifications
 
 Toutes les modifications notables de **Deck Compare — MTG** sont consignées ici.
-Le format s'inspire de [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
-et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
+Le format s'inspire de [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
+Les versions du manifeste suivent le schéma **`major.prod.dev`** (voir `CLAUDE.md`) : `prod`
+reste à `0` tant que la version n'est pas publiée, `dev` est bumpé à chaque itération testée.
+
+## [Non publié]
+
+La v1.0.0 taguée le 2026-09-02 a été **annulée en production** ; la vraie 1.0 sortira avec ce
+lot. Manifeste en cours : `1.0.9`. **56 tests verts. Aucune permission requise ajoutée.**
+
+### Ajouté
+
+- **Analyse d'un archétype mtgtop8 en un clic.** Sur une page archétype (`/archetype?…`), un
+  bouton « Analyser tous les decks » récupère TOUTES les decklists de l'archétype (toutes les
+  pages, max 100) et ouvre l'analyseur de pool pré-rempli. Le pool est **frais et éphémère** :
+  il n'écrase pas le pool sauvegardé et disparaît à la fermeture de l'onglet. Chaque deck est
+  nommé **« Pilote — Event »**.
+- **Picker d'onglets ouverts dans l'analyseur de pool.** Un clic ajoute au pool un deck déjà
+  ouvert dans un onglet (même détection que le popup).
+- **Filtres par carte dans le pool.** Garder ou exclure les decks qui jouent une carte donnée.
+
+### Modifié
+
+- **Refonte visuelle « Le mémo »** des trois pages de l'extension (popup, comparaison, pool),
+  inspirée d'un one-pager d'investissement : fond papier crème, encre chaude, feuilles blanches
+  à filet, boutons en pilules, une seule couleur d'action (rouge profond), chiffres-clés et noms
+  de decks en **Beleren** (la police des cartes, embarquée dans `fonts/`), interface en Archivo. **L'or disparaît** : l'accent ambre
+  ne sert plus nulle part ; les couleurs deck 1 / deck 2 / commun deviennent orange brûlé, teal
+  et vert profonds, lisibles sur fond clair (≥ 4,9:1). L'icône et le wordmark sont inchangés ;
+  les boutons injectés sur les sites ne bougent pas. `theme.css` reste le seul monde partagé.
+- **Aperçus de cartes rognés au vrai rayon de la carte** : certaines images Scryfall (JPG)
+  remplissent l'extérieur des coins arrondis en blanc, qui dépassait des coins de 5–6 px.
+- **Boutons injectés redessinés** : noir avec un fin liseré clair et l'icône deux-tons de
+  l'extension (au lieu du rouge), lisibles aussi bien sur sites clairs que sombres.
+- **Images de grille toujours en pleine résolution** (`normal`) : fini les cartes floues sur
+  écran non-retina.
+- **Analyseur de pool** : la liste de decks scrolle à l'intérieur du rail et la prévisualisation
+  de carte reste toujours visible (un gros pool la poussait hors écran). Les decks affichent leur
+  vrai nom au lieu de leur source.
+- **Liste des onglets ouverts du popup** plafonnée (scroll au-delà de ~4 lignes).
+
+### Corrigé
+
+- **Bouton mtgtop8 en vue « visuelle »** : il réapparaît et lit correctement le deck (le cookie
+  de vue visuelle collant cassait la lecture et masquait le bouton).
+- **Cartes recto/verso partagées entre sources** : `Life // Death` (Moxfield) et `Life/Death`
+  (export MTGO mtgtop8) sont reconnues comme la même carte — plus de doublon dans les deux
+  colonnes « unique ».
 
 ## [1.0.0] — 2026-09-02
 

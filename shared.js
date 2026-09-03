@@ -22,6 +22,50 @@
     return deck;
   }
 
+  // Front-face key for a split/DFC card, so the same card matches across sources and
+  // resolves on Scryfall: "Brazen Borrower // Petty Theft" -> "Brazen Borrower". The
+  // separator differs by source — Moxfield/Scryfall write " // ", but mtgtop8's MTGO
+  // export writes a bare slash with no spaces ("Life/Death") — so split on either form
+  // (one or two slashes, any surrounding spaces) and a cross-source shared card keys
+  // identically instead of landing in both "unique" columns.
+  function normalizeName(name) {
+    return String(name).split(/\s*\/\/?\s*/)[0].trim();
+  }
+
+  // Deck-page URL matching, shared by every surface that scans open tabs (the popup's
+  // "compare with this tab" and the pool analyzer's tab picker). `deckRe` is the strict
+  // form — a deck-detail URL, not a homepage or listing — so a one-click shortcut can
+  // never resolve to a page a comparison would fail on.
+  const SUPPORTED_SITES = [
+    { pattern: "mtggoldfish.com/deck/",           deckRe: /mtggoldfish\.com\/deck\/\d+/,                                                                          label: "MTGGoldfish" },
+    { pattern: "mtgtop8.com/event",               deckRe: /mtgtop8\.com\/event\?[^#]*\bd=\d+/,                                                                    label: "mtgtop8" },
+    { pattern: "archidekt.com/decks/",            deckRe: /archidekt\.com\/decks\/\d+/,                                                                           label: "Archidekt" },
+    { pattern: "moxfield.com/decks/",             deckRe: /moxfield\.com\/decks\/(?!(?:personal|public|liked|following|bookmarks)(?:[/?#]|$))[^/?#]+/,           label: "Moxfield" },
+    { pattern: "magic-ville.com/fr/decks/showdeck", deckRe: /magic-ville\.com\/fr\/decks\/showdeck\?[^#]*\bref=\d+/,                                              label: "Magic-Ville" },
+    { pattern: "mtgdecks.net/",                   deckRe: /mtgdecks\.net\/[^/?#]+\/[^/?#]/,                                                                        label: "mtgdecks" },
+    { pattern: "melee.gg/Decklist/View",          deckRe: /melee\.gg\/Decklist\/View\/[0-9a-fA-F-]{36}/,                                                          label: "Melee" },
+    { pattern: "getpaird.io/decklists/",          deckRe: /getpaird\.io\/decklists\/[^/?#]+/,                                                                     label: "getpaird" }
+  ];
+
+  // Open browser tabs that are deck-detail pages, deduped by URL and minus `excludeUrl`
+  // (the calling page itself). Extension surfaces only — chrome.tabs is absent in content
+  // scripts; returns [] wherever it (or the query) is unavailable.
+  async function getOpenDeckTabs(excludeUrl) {
+    if (typeof chrome === "undefined" || !chrome.tabs || !chrome.tabs.query) return [];
+    let tabs;
+    try { tabs = await chrome.tabs.query({ currentWindow: true }); } catch { return []; }
+    const seen = new Set(excludeUrl ? [excludeUrl] : []);
+    const out = [];
+    for (const t of tabs || []) {
+      if (!t.url || seen.has(t.url)) continue;
+      const site = SUPPORTED_SITES.find((x) => x.deckRe.test(t.url));
+      if (!site) continue;
+      seen.add(t.url);
+      out.push({ url: t.url, label: site.label, title: t.title || t.url });
+    }
+    return out;
+  }
+
   // The document language is whatever locale Chrome resolved for _locales, not a
   // fixed one baked into the markup. One helper, so a future refinement (keeping
   // the region subtag, RTL dir) lands on every page at once.
@@ -117,8 +161,9 @@
   }
 
   const api = {
-    fixCommanderHeuristic, sumBoard, cacheRead, cacheMerge,
+    fixCommanderHeuristic, sumBoard, normalizeName, cacheRead, cacheMerge,
     setDocumentLang, OPTIONAL_SCRIPTS, originMatchesHost,
+    SUPPORTED_SITES, getOpenDeckTabs,
     DECK_SOURCE_IDS, getSavedDecks, populateSavedDeckSelect
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

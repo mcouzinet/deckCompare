@@ -20,10 +20,13 @@
   };
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-  // Lookup keys for a card name: the full name + the front face of a DFC.
+  // Lookup keys for a card name: the full name + the front face of a split/DFC card.
+  // The front-face split mirrors Shared.normalizeName's slash tolerance — Scryfall/
+  // Moxfield write "Life // Death" but mtgtop8's MTGO export writes "Life/Death", so
+  // either form must key to the same enriched card.
   function nameKeys(name) {
     const lower = String(name).toLowerCase().trim();
-    const front = lower.split(" // ")[0].trim();
+    const front = lower.split(/\s*\/\/?\s*/)[0].trim();
     return front !== lower ? [lower, front] : [lower];
   }
 

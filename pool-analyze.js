@@ -94,6 +94,21 @@
     return out;
   }
 
+  // Card filters, mtgtop8-compare style. Each filter keeps the decks that do (`with`)
+  // or don't (`without`) play `name` in `board`; several filters all have to hold.
+  // Exact-key match on the board — the same keys buildStats counts — so "keep the decks
+  // with X" keeps precisely the decks the X row counted, no more, no fewer.
+  function matchesFilters(deck, filters) {
+    for (const f of filters || []) {
+      const has = ((deck[f.board] || {})[f.name] || 0) > 0;
+      if (f.mode === "without" ? has : !has) return false;
+    }
+    return true;
+  }
+  function filterDecks(decks, filters) {
+    return decks.filter((d) => matchesFilters(d, filters));
+  }
+
   function analyzePool(decks, map, errors, threshold) {
     if (threshold == null) threshold = 50;
     const total = decks.length;
@@ -145,7 +160,7 @@
     };
   }
 
-  const api = { analyzePool };
+  const api = { analyzePool, filterDecks, matchesFilters };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else global.PoolAnalyze = api;
 })(typeof window !== "undefined" ? window : globalThis);

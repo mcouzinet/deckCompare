@@ -2,7 +2,7 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const { nameKeys } = require("../enrich.js");
-const { analyzePool } = require("../pool-analyze.js");
+const { analyzePool, filterDecks, matchesFilters } = require("../pool-analyze.js");
 
 // Build an enrichMap (name-key -> enrichment) the way enrich.js would.
 function buildMap(defs) {
@@ -63,4 +63,51 @@ test("analyzePool carries through the errors it is given", () => {
   const a = analyzePool(DECKS, MAP, [{ url: "x", error: "boom" }]);
   assert.equal(a.errors.length, 1);
   assert.equal(a.errors[0].error, "boom");
+});
+
+// ---- card filters (mtgtop8 compare's keep / drop) ----
+const F = (name, mode, board = "mainboard") => ({ name, board, mode });
+
+test("filterDecks keeps or drops the decks that play a card", () => {
+  assert.deepEqual(filterDecks(DECKS, [F("Goblin Guide", "with")]).map((d) => d.name), ["Krenko A"]);
+  assert.deepEqual(filterDecks(DECKS, [F("Goblin Guide", "without")]).map((d) => d.name), ["Krenko B"]);
+  // a card every deck plays: "with" keeps all, "without" keeps none
+  assert.equal(filterDecks(DECKS, [F("Mountain", "with")]).length, 2);
+  assert.equal(filterDecks(DECKS, [F("Mountain", "without")]).length, 0);
+  // no filters: the whole pool
+  assert.deepEqual(filterDecks(DECKS, []), DECKS);
+  assert.deepEqual(filterDecks(DECKS, undefined), DECKS);
+});
+
+test("filterDecks stacks filters (every one must hold) and is board-aware", () => {
+  assert.deepEqual(filterDecks(DECKS, [F("Mountain", "with"), F("Shock", "without")]).map((d) => d.name), ["Krenko A"]);
+  assert.equal(filterDecks(DECKS, [F("Goblin Guide", "with"), F("Shock", "with")]).length, 0);
+  // Krenko sits in the command zone, not the mainboard
+  assert.equal(filterDecks(DECKS, [F("Krenko, Mob Boss", "with", "mainboard")]).length, 0);
+  assert.equal(filterDecks(DECKS, [F("Krenko, Mob Boss", "with", "commanders")]).length, 2);
+  assert.equal(filterDecks(DECKS, [F("Lightning Bolt", "with", "sideboard")]).length, 0);
+});
+
+test("matchesFilters matches the exact keys the usage rows count", () => {
+  // A zero-copy entry is not "playing" the card; an unknown name matches no deck; a
+  // missing board is an empty one.
+  const d = { name: "X", mainboard: { "Shock": 0 }, commanders: {} };
+  assert.equal(matchesFilters(d, [F("Shock", "with")]), false);
+  assert.equal(matchesFilters(d, [F("Shock", "without")]), true);
+  assert.equal(matchesFilters(d, [F("Nope", "with")]), false);
+  assert.equal(matchesFilters(d, [F("Nope", "with", "sideboard")]), false);
+  assert.equal(matchesFilters(d, [F("Nope", "without", "sideboard")]), true);
+});
+
+test("analyzePool over a filtered subset recounts against the kept decks only", () => {
+  const a = analyzePool(filterDecks(DECKS, [F("Goblin Guide", "with")]), MAP, []);
+  assert.equal(a.total_decks, 1);
+  const byName = Object.fromEntries(a.cardStats.map((c) => [c.name, c]));
+  assert.equal(byName["Goblin Guide"].percentage, 100);
+  assert.equal(byName["Shock"], undefined);
+  // an empty subset is a valid, empty analysis — no NaN, no throw
+  const e = analyzePool(filterDecks(DECKS, [F("Mountain", "without")]), MAP, []);
+  assert.equal(e.total_decks, 0);
+  assert.deepEqual(e.cardStats, []);
+  assert.deepEqual(e.averageDecklist, []);
 });
