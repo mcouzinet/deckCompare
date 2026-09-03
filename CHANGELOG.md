@@ -8,7 +8,7 @@ reste à `0` tant que la version n'est pas publiée, `dev` est bumpé à chaque 
 ## [Non publié]
 
 La v1.0.0 taguée le 2026-09-02 a été **annulée en production** ; la vraie 1.0 sortira avec ce
-lot. Manifeste en cours : `1.0.9`. **56 tests verts. Aucune permission requise ajoutée.**
+lot. Manifeste en cours : `1.0.10`. **56 tests verts. Aucune permission requise ajoutée.**
 
 ### Ajouté
 
@@ -40,6 +40,9 @@ lot. Manifeste en cours : `1.0.9`. **56 tests verts. Aucune permission requise a
   de carte reste toujours visible (un gros pool la poussait hors écran). Les decks affichent leur
   vrai nom au lieu de leur source.
 - **Liste des onglets ouverts du popup** plafonnée (scroll au-delà de ~4 lignes).
+- **« + Ajouter des decks » dans l'analyseur de pool s'ouvre en popin** (fond assombri, boîte
+  centrée sur l'écran, fermeture par la croix, un clic hors de la boîte ou Échap) au lieu de
+  se déplier en ligne en haut de page — repérable même en étant scrollé loin dans l'analyse.
 
 ### Corrigé
 
