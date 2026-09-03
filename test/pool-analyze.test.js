@@ -111,3 +111,11 @@ test("analyzePool over a filtered subset recounts against the kept decks only", 
   assert.deepEqual(e.cardStats, []);
   assert.deepEqual(e.averageDecklist, []);
 });
+
+test("analyzePool derives the pool's colours from the consensus when no deck has a commander", () => {
+  const sixty = DECKS.map((d) => Object.assign({}, d, { commanders: {} }));
+  const a = analyzePool(sixty, MAP, []);
+  assert.equal(a.commanders.length, 0);
+  // Mountain + Lightning Bolt are in every deck; their identities union to red
+  assert.equal(a.color_identity, '["R"]');
+});

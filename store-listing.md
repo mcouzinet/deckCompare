@@ -38,7 +38,7 @@ Because it reads the decklist straight from the page you are already on, a deck 
 
 Also included:
 
-• Pool analysis — paste several decklists and see the most-played cards across them, the average decklist, the mana curve and the top sideboard choices
+• Cross-compare — paste several decklists and see the most-played cards across them, the average decklist, the mana curve and the top sideboard choices
 • An optional Compare button added to each site's own toolbar, off by default
 • Load your public decks by username, then find them by name
 • Board filters for commanders, mainboard and sideboard, with every figure recalculated for what you are looking at
@@ -58,7 +58,7 @@ Comme la liste est lue directement depuis la page où vous êtes, un deck héber
 
 Également inclus :
 
-• Analyse de pool — collez plusieurs listes et voyez les cartes les plus jouées, la decklist moyenne, la courbe de mana et les meilleurs choix de réserve
+• Comparaison croisée — collez plusieurs listes et voyez les cartes les plus jouées, la decklist moyenne, la courbe de mana et les meilleurs choix de réserve
 • Un bouton Comparer optionnel ajouté à la barre d'outils de chaque site, désactivé par défaut
 • Chargez vos decks publics par nom d'utilisateur, puis retrouvez-les par leur nom
 • Filtres par zone — commandants, deck principal, réserve — avec tous les chiffres recalculés pour ce que vous regardez

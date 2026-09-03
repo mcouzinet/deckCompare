@@ -99,7 +99,8 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   // seed is transient (pool.js removes it on read) and capped, so nothing unbounded persists.
   if (msg.type === 'OPEN_POOL') {
     const decks = Array.isArray(msg.decks) ? msg.decks.slice(0, 100) : [];
-    chrome.storage.local.set({ poolSeed: { decks, ts: Date.now() } })
+    const archetype = typeof msg.archetype === 'string' ? msg.archetype.slice(0, 120) : '';
+    chrome.storage.local.set({ poolSeed: { decks, archetype, ts: Date.now() } })
       .then(() => chrome.tabs.create({ url: chrome.runtime.getURL('pool.html') }))
       .then(() => sendResponse({ ok: true }))
       .catch(err => sendResponse({ error: (err && err.message) || String(err) }));

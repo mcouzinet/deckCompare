@@ -127,13 +127,15 @@
       .sort((a, b) => b[1] - a[1])
       .map(([sig, count]) => ({ name: sig, count, card: enrichmentFor(map, sigNames.get(sig)[0]) }));
 
-    const color_identity = commanders.length
-      ? unionColorIdentity(sigNames.get(commanders[0].name).map((n) => enrichmentFor(map, n)))
-      : null;
-
     const cardStats = buildStats(decks, "mainboard", map, total);
     const sideboardStats = buildStats(decks, "sideboard", map, total);
     const consensus = cardStats.filter((c) => c.percentage >= threshold);
+
+    // The pool's colours: the main commander's identity when there is a command zone; for a
+    // 60-card format, the union of what the consensus plays.
+    const color_identity = commanders.length
+      ? unionColorIdentity(sigNames.get(commanders[0].name).map((n) => enrichmentFor(map, n)))
+      : unionColorIdentity(consensus);
     const averageDecklist = buildAverageDecklist(cardStats, meanMainboardSize(decks));
     const manaCurve = total >= 2 ? manaCurveFrom(consensus) : [];
 

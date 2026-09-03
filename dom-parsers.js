@@ -312,6 +312,18 @@
   // takes) plus a Player and an Event cell. Returns {id, player, event} per row so the pool
   // can name the decks by pilot/event instead of the nameless MTGO export. One page only —
   // the injector paginates by re-fetching and calling this per page.
+  // The archetype page's name: mtgtop8 prints "<Archetype> decks" in a blue title bar — but
+  // the same class carries "Metagame breakdown" above it and the privacy notice below, so
+  // the one that ends in "decks" is the one; an empty name (an unknown archetype id) is "".
+  function parseArchetypeTitle(doc) {
+    for (const el of doc.querySelectorAll('div.w_title')) {
+      const text = el.textContent.trim().replace(/\s+/g, ' ');
+      const m = /^(.*?)\s*decks?$/i.exec(text);
+      if (m) return m[1].trim();
+    }
+    return '';
+  }
+
   function parseArchetypeDecks(doc) {
     const decks = [];
     for (const tr of doc.querySelectorAll('table.Stable tr.hover_tr')) {
@@ -330,7 +342,7 @@
     return decks;
   }
 
-  const api = { parseMoxfield, parseMtgGoldfish, parseMtgTop8, parseArchidekt, parseMagicVille, parseMtgDecks, parseMelee, parseGetpaird, parseDeckFromCurrentSite, findActionBarAnchor, parseArchetypeDecks, ANCHORS };
+  const api = { parseMoxfield, parseMtgGoldfish, parseMtgTop8, parseArchidekt, parseMagicVille, parseMtgDecks, parseMelee, parseGetpaird, parseDeckFromCurrentSite, findActionBarAnchor, parseArchetypeDecks, parseArchetypeTitle, ANCHORS };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else global.DomParsers = api;
 })(typeof self !== 'undefined' ? self : globalThis);

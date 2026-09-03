@@ -46,7 +46,7 @@ changements de permissions le font.)
   **`pool-analyze.js`** (`label: d.name || "Deck N"`) sur les objets `analysis.decks` que le
   rendu affiche. Piège vécu cette session : le passer à `.name` casse tout l'affichage.
 - **Deux boutons injectés** partagent le même langage visuel : `inject-button.js` (« Comparer »,
-  formes flottant/inline/compact) et `inject-archetype.js` (« Analyser tous les decks »). Design
+  formes flottant/inline/compact) et `inject-archetype.js` (« Comparer tous les decks »). Design
   actuel : **noir `#141414` + liseré `rgba(255,255,255,.18)` + icône deux-tons orange/teal**
   (le liseré est indispensable pour que le noir tienne sur les sites sombres type Moxfield). Le
   CTA rouge à l'intérieur du panneau compare reste rouge (il n'est pas « sur le site »).

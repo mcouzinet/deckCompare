@@ -190,3 +190,18 @@ test("router dispatches by URL", () => {
   assert.equal(D.parseDeckFromCurrentSite(doc("getpaird.html"), "https://www.moxfield.com/decks/x").source, "moxfield");
   assert.equal(D.parseDeckFromCurrentSite(doc("dom-mtgtop8.html"), "https://unknown.com/x"), null);
 });
+
+test("mtgtop8 archetype title: the blue bar's '<name> decks', trimmed to the name", () => {
+  const page = (html) => new JSDOM(html).window.document;
+  assert.equal(D.parseArchetypeTitle(page('<div class="w_title">Slivers decks</div>')), "Slivers");
+  assert.equal(D.parseArchetypeTitle(page('<div class="w_title">  Mono Red\n Aggro  deck </div>')), "Mono Red Aggro");
+  assert.equal(D.parseArchetypeTitle(page('<div class="other">Slivers decks</div>')), "");
+  // the real page: "Metagame breakdown" first, the archetype bar (with its corner divs) after,
+  // the privacy notice last — and unquoted attributes, as mtgtop8 writes them
+  const real = '<div class=w_title align=center>Metagame breakdown</div>' +
+    '<div class=w_title style="margin-top:20px;"><div class=c_tl></div><div class=c_tr></div>Slivers decks</div>' +
+    '<div class=w_title>Privacy Policy The information presented on this site…</div>';
+  assert.equal(D.parseArchetypeTitle(page(real)), "Slivers");
+  // an unknown archetype id prints a bare " decks": no name, not "decks"
+  assert.equal(D.parseArchetypeTitle(page('<div class=w_title><div class=c_tl></div> decks</div>')), "");
+});

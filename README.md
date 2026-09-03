@@ -21,9 +21,9 @@ Chrome extension to compare Magic: The Gathering decklists side by side, across 
   page recomputed for the filtered subset
 - **View modes** — compact grid, responsive grid, or list
 - **Card preview** — hover, click or focus any card to see the full image via Scryfall
-- **Pool analysis** — a second full-page surface: paste several decklists and see the
+- **Cross-compare** — a second full-page surface: paste several decklists and see the
   most-played cards, the average decklist, the mana curve and the top sideboard cards;
-  your pool is saved between sessions
+  the set of decks is saved between sessions
 - **Bilingual** — English / French based on browser language
 - **No account needed** — no data collected, 100% client-side
 

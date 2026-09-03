@@ -12,7 +12,15 @@
   const MAX_DECKS = 100;   // hard cap on how many decklists we pull into one pool
   const MAX_PAGES = 30;    // pagination safety net (20 decks/page → far past MAX_DECKS)
 
-  const M = (k) => chrome.i18n.getMessage(k) || k;
+  // Once the extension is reloaded or updated, this copy of the script lives on in the open
+  // page with every chrome.* API gone ("Extension context invalidated" on the first call).
+  // Nothing here may reach chrome.* unguarded: strings fall back to a built-in copy, and the
+  // button turns into a "reload the page" notice instead of throwing into the console.
+  const FALLBACK = (navigator.language || '').toLowerCase().startsWith('fr')
+    ? { archetypeAnalyzeBtn: 'Comparer tous les decks', archetypeCollecting: 'Collecte des decks…', archetypeNoDecks: 'Aucune decklist trouvée', archetypeError: 'Échec de la collecte des decks', archetypeStale: 'Recharge la page pour utiliser ce bouton' }
+    : { archetypeAnalyzeBtn: 'Cross-compare all decks', archetypeCollecting: 'Collecting decks…', archetypeNoDecks: 'No decklists found', archetypeError: 'Couldn’t collect the decks', archetypeStale: 'Reload the page to use this button' };
+  const alive = () => { try { return !!(chrome.runtime && chrome.runtime.id); } catch (_) { return false; } };
+  const M = (k) => { try { return (alive() && chrome.i18n.getMessage(k)) || FALLBACK[k] || k; } catch (_) { return FALLBACK[k] || k; } };
 
   const MARK = `
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -132,22 +140,40 @@
     return decks;
   }
 
+  // The stale-script notice: the button stays visible but inert until the page is reloaded.
+  function markStale(btn, lbl) {
+    lbl.textContent = M('archetypeStale');
+    btn.disabled = true;
+    btn.title = M('archetypeStale');
+  }
+
   async function run(root) {
     if (busy) return;
-    busy = true;
     const btn = root.querySelector('.fab');
     const lbl = root.querySelector('.lbl');
+    if (!alive()) { markStale(btn, lbl); return; }
+    busy = true;
     btn.disabled = true;
     try {
       const decks = await collectDecks((n) => { lbl.textContent = `${M('archetypeCollecting')} (${n})`; });
       if (!decks.length) { lbl.textContent = M('archetypeNoDecks'); return; }
-      await new Promise((resolve) => chrome.runtime.sendMessage({ type: 'OPEN_POOL', decks }, () => resolve()));
+      const archetype = DomParsers.parseArchetypeTitle(document);   // the pool's title when its decks have no commander
+      if (!alive()) { markStale(btn, lbl); return; }   // reloaded while we were collecting
+      await new Promise((resolve, reject) => {
+        try {
+          chrome.runtime.sendMessage({ type: 'OPEN_POOL', decks, archetype }, () => {
+            const err = chrome.runtime.lastError;   // read it so Chrome does not log it; a sleeping worker still opened the tab
+            err ? reject(new Error(err.message)) : resolve();
+          });
+        } catch (e) { reject(e); }
+      });
       lbl.textContent = M('archetypeAnalyzeBtn');   // pool opened in a new tab; reset for a re-run
     } catch (_) {
+      if (!alive()) { markStale(btn, lbl); return; }
       lbl.textContent = M('archetypeError');
     } finally {
-      btn.disabled = false;
       busy = false;
+      if (alive()) btn.disabled = false;
     }
   }
 })();

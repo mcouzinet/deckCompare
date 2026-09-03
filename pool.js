@@ -33,6 +33,7 @@
   let inputExpanded = true; // once a pool exists, the input collapses to a "+ Ajouter" bar
   let seedMode = false;     // launched from an archetype button: fresh, ephemeral, not persisted
   let seedNameByUrl = null; // url -> pilot/event name, applied to the seeded decks after fetch
+  let seedArchetype = null; // the mtgtop8 archetype's name: the hero's title when the decks have no commander
   const POOL_KEY = "poolDecks";                 // persisted pool (survives tab close / restart)
   const FILTER_KEY = "poolFilters";             // the card filters that go with the saved pool
   const SEED_KEY = "poolSeed";                  // one-shot {url,name} list from the archetype button
@@ -315,7 +316,7 @@
     const seed = stored && stored[SEED_KEY];
     if (!seed || !Array.isArray(seed.decks) || !seed.decks.length) return null;
     try { await chrome.storage.local.remove(SEED_KEY); } catch (e) { /* best effort */ }
-    return seed.decks;   // [{ url, name }]
+    return seed;   // { decks: [{ url, name }], archetype }
   }
 
   async function restorePool() {
@@ -360,8 +361,24 @@
     const top = analysis.commanders[0];
     const total = analysis.total_decks;
     const commons = analysis.cardStats.filter((c) => c.deck_count === total).length;
-    $("hero-eyebrow").textContent = analysis.commanders.length > 1 ? M("poolMainCommander") : M("poolCommander");
-    $("hero-name").textContent = top ? top.name : M("poolDeckPool");
+    // The pool's face: its commander when it has a command zone; otherwise (a 60-card
+    // format) the most-played non-land card, which is what identifies the archetype.
+    let heroName, heroCard = null, role = "";
+    if (top) {
+      heroName = top.name; heroCard = top.card;
+      role = analysis.commanders.length > 1 ? M("poolMainCommander") : M("poolCommander");
+    } else {
+      // Launched from an mtgtop8 archetype page, the archetype is the title and the
+      // most-played card is its face; otherwise that card is both.
+      const lead = analysis.cardStats.find((c) => !(c.type_line || "").includes("Land"));
+      heroCard = lead || null;
+      if (seedArchetype) { heroName = seedArchetype; role = M("poolArchetype"); }
+      else if (lead) { heroName = lead.name; role = M("poolMostPlayed"); }
+      else heroName = M("poolDeckPool");
+    }
+    $("hero-name").textContent = heroName;
+    $("hero-eyebrow").textContent = role;
+    $("hero-eyebrow").classList.toggle("hide", !role);
 
     let pips = [];
     try { pips = JSON.parse(analysis.color_identity || "[]"); } catch (e) {}
@@ -379,8 +396,8 @@
 
     const art = $("hero-art");
     art.classList.remove("has");
-    if (top && top.card && top.card.image_uri) {
-      fetchImg(top.card.image_uri).then((d) => { if (d) { $("hero-img").src = d; art.classList.add("has"); } });
+    if (heroCard && heroCard.image_uri) {
+      fetchImg(heroCard.image_uri).then((d) => { if (d) { $("hero-img").src = d; art.classList.add("has"); } });
     }
   }
 
@@ -669,8 +686,10 @@
     // An archetype seed wins over the saved pool: start fresh in ephemeral seed mode (nothing
     // is persisted, so the user's saved pool survives untouched), stage the URLs and analyze.
     // With no seed, restore the saved pool as usual.
-    consumePoolSeed().then((seedDecks) => {
-      if (seedDecks) {
+    consumePoolSeed().then((seed) => {
+      if (seed) {
+        const seedDecks = seed.decks;
+        seedArchetype = typeof seed.archetype === "string" && seed.archetype.trim() ? seed.archetype.trim() : null;
         seedMode = true;
         seedNameByUrl = new Map(seedDecks.filter((d) => d.name).map((d) => [d.url, d.name]));
         $("urls").value = seedDecks.map((d) => d.url).join("\n");
