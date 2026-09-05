@@ -140,7 +140,9 @@ amber accent is gone: the deck colours — warm card, cool card, green in betwee
 icon's own encoding, deepened until they read on paper, and they are roles, never accents.
 The icon and the wordmark ("Deck" + bold "Compare" in Bricolage Grotesque) are unchanged.
 The two buttons injected into the deck sites keep their own black-on-site treatment inside
-a shadow root; they sit on other people's pages and are not this world.
+a shadow root; they sit on other people's pages and are not this world. The compare panel
+the first one opens is this world: a sheet of the memo, its tokens copied into the shadow
+root's stylesheet (`inject-button.js`), to be kept in step with `theme.css`.
 
 **Key Characteristics:**
 - Cream paper, white sheets, one hairline weight, warm ink in three strengths.
@@ -190,7 +192,7 @@ Each role has a wash (`--a-wash`, `--b-wash`, `--match-wash`, 10% alpha) for the
 ### Hierarchy
 - **Display** (400, clamp(40px, 6vw, 80px), 1, -0.01em): the similarity figure alone. The `%` inside it is 0.42em in Ink Mute.
 - **Headline** (400, clamp(22px, 2.8vw, 36px), 1.1, -0.01em): the two deck names in the matchup, the commander's name in the pool hero, the pool page's title. Deck names take their side's ink.
-- **Stat** (400, 30px, 1, -0.01em, Beleren): the pool hero counts; "shared cards" takes Shared Green.
+- **Stat** (400, 30px, 1, -0.01em, Beleren): the pool hero counts; "shared cards" takes Shared Green. The two card counts are also copy buttons: their caption darkens to Ink and underlines on hover, and reads "copied!" in Action Teal for a beat after a click — a state, so the action ink, never a role colour.
 - **Title** (400, 17–19px, 1.15–1.25, 0, Beleren): the held card's name, the popup's detected deck name.
 - **Body** (400, 13px, 1.5, Archivo): every row, hint and control; 15px on the pool page's reading text.
 - **Label** (600, 11px, 0.14em, uppercase, Archivo): zone names, section titles, field labels, source names, stat captions. 11px is a floor.

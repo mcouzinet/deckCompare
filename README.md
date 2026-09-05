@@ -12,9 +12,9 @@ Chrome extension to compare Magic: The Gathering decklists side by side, across 
 - **Similarity score** — share of the larger deck the two lists have in common, shown as a headline figure with an overlap bar
 - **8 supported sites** — Moxfield, MTGGoldfish, Archidekt, mtgtop8, Magic-Ville, mtgdecks.net, Melee, getpaird
 - **Cross-site comparison** — compare a Moxfield deck against an mtgtop8 list, etc.
-- **In-page Compare button** *(optional, off by default)* — adds a Compare button to each
-  site's own toolbar, so a comparison starts without opening the popup. Enable it under
-  the gear icon → *Compare button on deck sites*.
+- **In-page Compare button** *(on by default)* — adds a Compare button to each site's own
+  toolbar, so a comparison starts without opening the popup. Switch it off under the gear
+  icon → *Compare button on deck sites*; Moxfield needs one extra click there to allow it.
 - **Your own decks** — enter your username under the gear icon and load your public decks
   from Moxfield, Archidekt or Magic-Ville; the Deck 2 field then searches all of them
 - **Board filters** — All / Commanders / Mainboard / Sideboard, with every figure on the
@@ -30,7 +30,7 @@ Chrome extension to compare Magic: The Gathering decklists side by side, across 
 ## How it works
 
 1. Open a deck on any supported site
-2. Click the extension icon — or the in-page **Compare** button, if enabled. If another
+2. Click the extension icon — or the in-page **Compare** button. If another
    supported deck page is already open, pick it in one click; otherwise paste a second
    deck URL, or search your loaded decks by name
 3. Get a full visual breakdown in a new tab — then swap the two decks, or compare against
@@ -38,11 +38,11 @@ Chrome extension to compare Magic: The Gathering decklists side by side, across 
 
 ### Permissions
 
-The extension asks only for the sites it reads decks from. Turning on the in-page button
-requests a few extra hosts at that moment, and only then: Moxfield's own pages (its decks
-come from `api2.moxfield.com`, so the page itself was never needed) and the www/non-www
-twins of sites declared under a single form. Declining costs you the button on those
-hosts and nothing else; switching the button back off revokes them.
+The extension asks only for the sites it reads decks from, and the in-page button works
+there out of the box. A few hosts are optional and asked for from the Settings panel, and
+only then: Moxfield's own pages (its decks come from `api2.moxfield.com`, so the page itself
+was never needed) and the www/non-www twins of sites declared under a single form. Declining
+costs you the button on those hosts and nothing else; switching the button off revokes them.
 
 ## Install
 

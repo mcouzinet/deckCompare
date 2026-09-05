@@ -2,7 +2,8 @@
    One world, one file, linked by the three extension pages (popup, results, pool).
    The two injected in-page buttons keep their own black-on-site treatment inside a
    shadow root (inject-button.js, inject-archetype.js): they sit on other people's pages
-   and are not this world.
+   and are not this world. The compare panel the first one opens IS this world — its
+   tokens are copied into inject-button.js's shadow stylesheet; keep them in step.
 
    The surface is a one-page brief read at a desk in daylight: cream paper, warm ink,
    white sheets laid on it, one deep red for the action. Consequences, not decoration:

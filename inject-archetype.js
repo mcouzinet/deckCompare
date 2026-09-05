@@ -1,5 +1,5 @@
-// Optional in-page button for mtgtop8 archetype pages (same Settings toggle as the deck-page
-// Compare button). One click gathers every decklist of the archetype — across all its pages —
+// In-page button for mtgtop8 archetype pages (same Settings toggle as the deck-page Compare
+// button, on by default since 1.1). One click gathers every decklist of the archetype — across all its pages —
 // and opens the pool analyzer seeded with them. The analysis runs as a fresh, ephemeral pool
 // (background stores a `poolSeed`; pool.js reads it once) so the user's saved pool is untouched.
 //
@@ -7,7 +7,7 @@
 // button has no compare panel — it is a single action, so sharing the compare flow would only
 // entangle it. Loaded with shared.js + dom-parsers.js on https://www.mtgtop8.com/archetype*.
 (function () {
-  const STORAGE_KEY = 'injectButton';
+  const STORAGE_KEY = Shared.INJECT_KEY;
   const HOST_ID = 'deckcompare-archetype';
   const MAX_DECKS = 100;   // hard cap on how many decklists we pull into one pool
   const MAX_PAGES = 30;    // pagination safety net (20 decks/page → far past MAX_DECKS)
@@ -57,13 +57,13 @@
   let busy = false;     // a collection is in flight
 
   chrome.storage.local.get([STORAGE_KEY]).then(({ [STORAGE_KEY]: on }) => {
-    enabled = !!on;
+    enabled = Shared.injectEnabled(on);
     if (enabled) mount();
   });
 
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== 'local' || !changes[STORAGE_KEY]) return;
-    enabled = !!changes[STORAGE_KEY].newValue;
+    enabled = Shared.injectEnabled(changes[STORAGE_KEY].newValue);
     enabled ? mount() : unmount();
   });
 

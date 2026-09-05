@@ -3,7 +3,7 @@
   "name": "__MSG_appName__",
   "short_name": "__MSG_appShortName__",
   "description": "__MSG_appDescription__",
-  "version": "1.0.13",
+  "version": "1.1.1",
   "default_locale": "en",
   "permissions": [
     "activeTab",
@@ -52,6 +52,7 @@
         "https://www.mtgtop8.com/archetype*"
       ],
       "js": [
+        "shared.js",
         "dom-parsers.js",
         "inject-archetype.js"
       ],

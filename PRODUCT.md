@@ -47,7 +47,7 @@ exports.
 - Used inside the browser, alongside the deck sites themselves: Moxfield, MTGGoldfish,
   Archidekt, mtgtop8, Magic-Ville, mtgdecks.net, Melee, getpaird.
 - Three surfaces: a 400px-wide toolbar popup, a full-tab comparison page, a full-tab pool
-  analysis page. Plus an optional Compare button injected into each site's own toolbar.
+  analysis page. Plus a Compare button injected into each site's own toolbar, on by default.
 - The popup is subject to Chrome's 800×600 ceiling and dies on focus loss.
 - Card data and images come from Scryfall; deck data from each site's own API or DOM.
 - MTG vocabulary is the domain language and is not jargon to be simplified away:

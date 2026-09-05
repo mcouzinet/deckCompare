@@ -113,3 +113,11 @@ test("normalizeName matches a split card across sources (Moxfield ' // ' vs mtgt
 function mainOf(n) {
   return { "Mountain": n };
 }
+
+test("injectEnabled: the in-page button is on unless explicitly switched off (1.1 default)", () => {
+  const { injectEnabled, INJECT_KEY } = require("../shared.js");
+  assert.equal(INJECT_KEY, "injectButton");
+  assert.equal(injectEnabled(undefined), true);   // fresh install, or never opened Settings
+  assert.equal(injectEnabled(true), true);
+  assert.equal(injectEnabled(false), false);      // the only value that removes the button
+});

@@ -13,6 +13,8 @@ const settingsPanel = document.getElementById('settings-panel');
 const settingsUser = document.getElementById('settings-user');
 const settingsHint = document.getElementById('settings-hint');
 const settingsInject = document.getElementById('settings-inject');
+const injectGrant = document.getElementById('inject-grant');            // Settings: allow on Moxfield
+const injectGrantMain = document.getElementById('inject-grant-main');   // main view, on such a tab
 const tabpick = document.getElementById('tabpick');
 const tabpickList = document.getElementById('tabpick-list');
 
@@ -49,6 +51,8 @@ document.getElementById('settings-user-label').textContent = chrome.i18n.getMess
 document.getElementById('settings-loadfrom-label').textContent = chrome.i18n.getMessage('settingsLoadFrom');
 document.getElementById('settings-inject-label').textContent = chrome.i18n.getMessage('settingsInjectLabel');
 document.getElementById('settings-inject-hint').textContent = chrome.i18n.getMessage('settingsInjectHint');
+document.getElementById('inject-grant-text').textContent = chrome.i18n.getMessage('injectGrantMox');
+document.getElementById('inject-grant-main-text').textContent = chrome.i18n.getMessage('injectGrantMox');
 document.getElementById('onboarding-title').textContent = chrome.i18n.getMessage('onboardingTitle');
 document.getElementById('onboarding-step1').textContent = chrome.i18n.getMessage('onboardingStep1');
 document.getElementById('onboarding-step2').textContent = chrome.i18n.getMessage('onboardingStep2');
@@ -146,8 +150,9 @@ let currentSource = 'moxfield';  // the source Enter targets: persisted deckSour
 // loading Moxfield made previously loaded Archidekt decks unreachable.
 async function loadSavedDecks() {
   const keys = DECK_SOURCES.map(s => `${s.id}User`);
-  const stored = await chrome.storage.local.get([...keys, 'deckSource', 'injectButton']);
-  settingsInject.checked = !!stored.injectButton;   // opt-in: off unless the user enabled it
+  const stored = await chrome.storage.local.get([...keys, 'deckSource', Shared.INJECT_KEY]);
+  settingsInject.checked = Shared.injectEnabled(stored[Shared.INJECT_KEY]);   // on unless switched off
+  refreshInjectGrant();
 
   // The merged, source-tagged deck list comes from the same shared reader the
   // results page and the in-page panel use.
@@ -303,48 +308,65 @@ moxHint.addEventListener('click', () => {
 });
 
 // In-page button toggle — the content script watches this key and mounts/unmounts live.
+// On by default since 1.1: an absent key reads as on and only an explicit false removes the
+// button, so whoever never opened Settings gets it and whoever switched it off keeps that.
 // Some supported pages need access the extension doesn't hold by default: Moxfield (its
 // decks come from api2.moxfield.com, not the page) and the www/non-www twins of sites
-// declared under only one form. They are optional permissions, asked for here from this
-// click — chrome.permissions.request needs a user gesture — and revoked when the button
-// is switched off. Declining costs only the button on those hosts; the rest keeps working.
+// declared under only one form. They are optional permissions — chrome.permissions.request
+// needs a user gesture, so they can never be granted at install — asked for from the
+// toggle's click or, later, from the "Allow the button on Moxfield" action, and revoked
+// when the button is switched off. Declining costs only the button on those hosts.
 // One list, in shared.js — background.js registers scripts from the same table,
 // so a host cannot be granted here but never injected there (or the reverse).
 const OPTIONAL_ORIGINS = Shared.OPTIONAL_SCRIPTS.map(s => s.origin);
 
-// A page already open on a freshly granted origin has no content script in it yet:
-// registerContentScripts only applies to later loads, and the storage listener that
-// mounts the button live can only fire where the script is already running.
-const needsReload = (url) => {
+// True when `url` sits on one of those optional hosts: the page a fresh grant cannot reach
+// without a reload (registerContentScripts only applies to later loads, and the storage
+// listener that mounts the button live only fires where the script already runs), and the
+// page whose popup should offer the grant.
+const onOptionalHost = (url) => {
   if (!url) return false;
   let host;
   try { host = new URL(url).hostname; } catch (_) { return false; }
   return OPTIONAL_ORIGINS.some(o => Shared.originMatchesHost(o, host));
 };
 
-settingsInject.addEventListener('change', async () => {
-  if (!settingsInject.checked) {
-    chrome.storage.local.set({ injectButton: false });
-    try { await chrome.permissions.remove({ origins: OPTIONAL_ORIGINS }); } catch (_) {}
-    setStatus('');
-    return;
-  }
+// "Allow the button on Moxfield" shows only while the button is on and those hosts are not
+// granted — the one state where a supported deck page carries no button. Under the toggle
+// always; on the main view only when this very tab is such a page.
+async function refreshInjectGrant() {
+  let granted = false;
+  try { granted = await chrome.permissions.contains({ origins: OPTIONAL_ORIGINS }); } catch (_) {}
+  const missing = settingsInject.checked && !granted;
+  injectGrant.hidden = !missing;
+  injectGrantMain.hidden = !(missing && detectedSite && onOptionalHost(currentTab?.url));
+}
 
-  // Ask before persisting. Writing first left the checkbox on after a decline, with the
-  // button never appearing on those hosts and nothing explaining why.
+async function requestInjectGrant() {
   let granted = false;
   try { granted = await chrome.permissions.request({ origins: OPTIONAL_ORIGINS }); }
   catch (_) { granted = false; }
+  if (granted) setStatus(onOptionalHost(currentTab?.url) ? chrome.i18n.getMessage('injectReload') : '');
+  else setStatus(chrome.i18n.getMessage('injectDeclined'), true);
+  await refreshInjectGrant();
+}
 
-  if (!granted) {
-    settingsInject.checked = false;
-    chrome.storage.local.set({ injectButton: false });
-    setStatus(chrome.i18n.getMessage('injectDeclined'), true);
+injectGrant.addEventListener('click', requestInjectGrant);
+injectGrantMain.addEventListener('click', requestInjectGrant);
+
+settingsInject.addEventListener('change', async () => {
+  if (!settingsInject.checked) {
+    chrome.storage.local.set({ [Shared.INJECT_KEY]: false });
+    try { await chrome.permissions.remove({ origins: OPTIONAL_ORIGINS }); } catch (_) {}
+    setStatus('');
+    await refreshInjectGrant();
     return;
   }
-
-  chrome.storage.local.set({ injectButton: true });
-  setStatus(needsReload(currentTab?.url) ? chrome.i18n.getMessage('injectReload') : '');
+  // On applies at once wherever the extension already reads the page; the optional hosts
+  // are asked for from this same click. A decline no longer unchecks the box — it costs
+  // Moxfield only, and the grant stays one click away just below.
+  chrome.storage.local.set({ [Shared.INJECT_KEY]: true });
+  await requestInjectGrant();
 });
 
 // --- Pool analyzer entry ---

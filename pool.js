@@ -357,10 +357,15 @@
     return url || null;
   }
 
+  // A card every analyzed deck plays. The hero's "shared cards" count, the usage view's
+  // shared section, the list the stat button copies and the inert filter icons all read
+  // this one predicate, so the number shown and the list copied can never diverge.
+  const inEveryDeck = (c) => c.deck_count === c.total_decks;
+
   function renderHero() {
     const top = analysis.commanders[0];
     const total = analysis.total_decks;
-    const commons = analysis.cardStats.filter((c) => c.deck_count === total).length;
+    const commons = analysis.cardStats.filter(inEveryDeck).length;
     // The pool's face: its commander when it has a command zone; otherwise (a 60-card
     // format) the most-played non-land card, which is what identifies the archetype.
     let heroName, heroCard = null, role = "";
@@ -388,11 +393,19 @@
 
     // Filtered: "12/20" — the pool is still 20 decks, 12 of them are on the table.
     const decksN = filters.length ? `${total}<span class="of">/${pooledDecks.length}</span>` : String(total);
+    // The two card stats double as copy buttons (see copyStat) — unless they read 0, when
+    // there is nothing to copy. The list is computed at click time from `analysis`, not
+    // stashed here: `payloads` is reset by every view render.
     $("hero-stats").innerHTML = [
-      [decksN, M("poolDecksAnalyzed"), false],
-      [commons, M("poolSharedCardsStat"), true],
-      [analysis.cardStats.length, M("poolDistinctCards"), false],
-    ].map(([n, l, a]) => `<div class="stat"><div class="n ${a ? "accent" : ""}">${n}</div><div class="l">${l}</div></div>`).join("");
+      [decksN, M("poolDecksAnalyzed"), false, null],
+      [commons, M("poolSharedCardsStat"), true, "shared"],
+      [analysis.cardStats.length, M("poolDistinctCards"), false, "distinct"],
+    ].map(([n, l, a, k]) => {
+      const body = `<span class="n ${a ? "accent" : ""}">${n}</span><span class="l">${l}</span>`;
+      return k && n
+        ? `<button type="button" class="stat stat-btn" data-copystat="${k}" title="${M("poolCopyListTitle")}">${body}</button>`
+        : `<div class="stat">${body}</div>`;
+    }).join("");
 
     const art = $("hero-art");
     art.classList.remove("has");
@@ -439,7 +452,7 @@
   const ICON_KEEP = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>`;
   const ICON_DROP = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>`;
   function filterButtons(c, board) {
-    const off = c.deck_count >= c.total_decks ? " disabled" : "";
+    const off = inEveryDeck(c) ? " disabled" : "";
     const btn = (mode, cls, icon, label) =>
       `<button class="fa ${cls}" data-flt="${mode}" data-fname="${esc(c.name)}" data-fboard="${board}" title="${label}" aria-label="${label}"${off}>${icon}</button>`;
     return btn("with", "keep", ICON_KEEP, M("poolKeepWithCard")) + btn("without", "drop", ICON_DROP, M("poolDropWithCard"));
@@ -519,10 +532,9 @@
   function renderUsage() {
     payloadId = 0; payloads = {};
     if (!analysis.total_decks) { $("sections").innerHTML = emptyFiltered(); return; }
-    const total = analysis.total_decks;
     const filtered = analysis.cardStats.filter((c) => matchCat(c.type_line, cat));
-    const commons = filtered.filter((c) => c.deck_count === total);
-    const variable = filtered.filter((c) => c.deck_count < total);
+    const commons = filtered.filter(inEveryDeck);
+    const variable = filtered.filter((c) => !inEveryDeck(c));
     let html = "";
     if (commons.length) {
       html += `<div class="sect">${sectionHead(M("poolSharedFull"), commons.length, "", commons)}` +
@@ -594,7 +606,40 @@
     $("sel-n").textContent = `${n} ${cardWord} ${selWord}`;
     $("selbar").classList.toggle("show", n > 0);
   }
-  function copy(text) { navigator.clipboard.writeText(text).catch(() => {}); }
+  // Resolves to whether the text reached the clipboard; never rejects.
+  function copy(text) { return navigator.clipboard.writeText(text).then(() => true, () => false); }
+
+  // Hero stats as copy buttons: "shared cards" is every mainboard card all compared decks
+  // play, "distinct cards" every mainboard card in the pool (the sideboard has its own
+  // section, the commander is the hero) — one name per line, like the section Copy buttons.
+  // Both lists match the numbers shown: renderHero counts with the same inEveryDeck.
+  function statList(kind) {
+    const cards = kind === "shared" ? analysis.cardStats.filter(inEveryDeck) : analysis.cardStats;
+    return cards.map((c) => c.name);
+  }
+  const statFlash = {};   // kind -> the timer that ends its "copied!" flash (a re-click re-arms it)
+  function copyStat(el) {
+    const kind = el.dataset.copystat;
+    copy(statList(kind).join("\n")).then((ok) => {
+      if (!ok) return;   // nothing reached the clipboard: don't say it did
+      const label = el.querySelector(".l");
+      if (!el.classList.contains("copied")) {
+        el.dataset.label = label.textContent;
+        el.style.minWidth = el.getBoundingClientRect().width + "px";   // "copied!" is shorter: keep the row from reflowing
+        el.classList.add("copied");
+        label.textContent = M("poolCopiedLabel");
+      }
+      $("hero-status").textContent = M("poolCopiedLabel");   // the same word, for screen readers
+      clearTimeout(statFlash[kind]);
+      statFlash[kind] = setTimeout(() => {
+        label.textContent = el.dataset.label;
+        delete el.dataset.label;
+        el.classList.remove("copied");
+        el.style.minWidth = "";
+        $("hero-status").textContent = "";
+      }, 1200);
+    });
+  }
 
   // ---- hover preview ----
   let pvCurrent = null;
@@ -661,6 +706,8 @@
       const rf = e.target.closest("[data-rmfilter]");
       if (rf) { removeFilter(parseInt(rf.dataset.rmfilter, 10)); return; }
       if (e.target.closest("[data-clearfilters]")) { clearFilters(); return; }
+      const cs = e.target.closest("[data-copystat]");
+      if (cs) { copyStat(cs); return; }
       const cp = e.target.closest("[data-copy]");
       if (cp) { copy(cp.dataset.copy); return; }
       const ct = e.target.closest("[data-copyid]");

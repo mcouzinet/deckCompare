@@ -74,6 +74,13 @@
     document.documentElement.lang = chrome.i18n.getUILanguage().split("-")[0];
   }
 
+  // ---- in-page button default (single source of truth) ----
+  // The button is on unless the user switched it off: an absent key reads as on (1.1 —
+  // before that, absent meant off). The popup toggle and both content scripts read this
+  // one definition, so "absent" cannot mean on in one file and off in another.
+  const INJECT_KEY = "injectButton";
+  const injectEnabled = (value) => value !== false;
+
   // ---- optional page access (single source of truth) ----
   // background.js registers/unregisters these content scripts as their origin is
   // granted/revoked; popup.js requests the origins from its toggle. The manifest's
@@ -162,7 +169,7 @@
 
   const api = {
     fixCommanderHeuristic, sumBoard, normalizeName, cacheRead, cacheMerge,
-    setDocumentLang, OPTIONAL_SCRIPTS, originMatchesHost,
+    setDocumentLang, OPTIONAL_SCRIPTS, originMatchesHost, INJECT_KEY, injectEnabled,
     SUPPORTED_SITES, getOpenDeckTabs,
     DECK_SOURCE_IDS, getSavedDecks, populateSavedDeckSelect
   };

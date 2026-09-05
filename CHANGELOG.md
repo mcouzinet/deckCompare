@@ -3,167 +3,176 @@
 Toutes les modifications notables de **Deck Compare — MTG** sont consignées ici.
 Le format s'inspire de [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 Les versions du manifeste suivent le schéma **`major.prod.dev`** (voir `CLAUDE.md`) : `prod`
-reste à `0` tant que la version n'est pas publiée, `dev` est bumpé à chaque itération testée.
+avance d'un à chaque nouvelle ligne publiée sur le Web Store (1.0.13 en ligne → la suivante
+se lit `1.1.<dev>`), `dev` est bumpé à chaque itération testée.
 
-## [1.0.13] — 2026-09-03
-
-Première version publiée depuis la 0.9.0 : la v1.0.0 taguée le 2026-09-02 avait été annulée
-avant mise en ligne, ce lot la remplace. **Aucune permission d'hôte requise ajoutée** (seule
-l'API `scripting`, sans avertissement à la mise à jour).
+## [Non publié]
 
 ### Ajouté
 
-- **Analyse d'un archétype mtgtop8 en un clic.** Sur une page archétype (`/archetype?…`), un
-  bouton « Analyser tous les decks » récupère TOUTES les decklists de l'archétype (toutes les
-  pages, max 100) et ouvre l'analyseur de pool pré-rempli. Le pool est **frais et éphémère** :
-  il n'écrase pas le pool sauvegardé et disparaît à la fermeture de l'onglet. Chaque deck est
-  nommé **« Pilote — Event »**.
-- **Picker d'onglets ouverts dans l'analyseur de pool.** Un clic ajoute au pool un deck déjà
-  ouvert dans un onglet (même détection que le popup).
-- **Filtres par carte dans le pool.** Garder ou exclure les decks qui jouent une carte donnée.
+- **Comparaison croisée : « cartes en commun » et « cartes distinctes » se copient d'un clic.**
+  Les deux chiffres-clés de l'en-tête sont désormais des boutons : un clic met la liste
+  correspondante dans le presse-papiers (un nom par ligne, comme les boutons « Copier » des
+  sections) et le libellé confirme « copié ! » un instant — annoncé aussi aux lecteurs
+  d'écran. Le libellé souligné au survol et l'infobulle signalent l'action ; à zéro, le
+  chiffre reste un simple texte (rien à copier).
 
 ### Modifié
 
-- **Refonte visuelle « Le mémo »** des trois pages de l'extension (popup, comparaison, pool),
-  inspirée d'un one-pager d'investissement : fond papier crème, encre chaude, feuilles blanches
-  à filet, boutons en pilules, une seule couleur d'action (rouge profond), chiffres-clés et noms
-  de decks en **Beleren** (la police des cartes, embarquée dans `fonts/`), interface en Archivo. **L'or disparaît** : l'accent ambre
-  ne sert plus nulle part ; les couleurs deck 1 / deck 2 / commun deviennent orange brûlé, teal
-  et vert profonds, lisibles sur fond clair (≥ 4,9:1). L'icône et le wordmark sont inchangés ;
-  les boutons injectés sur les sites ne bougent pas. `theme.css` reste le seul monde partagé.
-- **« Analyse de pool » devient « Comparaison croisée »** (EN : Cross-compare) : « pool » désigne
-  un pool de scellé en Magic ; le nouveau nom prolonge la marque (Compare à deux, croisée à N).
-  Entrée du popup, en-tête de la page, bouton archétype mtgtop8 (« Comparer tous les decks »),
-  README et fiche Store suivent.
-- **Les deux encres du logo font le travail de l'interface** : le teal pour tout ce qu'on presse,
-  choisit ou focalise (pilule principale, segment sélectionné, anneau de focus, cases à cocher),
-  l'orange pour le commandant et les graphiques ; le rouge ne reste que pour l'alarme (erreurs,
-  écarts de quantité, exclusions).
-- **Comparaison croisée sans commandant** : pour un format à 60 cartes, le héros montre la carte
-  la plus jouée (hors terrains) avec son image, et les couleurs du consensus remplacent celles du
-  commandant ; le libellé « Commandant » disparaît. Lancée depuis une page archétype mtgtop8,
-  le titre est le nom de l'archétype (« Slivers »).
-- **Aperçus de cartes rognés au vrai rayon de la carte** : certaines images Scryfall (JPG)
-  remplissent l'extérieur des coins arrondis en blanc, qui dépassait des coins de 5–6 px.
-- **Boutons injectés redessinés** : noir avec un fin liseré clair et l'icône deux-tons de
-  l'extension (au lieu du rouge), lisibles aussi bien sur sites clairs que sombres.
-- **Images de grille toujours en pleine résolution** (`normal`) : fini les cartes floues sur
-  écran non-retina.
-- **Analyseur de pool** : la liste de decks scrolle à l'intérieur du rail et la prévisualisation
-  de carte reste toujours visible (un gros pool la poussait hors écran). Les decks affichent leur
-  vrai nom au lieu de leur source.
-- **Liste des onglets ouverts du popup** plafonnée (scroll au-delà de ~4 lignes).
-- **Pastilles de couleur de l'analyseur de pool** : les cinq pastilles WUBRG utilisent désormais
-  les vraies couleurs Magic (blanc ivoire, bleu, noir, rouge, vert) au lieu d'un violet
-  approximatif pour le noir.
-- **« + Ajouter des decks » dans l'analyseur de pool s'ouvre en popin** (fond assombri, boîte
-  centrée sur l'écran, fermeture par la croix, un clic hors de la boîte ou Échap) au lieu de
-  se déplier en ligne en haut de page — repérable même en étant scrollé loin dans l'analyse.
+- **Le bouton « Comparer » sur les sites de decks est activé par défaut.** Il n'apparaissait
+  qu'après avoir coché un réglage que rien ne signalait, au point de passer pour un bug. Il
+  est désormais là dès l'installation sur les sites dont l'extension lit déjà les pages, et
+  le réglage sert à le retirer. Moxfield et les variantes sans www demandent une autorisation
+  que Chrome n'accorde que sur un clic : elle se donne depuis les Réglages (« Autoriser le
+  bouton sur Moxfield »), ou depuis le popup ouvert sur un onglet Moxfield ; refuser ne coûte
+  que ces sites, plus tout le bouton comme avant. Ceux qui avaient décoché la case gardent
+  leur choix.
+- **Le panneau « Comparer » injecté sur les sites passe au monde clair « Le mémo ».** Il
+  gardait le fond noir et le CTA rouge de l'ancienne interface : désormais papier crème, encre
+  chaude, wordmark orange/teal, libellé « Comparer ce deck » en teal avec sa pastille, champs en
+  feuilles blanches à filet, pilule teal « Comparer → » (le rouge ne reste que pour l'erreur).
+  Le bouton noir posé sur le site ne change pas.
 
-### Corrigé
+## [1.0.13] — 2026-09-03
 
-- **Bouton Archidekt mal placé** : il s'ancre maintenant à côté du bouton « More » (groupe
-  Clone deck / More) au lieu du lien Playtester, qui peut se retrouver loin de ce groupe
-  quand le deck contient des erreurs.
-- **« Extension context invalidated » sur le bouton archétype** : après un rechargement de
-  l'extension, l'ancien script injecté restait actif dans l'onglet mtgtop8 et levait une erreur
-  au clic. Il détecte maintenant le contexte perdu, ne touche plus aux API `chrome.*`, et le
-  bouton affiche « Recharge la page pour utiliser ce bouton ».
-- **Bouton mtgtop8 en vue « visuelle »** : il réapparaît et lit correctement le deck (le cookie
-  de vue visuelle collant cassait la lecture et masquait le bouton).
-- **Cartes recto/verso partagées entre sources** : `Life // Death` (Moxfield) et `Life/Death`
-  (export MTGO mtgtop8) sont reconnues comme la même carte — plus de doublon dans les deux
-  colonnes « unique ».
-- **Erreur « Erreur Magic-Ville: 403 » à la comparaison.** Magic-Ville rejette désormais les
-  requêtes sans cookie (même protection anti-bot que MTGGoldfish/mtgdecks) ; la récupération du
-  deck et la liste des decks d'un joueur passent en `credentials:'include'` pour envoyer le
-  cookie de session, avec un message d'erreur explicite (`errMagicVilleBlocked`) si le 403
-  persiste malgré tout.
+Première version mise en ligne sur le Chrome Web Store depuis la **0.9.0** (en ligne le
+2026-09-05). La v1.0.0, taguée le 2026-09-02, avait été annulée avant publication : son contenu
+est repris ici, relu à l'aune de ce qui a changé depuis, pour que cette entrée décrive ce qu'un
+utilisateur de la 0.9 découvre réellement. **Aucune permission d'hôte requise ajoutée** : seule
+l'API `scripting`, qui n'affiche aucun avertissement à la mise à jour ; les hôtes
+supplémentaires du bouton in-page sont optionnels et demandés à l'activation (voir *Sécurité et
+vie privée*).
 
-## [1.0.0] — 2026-09-02
+### Refonte visuelle — « Le mémo »
 
-Première version majeure. Elle apporte le bouton « Comparer » directement sur les sites de
-decks, raccourcit nettement le chemin entre deux decklists et remplace l'identité visuelle
-de l'extension. Aucune permission supplémentaire n'est exigée à la mise à jour.
+Le monde visuel a été remplacé, pas retouché. Les trois pages (popup, comparaison, comparaison
+croisée) se lisent comme un one-pager sur papier crème, en plein jour : encre chaude, feuilles
+blanches à filet posées sur le papier, boutons en pilules, chiffres-clés et noms de decks en
+**Beleren** (la police des cartes, embarquée dans `fonts/`), interface en Archivo. L'icône et
+le wordmark sont inchangés ; le monde est construit autour d'eux.
 
-### Refonte visuelle — « La table »
-
-Le monde visuel a été remplacé, pas retouché. La surface est un tapis de jeu vu de dessus
-sous une lumière unique : le fond est de la feutrine chaude, l'élévation est une vraie
-ombre portée vers le bas, et une zone est sérigraphiée sur le tapis avec un filet et un
-nom. L'icône, le wordmark et le codage orange/teal restent inchangés — le monde est
-construit autour d'eux.
-
+- **Les deux encres du logo font le travail de l'interface** : le teal pour tout ce qu'on
+  presse, choisit ou focalise (pilule principale, segment sélectionné, anneau de focus, cases à
+  cocher), l'orange pour le commandant et les graphiques ; le rouge ne reste que pour l'alarme
+  (erreurs, écarts de quantité, exclusions).
+- **L'or disparaît** : l'accent ambre ne sert plus nulle part hors de l'icône. Les couleurs
+  deck 1 / deck 2 / commun deviennent orange brûlé, teal et vert profonds, lisibles sur fond
+  clair (≥ 4,9:1), et n'apparaissent que sur ce qu'elles désignent — un nom, un compte, un
+  segment de barre.
 - **`theme.css`** : le monde vit dans un seul fichier lié par les trois pages. La palette
   était recopiée dans chacune, ce qui avait déjà produit deux tailles différentes pour les
   mêmes chips et une page figée en français.
-- **Un seul composant bouton** (quatre variantes) remplace les neuf traitements inventés
-  au fil de l'eau dans trois fichiers.
-- **Plus aucune auréole** : les onze halos colorés à décalage nul ont disparu, remplacés
-  par trois niveaux d'élévation et un d'enfoncement, tous issus d'une lumière zénithale
-  unique. Le rouge d'action a été réchauffé pour partager cette lumière.
-- **Des zones, plus des boîtes** : fin des panneaux imbriqués. Le score de similarité est
-  estampé dans la feutrine au lieu d'être un cadran flottant.
-- **Échelle typographique** : 18 tailles ad hoc, dont 76 déclarations sur 117 coincées
-  entre 10 et 13 px, remplacées par une rampe nommée de 7 pas (11 → 34 px).
-- Surfaces navigateur habillées : sélection, curseur, barres de défilement, anneau de
-  focus, chiffres tabulaires.
+- **Un seul composant bouton** (quatre variantes) remplace les neuf traitements inventés au
+  fil de l'eau dans trois fichiers.
+- **Plus aucune auréole** : les onze halos colorés à décalage nul ont disparu, remplacés par
+  trois niveaux d'élévation et un d'enfoncement, tous issus d'une lumière zénithale unique —
+  rien ne brille, rien ne floute, rien n'est embossé.
+- **Des feuilles, plus des boîtes** : fin des panneaux imbriqués. Une feuille repose sur le
+  papier, jamais sur une autre feuille ; les lignes d'une liste sont séparées par des filets.
+- **Échelle typographique** : 18 tailles ad hoc, dont 76 déclarations sur 117 coincées entre
+  10 et 13 px, remplacées par une rampe nommée de huit pas (11 → 56 px).
+- Surfaces navigateur habillées : sélection, curseur, barres de défilement, anneau de focus,
+  chiffres tabulaires.
+- **Boutons injectés sur les sites** : noir avec un fin liseré clair et l'icône deux-tons de
+  l'extension, lisibles aussi bien sur sites clairs que sombres.
 
 ### Ajouté
 
-- **Bouton « Comparer » directement sur les sites de decks** — optionnel et **désactivé
-  par défaut**, activable dans les Réglages du popup. Il s'insère dans la barre d'actions
-  propre à chaque site, aux 8 endroits attendus : Melee à côté de *Visual View* ;
-  Archidekt à côté de *Playtester* ; getpaird à côté de *Playtest* ; mtgtop8 à côté de
+- **Bouton « Comparer » directement sur les sites de decks** — optionnel et **désactivé par
+  défaut**, activable dans les Réglages du popup. Il s'insère dans la barre d'actions propre à
+  chaque site, aux 8 endroits attendus : Melee à côté de *Visual View* ; Archidekt à côté de
+  *More* (groupe Clone deck / More) ; getpaird à côté de *Playtest* ; mtgtop8 à côté de
   *Switch to Visual* ; Magic-Ville après *Proxies* ; mtgdecks dans la barre d'onglets ;
   MTGGoldfish près du titre ; Moxfield en fin de barre du deck. Il reprend la taille,
-  l'alignement et l'espacement du bouton voisin, et bascule en version compacte au milieu
-  d'un menu de liens texte. Si un site refond son interface, le bouton revient en
-  flottant : le placement est perdu, jamais la fonctionnalité.
+  l'alignement et l'espacement du bouton voisin, et bascule en version compacte au milieu d'un
+  menu de liens texte. Si un site refond son interface, le bouton revient en flottant : le
+  placement est perdu, jamais la fonctionnalité.
+- **Analyse d'un archétype mtgtop8 en un clic.** Sur une page archétype (`/archetype?…`), un
+  bouton « Comparer tous les decks » récupère TOUTES les decklists de l'archétype (toutes les
+  pages, max 100) et ouvre la comparaison croisée pré-remplie, titrée du nom de l'archétype
+  (« Slivers »). Le pool est **frais et éphémère** : il n'écrase pas le pool sauvegardé et
+  disparaît à la fermeture de l'onglet. Chaque deck est nommé **« Pilote — Event »**.
 - **Le deuxième deck se choisit en un clic** parmi les pages de deck déjà ouvertes dans la
-  fenêtre. L'extension listait déjà les onglets et sait lire les 8 sites : plus besoin
-  d'aller chercher une URL dans une autre barre d'adresse. Aucune autorisation nouvelle.
-- **« Comparer un autre » et « Inverser les decks »** sur la page de résultats, qui était
-  un cul-de-sac : changer de deck imposait de revenir sur un onglet et de tout recommencer,
-  dans un nouvel onglet à chaque fois.
+  fenêtre. L'extension listait déjà les onglets et sait lire les 8 sites : plus besoin d'aller
+  chercher une URL dans une autre barre d'adresse. Aucune autorisation nouvelle. Le même
+  sélecteur d'onglets existe dans la comparaison croisée pour ajouter un deck au pool.
+- **« Comparer un autre » et « Inverser les decks »** sur la page de résultats, qui était un
+  cul-de-sac : changer de deck imposait de revenir sur un onglet et de tout recommencer, dans
+  un nouvel onglet à chaque fois.
+- **Filtres par carte dans la comparaison croisée** : garder ou exclure les decks qui jouent
+  une carte donnée.
+- **« + Ajouter des decks » s'ouvre en popin** (fond assombri, boîte centrée, fermeture par la
+  croix, un clic hors de la boîte ou Échap) au lieu de se déplier en ligne en haut de page —
+  repérable même en étant scrollé loin dans l'analyse.
 - Le deck détecté est **nommé** dans le popup, au lieu d'afficher « Détecté » deux fois.
 - Navigation **au clavier** dans la liste de decks sauvegardés (flèches, Entrée, Échap).
 - La densité d'affichage choisie sur la page de résultats est **mémorisée**.
 
 ### Modifié
 
-- **Le résultat s'affiche immédiatement.** Il attendait un appel Scryfall purement
-  cosmétique avant de rien montrer, sans limite de temps ; le diff et le score sont
-  calculés en local et n'attendent plus rien.
+- **« Analyse de pool » devient « Comparaison croisée »** (EN : Cross-compare) : « pool »
+  désigne un pool de scellé en Magic ; le nouveau nom prolonge la marque (Compare à deux,
+  croisée à N). Entrée du popup, en-tête de la page, bouton archétype mtgtop8, README et fiche
+  Store suivent.
+- **Comparaison croisée sans commandant** : pour un format à 60 cartes, le héros montre la
+  carte la plus jouée (hors terrains) avec son image, et les couleurs du consensus remplacent
+  celles du commandant ; le libellé « Commandant » disparaît.
+- **Le résultat s'affiche immédiatement.** Il attendait un appel Scryfall purement cosmétique
+  avant de rien montrer, sans limite de temps ; le diff et le score sont calculés en local et
+  n'attendent plus rien.
 - **Un seul champ pour le deuxième deck** : il accepte une URL **ou** filtre tes decks
-  sauvegardés à la frappe, dans **toutes** les sources chargées. Le sélecteur de source,
-  le second bouton Comparer et le bouton Recharger sont supprimés ; un bouton par service
-  fait le choix et le chargement d'un seul geste.
+  sauvegardés à la frappe, dans **toutes** les sources chargées. Le sélecteur de source, le
+  second bouton Comparer et le bouton Recharger sont supprimés ; un bouton par service fait le
+  choix et le chargement d'un seul geste.
 - **Le filtre par zone recalcule les chiffres qu'il filtre.** « Réserve » pouvait afficher
   3 cartes sous un en-tête indiquant 24, avec un score inchangé.
 - Les deux decks sont récupérés **en parallèle** au lieu de l'un après l'autre.
 - L'aperçu d'une carte répond aussi au **clic et au clavier**, plus seulement au survol.
-- **Chargement des images de cartes plus fiable et plus rapide.** Elles étaient récupérées
-  une par une par le service worker puis converties en base64 ; elles sont désormais
-  chargées directement depuis le CDN, avec le cache du navigateur, et seulement quand
-  elles arrivent à l'écran.
+- **Chargement des images de cartes plus fiable et plus rapide.** Elles étaient récupérées une
+  par une par le service worker puis converties en base64 ; elles sont désormais chargées
+  directement depuis le CDN, avec le cache du navigateur, et seulement quand elles arrivent à
+  l'écran.
+- **Images de grille toujours en pleine résolution** (`normal`) : nettes sur tous les écrans,
+  HiDPI comme non-retina.
+- **Aperçus de cartes rognés au vrai rayon de la carte** : certaines images Scryfall (JPG)
+  remplissent l'extérieur des coins arrondis en blanc, qui dépassait des coins de 5–6 px.
 - Dans le popup, les **Réglages remplacent la vue principale** au lieu de s'y ajouter.
+- **Comparaison croisée** : la liste de decks scrolle à l'intérieur du rail et la
+  prévisualisation de carte reste toujours visible (un gros pool la poussait hors écran). Les
+  decks affichent leur vrai nom au lieu de leur source.
+- **Liste des onglets ouverts du popup** plafonnée (scroll au-delà de ~4 lignes).
+- **Pastilles de couleur de la comparaison croisée** : les cinq pastilles WUBRG utilisent
+  désormais les vraies couleurs Magic (blanc ivoire, bleu, noir, rouge, vert) au lieu d'un
+  violet approximatif pour le noir.
 
 ### Corrigé
 
 - **L'aperçu de carte se vidait après quelques survols.** Chaque survol appelait l'API
-  Scryfall — pas le CDN — donc traverser une grille suffisait à se faire limiter, et un
-  échec laissait le cadre vide pour de bon. Les URLs d'images sont désormais lues dans le
-  lot déjà effectué pour les types de cartes.
-- **Les cartes de la grille ne sont plus floues sur écran HiDPI.**
+  Scryfall — pas le CDN — donc traverser une grille suffisait à se faire limiter, et un échec
+  laissait le cadre vide pour de bon. Les URLs d'images sont désormais lues dans le lot déjà
+  effectué pour les types de cartes.
+- **Erreur « Erreur Magic-Ville: 403 » à la comparaison.** Magic-Ville rejette désormais les
+  requêtes sans cookie (même protection anti-bot que MTGGoldfish/mtgdecks) ; la récupération du
+  deck et la liste des decks d'un joueur passent en `credentials:'include'` pour envoyer le
+  cookie de session, avec un message d'erreur explicite (`errMagicVilleBlocked`) si le 403
+  persiste malgré tout.
+- **Bouton mtgtop8 en vue « visuelle »** : il réapparaît et lit correctement le deck (le cookie
+  de vue visuelle collant cassait la lecture et masquait le bouton).
+- **Cartes recto/verso partagées entre sources** : `Life // Death` (Moxfield) et `Life/Death`
+  (export MTGO mtgtop8) sont reconnues comme la même carte — plus de doublon dans les deux
+  colonnes « unique ».
+- **« Extension context invalidated » sur les boutons injectés** : après un rechargement de
+  l'extension, l'ancien script restait actif dans l'onglet et levait une erreur au clic. Les
+  deux boutons détectent le contexte perdu, ne touchent plus aux API `chrome.*`, et le bouton
+  archétype affiche « Recharge la page pour utiliser ce bouton ».
 - **L'activation du bouton in-page n'échoue plus en silence** : l'autorisation est demandée
-  avant d'être enregistrée, un refus décoche la case et l'explique, et les pages déjà
-  ouvertes indiquent qu'un rechargement est nécessaire.
-- **Contraste** : le bouton Comparer lui-même était sous le seuil WCAG AA (4,17:1), tout
-  comme les 42 usages du gris le plus discret de la palette.
-- Anneau de focus visible sur tous les contrôles, respect de `prefers-reduced-motion`,
-  états ARIA sur les segmentés, région live sur les messages de statut, titres de page.
-- La page d'analyse de pool n'est plus figée en français.
+  avant d'être enregistrée, un refus décoche la case et l'explique, et les pages déjà ouvertes
+  indiquent qu'un rechargement est nécessaire.
+- **Contraste** : le bouton Comparer de la 0.9 était sous le seuil WCAG AA (4,17:1), tout
+  comme les 42 usages du gris le plus discret de son ancienne palette.
+- Anneau de focus visible sur tous les contrôles, respect de `prefers-reduced-motion`, états
+  ARIA sur les segmentés, région live sur les messages de statut, titres de page.
+- La comparaison croisée n'est plus figée en français.
 - Le lien « Configure ton compte » ouvre les Réglages au lieu d'être inerte.
 - Le panneau du bouton in-page se ferme avec Échap ou un clic à l'extérieur.
 - Plus de liseré blanc au bord du popup.
@@ -176,11 +185,18 @@ construit autour d'eux.
 
 ### Sécurité et vie privée
 
-- L'accès aux pages Moxfield et aux variantes www/sans-www est demandé **uniquement au
-  moment où le bouton est activé**, et révoqué lorsqu'il est désactivé. Aucune permission
-  d'hôte supplémentaire n'est exigée à la mise à jour : les utilisateurs existants ne sont
-  pas interrompus.
+- L'accès aux pages Moxfield et aux variantes www/sans-www est demandé **uniquement au moment
+  où le bouton est activé**, et révoqué lorsqu'il est désactivé (`optional_host_permissions`).
+  Aucune permission d'hôte supplémentaire n'est exigée à la mise à jour : les utilisateurs de
+  la 0.9 ne sont pas interrompus.
+- Toujours aucun compte, aucune connexion, aucune donnée collectée ; tout s'exécute
+  localement.
 
+### Détails techniques
+
+- **58 tests** (contre 36 en 0.9.0) : la logique partagée (`shared.js` — normalisation des
+  noms, sites supportés, scan d'onglets), l'analyse croisée (`pool-analyze.js`) et
+  l'enrichissement Scryfall (`enrich.js`) rejoignent les parseurs sous harnais.
 
 ## [0.9.0] — 2026-08-31
 
@@ -248,7 +264,8 @@ construit autour d'eux.
 ### Ajouté
 - Séparation des créatures, vue en liste, cartes plus grandes et nettoyage de code.
 
-[1.0.0]: https://github.com/mcouzinet/deckCompare/compare/v0.9.0...v1.0.0
+[Non publié]: https://github.com/mcouzinet/deckCompare/compare/v1.0.13...HEAD
+[1.0.13]: https://github.com/mcouzinet/deckCompare/compare/v0.9.0...v1.0.13
 [0.9.0]: https://github.com/mcouzinet/deckCompare/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/mcouzinet/deckCompare/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/mcouzinet/deckCompare/compare/v0.6.0...v0.7.0

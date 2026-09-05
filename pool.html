@@ -91,10 +91,16 @@
     .cpip { width:16px; height:16px; border-radius:50%; border:1px solid var(--line-strong); }
     .cpip.W{background:var(--W);} .cpip.U{background:var(--U);} .cpip.B{background:var(--K);} .cpip.R{background:var(--R);} .cpip.G{background:var(--G);} .cpip.C{background:var(--bg-deep);}
     .stats { display:flex; gap:32px; margin-top:20px; flex-wrap:wrap; }
-    .stat .n { font-family:var(--font-display); font-weight:400; font-size:30px; letter-spacing:-0.01em; color:var(--ink); line-height:1; font-variant-numeric:tabular-nums; }
+    .stat .n { display:block; font-family:var(--font-display); font-weight:400; font-size:30px; letter-spacing:-0.01em; color:var(--ink); line-height:1; font-variant-numeric:tabular-nums; }
     .stat .n.accent { color:var(--match); }
     .stat .n .of { font-size:var(--fs-md); font-weight:400; color:var(--ink-3); letter-spacing:0; }
-    .stat .l { font-size:var(--fs-micro); text-transform:uppercase; letter-spacing:0.1em; font-weight:600; color:var(--ink-3); margin-top:6px; }
+    .stat .l { display:block; font-size:var(--fs-micro); text-transform:uppercase; letter-spacing:0.1em; font-weight:600; color:var(--ink-3); margin-top:6px; }
+    /* the two card stats are copy buttons (spans inside, hence the display:block above): same look,
+       a pointer and an underlined label on hover; "copied!" takes the action ink, not a role colour.
+       No border-radius here: the focus ring keeps the theme's own radius. */
+    .stat-btn { background:none; border:0; text-align:left; font:inherit; color:inherit; cursor:pointer; }
+    .stat-btn:hover .l, .stat-btn:focus-visible .l { color:var(--ink); text-decoration:underline; text-underline-offset:3px; }
+    .stat-btn.copied .l { color:var(--brand-btn); text-decoration:none; }
 
     /* card filters — keep / drop the decks that play a card, as chips above the results */
     .filters { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:-6px 0 18px; }
@@ -285,6 +291,7 @@
             <div class="hero-role" id="hero-eyebrow"></div>
             <div class="cpips" id="hero-pips"></div>
             <div class="stats" id="hero-stats"></div>
+            <div class="sr-only" id="hero-status" role="status" aria-live="polite"></div>
           </div>
         </section>
 

@@ -168,6 +168,8 @@
     }
     .hint-configure svg { width: 15px; height: 15px; flex: none; }
     .hint-configure:hover { color: var(--b); border-color: var(--b); background: var(--elev); }
+    /* .hint-configure sets display:flex, which would beat the UA's [hidden] rule */
+    [hidden] { display: none !important; }
 
     /* --- pool, a second brief ------------------------------------------------------ */
     .pool-entry {
@@ -264,6 +266,7 @@
         <div>
           <label class="settings-label" id="settings-inject-label" for="settings-inject"></label>
           <div class="settings-hint" id="settings-inject-hint"></div>
+          <button type="button" class="hint-configure" id="inject-grant" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span id="inject-grant-text"></span></button>
         </div>
       </div>
       <div class="settings-field settings-sites">
@@ -339,6 +342,7 @@
         </button>
       </div>
       <button type="button" class="hint" id="mox-hint"></button>
+      <button type="button" class="hint-configure" id="inject-grant-main" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span id="inject-grant-main-text"></span></button>
     </div>
 
     <button class="pool-entry" id="pool-btn">

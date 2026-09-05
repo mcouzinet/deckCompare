@@ -14,10 +14,11 @@ decks. Pas de build : Chrome charge le dossier tel quel. Tests : `npm test` (nod
 - **dev** — compteur d'itérations de dev. **On le bumpe à CHAQUE lot de modifs que l'utilisateur
   va tester dans le navigateur.**
 
-État au 2026-09-03 : **`1.0.6`**. La v1.0.0 avait été taguée puis **annulée en prod** ; la vraie
-1.0 sortira avec le lot de correctifs ci-dessous. Donc tant que rien n'est en prod, on lit
-`1.0.<dev>` (prochaines : 1.0.7, 1.0.8…). Quand la vraie 1.0 est publiée, elle devient la
-baseline prod.
+État au 2026-09-05 : **`1.1.1`** dans l'arbre de travail. La **1.0.13** est publiée sur le Chrome
+Web Store (la v1.0.0 taguée le 2026-09-02 n'a jamais été mise en ligne) : c'est la baseline
+permissions. La ligne suivante se lit `1.1.<dev>` (1.1.1, 1.1.2…) jusqu'à sa publication ;
+`prod` avance d'un quand on ouvre une nouvelle ligne, pas au moment de la publication (la
+1.0.13 est partie telle quelle).
 
 **Pourquoi bumper à chaque itération** : Chrome ne recharge PAS les content-scripts d'un onglet
 déjà ouvert quand on recharge l'extension. Le numéro visible dans `chrome://extensions` est le
@@ -49,7 +50,14 @@ changements de permissions le font.)
   formes flottant/inline/compact) et `inject-archetype.js` (« Comparer tous les decks »). Design
   actuel : **noir `#141414` + liseré `rgba(255,255,255,.18)` + icône deux-tons orange/teal**
   (le liseré est indispensable pour que le noir tienne sur les sites sombres type Moxfield). Le
-  CTA rouge à l'intérieur du panneau compare reste rouge (il n'est pas « sur le site »).
+  **panneau** qu'ouvre « Comparer » n'est pas « sur le site » : depuis 1.1.1 c'est une feuille du
+  monde clair « Le mémo » (tokens de `theme.css` recopiés en dur dans le `<style>` du shadow root
+  de `inject-button.js` — à garder synchrones ; pilule teal, rouge réservé à l'erreur).
+- **Bouton injecté activé par défaut depuis 1.1** : clé `injectButton` absente = actif, seul
+  `false` l'éteint (`Shared.injectEnabled` / `Shared.INJECT_KEY` — ne pas redéfinir ce défaut
+  ailleurs). Moxfield et les jumeaux www/sans-www restent des `optional_host_permissions`
+  demandées sur un clic (la case, ou « Autoriser le bouton sur Moxfield ») ; un refus ne
+  décoche plus la case, il ne coûte que ces hôtes.
 - **mtgtop8** : la vue « visuelle » (cookie collant `mtgtop8_deck_display=visual`) n'a pas de
   `deck_line`/`L14` → `parseMtgTop8` renvoie vide → on pose `_needsApiFetch` (via la bascule
   « Switch to Text ») pour lire le deck via le fetch `/mtgo?d=` indépendant de la vue.

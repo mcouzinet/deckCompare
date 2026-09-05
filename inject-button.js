@@ -1,4 +1,4 @@
-// Optional in-page button (off by default; toggled in the popup's Settings panel).
+// In-page button (on by default since 1.1; switched off in the popup's Settings panel).
 // Adds a "Compare" launcher on supported deck pages so a comparison can be started
 // without opening the popup. Where we know the site's own action bar it is inserted
 // there (see ANCHORS); otherwise it falls back to a floating pill. Everything lives
@@ -9,7 +9,7 @@
 // Loaded after shared.js + dom-parsers.js + content.js, so Shared and DomParsers
 // are available.
 (function () {
-  const STORAGE_KEY = 'injectButton';
+  const STORAGE_KEY = Shared.INJECT_KEY;
   const HOST_ID = 'deckcompare-launcher';
 
   // Anchor table lives in dom-parsers.js (site-DOM knowledge, and unit-testable against
@@ -39,13 +39,13 @@
   // --- lifecycle: mount/unmount so the popup toggle applies without a page reload ---
 
   chrome.storage.local.get([STORAGE_KEY]).then(({ [STORAGE_KEY]: on }) => {
-    enabled = !!on;
+    enabled = Shared.injectEnabled(on);
     if (enabled) mountWhenReady();
   });
 
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== 'local' || !changes[STORAGE_KEY]) return;
-    enabled = !!changes[STORAGE_KEY].newValue;
+    enabled = Shared.injectEnabled(changes[STORAGE_KEY].newValue);
     enabled ? mountWhenReady() : unmount();
   });
 
@@ -209,7 +209,7 @@
   // depth from opacity, so it reads on any background. Used on the button and, so the
   // panel is identifiably ours, in the panel header.
   // Card fills are classed rather than hardcoded so the same markup can be monochrome on
-  // the coloured button and two-tone (the icon's orange + teal) on the dark panel. The
+  // the coloured button and two-tone (the icon's orange + teal) on the panel's paper. The
   // rule lines use a translucent black, which works over either fill — an earlier version
   // stroked them in the button colour, which made them vanish anywhere else.
   const MARK = `
@@ -224,28 +224,32 @@
 
   const TEMPLATE = `
     <style>
-      /* Deck Compare's own palette, mirrored from popup.html's :root so the injected UI
-         matches the extension rather than inventing a look. Values are inlined because
-         the host page never sees those custom properties. */
+      /* Two surfaces, two treatments. The button sits on someone else's page: black with a
+         light hairline and the two-tone icon, so it reads as "added by the extension" on
+         any site (CLAUDE.md). The panel it opens is ours — a sheet of "The Memo", the world
+         of theme.css and the popup: cream paper, warm ink, teal for the one action, red for
+         the alarm only. Its tokens are copied here because the host page never sees
+         theme.css's custom properties; keep the two in step. */
       :host {
-        --dc-brand: #e0654a;
-        --dc-brand-btn: #b8402c; --dc-brand-btn-hi: #c74a33;   /* panel CTA (inside our own dark panel) */
         --dc-btn: #141414; --dc-btn-hi: #1e1e1e; --dc-btn-line: rgba(255,255,255,.18);  /* on-site button */
-        --dc-card-a: #e3a24f;     /* --a, the icon's orange card */
-        --dc-card-b: #56b6c9;     /* --b, the icon's teal card   */
-        --dc-felt: #17120d; --dc-felt-lit: #201a13; --dc-felt-deep: #0d0a06;
-        --dc-raised: #2a221a;
-        --dc-tx-hi: #f4eee3; --dc-tx: #c9bfad; --dc-tx-mut: #9a8f7c;
-        --dc-line: rgba(244,238,227,0.13);
-        --dc-lift: 0 2px 4px rgba(0,0,0,.5), 0 8px 20px rgba(0,0,0,.42);
-        --dc-press: inset 0 2px 5px rgba(0,0,0,.66);
+        --dc-card-a: #e3a24f;     /* the icon's orange card (the icon keeps its own amber) */
+        --dc-card-b: #56b6c9;     /* the icon's teal card   */
+        /* the memo — mirrored from theme.css :root */
+        --dc-bg: #f8f5f2; --dc-bg-deep: #efe9e3; --dc-elev: #ffffff;
+        --dc-ink: #241c18; --dc-ink-2: #5e524b; --dc-ink-3: #7a6d64;
+        --dc-line: #e8dfd8; --dc-line-strong: #d6c9bf;
+        --dc-a: #a8540f; --dc-b: #137083; --dc-b-hi: #0f5d6d; --dc-brand: #8a1f16;
+        --dc-lift: 0 6px 12px rgba(36,28,24,.06), 0 24px 56px rgba(36,28,24,.14);
+        --dc-brand-lift: 0 2px 10px rgba(19,112,131,.30);
+        --dc-font: "Archivo", system-ui, -apple-system, "Segoe UI", Helvetica, sans-serif;
+        --dc-font-mark: "Bricolage Grotesque", "Archivo", system-ui, sans-serif;
       }
       :host, * { box-sizing: border-box; }
       .fab {
         display: flex; align-items: center; gap: 8px;
         font: 600 13px/1.2 system-ui, -apple-system, "Segoe UI", sans-serif;
         color: #fff; background: var(--dc-btn); border: 1px solid var(--dc-btn-line); border-radius: 999px;
-        padding: 11px 16px; cursor: pointer; box-shadow: var(--dc-lift);
+        padding: 11px 16px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,.5), 0 8px 20px rgba(0,0,0,.42);
       }
       .fab:hover { background: var(--dc-btn-hi); }
       .fab svg { width: 15px; height: 15px; flex: none; }
@@ -269,47 +273,77 @@
         border-radius: 3px; padding: 0 7px; font-size: 11px; gap: 5px;
       }
       :host(.compact) .fab svg { width: 12px; height: 12px; }
+
+      /* --- the panel: a sheet of the memo laid over the host page ------------------- */
       .panel {
-        position: fixed; z-index: 2147483647; width: 290px;
-        background: var(--dc-felt-lit); color: var(--dc-tx-hi); border: 1px solid var(--dc-line);
-        border-radius: 6px; padding: 14px; box-shadow: var(--dc-lift);
-        font: 400 13px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+        position: fixed; z-index: 2147483647; width: 300px;
+        background: var(--dc-bg); color: var(--dc-ink-2);
+        border: 1px solid var(--dc-line-strong); border-radius: 14px;
+        padding: 14px 16px 16px; box-shadow: var(--dc-lift);
+        font: 400 13px/1.5 var(--dc-font); -webkit-font-smoothing: antialiased;
+        text-align: left; color-scheme: light;   /* the native select stays light on dark sites */
       }
       .panel[hidden] { display: none; }
-      .row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+      .row {
+        display: flex; align-items: center; justify-content: space-between; gap: 8px;
+        padding-bottom: 10px; margin-bottom: 12px; border-bottom: 1px solid var(--dc-line);
+      }
       /* The panel has to say whose it is — on a host site it is otherwise an unexplained
-         popup. Same wordmark as the toolbar popup: Deck + bold Compare. */
-      .brand { display: flex; align-items: center; gap: 7px; }
-      .brand svg { width: 17px; height: 17px; flex: none; }
-      .brand-name { font-size: 13px; font-weight: 500; color: var(--dc-tx-hi); letter-spacing: .01em; }
-      .brand-name b { font-weight: 700; }
+         popup. The locked wordmark, as in the popup: the icon, "Deck" warm, bold "Compare" cool. */
+      .brand { display: flex; align-items: center; gap: 8px; min-width: 0; }
+      .brand svg { width: 18px; height: 18px; flex: none; }
+      .brand-name { font: 700 14px/1 var(--dc-font-mark); letter-spacing: -0.01em; color: var(--dc-a); }
+      .brand-name b { color: var(--dc-b); font-weight: 800; }
+      .x {
+        flex: none; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 999px;
+        background: none; color: var(--dc-ink-3); cursor: pointer;
+        display: inline-flex; align-items: center; justify-content: center;
+      }
+      .x svg { width: 14px; height: 14px; }
+      .x:hover { color: var(--dc-ink); background: var(--dc-bg-deep); }
+      /* The printed name over the field: the popup's "Deck 2 · compare with" mark, teal
+         pip and all — the deck you type here is side B. */
       .title {
-        font-size: 10.5px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;
-        color: var(--dc-tx-mut); margin-bottom: 10px;
+        display: flex; align-items: center; gap: 7px; margin-bottom: 10px;
+        font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
+        color: var(--dc-b);
       }
-      .x { border: 0; background: none; color: var(--dc-tx-mut); cursor: pointer; padding: 2px; display: inline-flex; }
-      .x svg { width: 15px; height: 15px; }
-      .x:hover { color: var(--dc-tx-hi); }
+      .title .pip { width: 6px; height: 6px; border-radius: 50%; background: var(--dc-b); flex: none; }
+      /* Fields are white sheets with a hairline; focus is the teal ring, as in theme.css. */
       select, input {
-        width: 100%; font: inherit; color: var(--dc-tx-hi); background: var(--dc-felt-deep);
-        border: 1px solid var(--dc-line); border-radius: 4px; padding: 8px 10px; margin-bottom: 8px;
-        box-shadow: var(--dc-press);
+        display: block; width: 100%; margin: 0 0 8px; padding: 10px 14px;
+        font: 400 13px/1.3 var(--dc-font); color: var(--dc-ink); background: var(--dc-elev);
+        border: 1px solid var(--dc-line-strong); border-radius: 10px; outline: none;
+        transition: border-color .12s, box-shadow .12s;
       }
-      select:focus, input:focus { outline: 2px solid var(--dc-card-a); outline-offset: -1px; }
+      input::placeholder { color: var(--dc-ink-3); }
+      select:focus, input:focus { border-color: var(--dc-b); box-shadow: inset 0 0 0 1px var(--dc-b); }
+      select {
+        appearance: none; -webkit-appearance: none; padding-right: 36px; cursor: pointer;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a6d64' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>");
+        background-repeat: no-repeat; background-position: right 12px center; background-size: 14px;
+      }
       select[hidden] { display: none; }
+      /* The one action: the popup's teal pill, the only coloured shadow on the sheet. */
       .go {
-        width: 100%; font: 600 13px/1 system-ui, sans-serif; color: #fff;
-        background: var(--dc-brand-btn); border: 0; border-radius: 4px; padding: 10px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; gap: 7px; width: 100%;
+        font: 600 13px/1 var(--dc-font); color: #fff; background: var(--dc-b);
+        border: 1px solid var(--dc-b); border-radius: 999px; padding: 11px 18px; cursor: pointer;
+        box-shadow: var(--dc-brand-lift);
+        transition: transform .16s cubic-bezier(.22,1,.36,1), box-shadow .16s, background .16s;
       }
-      .go:hover:not(:disabled) { background: var(--dc-brand-btn-hi); }
-      .go:disabled { opacity: .55; cursor: default; }
+      .go svg { width: 14px; height: 14px; flex: none; }
+      .go:hover:not(:disabled) { background: var(--dc-b-hi); border-color: var(--dc-b-hi); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(19,112,131,.36); }
+      .go:active:not(:disabled) { transform: none; box-shadow: var(--dc-brand-lift); }
+      .go:disabled { opacity: .45; cursor: default; box-shadow: none; }
+      .x:focus-visible, .go:focus-visible { outline: 2px solid var(--dc-b); outline-offset: 2px; }
       /* Collapses entirely when there is nothing to say. It used to reserve a line to
          avoid a jump when a status appears, but that left dead space under the button
          for the whole time the panel is idle — which is most of it. */
-      .msg { margin-top: 8px; font-size: 12px; color: var(--dc-tx-mut); }
+      .msg { margin-top: 10px; font-size: 12px; color: var(--dc-ink-3); }
       .msg:empty { display: none; }
-      /* popup.html styles #status.error with --brand-hi; same convention here. */
-      .msg.err { color: var(--dc-brand); }
+      .msg.err { color: var(--dc-brand); }   /* red is the alarm only, as everywhere in the memo */
+      @media (prefers-reduced-motion: reduce) { .go, select, input { transition: none; } }
     </style>
     <button class="fab" part="fab" aria-expanded="false" aria-haspopup="dialog">
       ${MARK}
@@ -320,10 +354,10 @@
         <span class="brand">${MARK}<span class="brand-name">Deck<b>Compare</b></span></span>
         <button class="x" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       </div>
-      <div class="title"></div>
+      <div class="title"><span class="pip"></span><span class="title-text"></span></div>
       <select hidden></select>
       <input type="text" />
-      <button class="go"></button>
+      <button class="go"><span class="go-label"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
       <div class="msg"></div>
     </div>`;
 
@@ -335,11 +369,11 @@
     const select = $('select'), go = $('.go'), msg = $('.msg');
 
     $('.fab-label').textContent = M('compare');
-    $('.title').textContent = M('injectPanelTitle');
+    $('.title-text').textContent = M('injectPanelTitle');
     input.placeholder = M('pasteADeckUrl');
     input.setAttribute('aria-label', M('pasteADeckUrl'));
     select.setAttribute('aria-label', M('selectDeck'));
-    go.textContent = M('compare');
+    $('.go-label').textContent = M('compare');
 
     const setMsg = (text, isErr) => { msg.textContent = text; msg.className = isErr ? 'msg err' : 'msg'; };
 
@@ -347,7 +381,7 @@
     // or stacking context on the host page can clip it. Clamped to stay on screen.
     function placePanel() {
       const b = fab.getBoundingClientRect();
-      const w = 290, margin = 8;
+      const w = panel.offsetWidth || 300, margin = 8;
       const left = Math.min(Math.max(margin, b.right - w), innerWidth - w - margin);
       const below = b.bottom + margin;
       const fitsBelow = below + panel.offsetHeight <= innerHeight - margin;
