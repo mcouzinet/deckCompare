@@ -88,7 +88,7 @@ Name: Deck Compare — MTG. Published on the Chrome Web Store.
 
 ## Evidence on Hand
 
-- Live product on the Chrome Web Store; v1.0.0 tagged and submitted.
+- Live product on the Chrome Web Store: v1.0.13, live since 2026-09-05 (the tagged v1.0.0 was withdrawn before publication); the 1.1 line is in progress.
 - Real card data and imagery via the Scryfall API (`image_uris`, type lines).
 - Unit tests over the eight site parsers with fixtures in `test/fixtures/`.
 - A design critique snapshot at `.impeccable/critique/` scoring the pre-v1 UI 20/40.

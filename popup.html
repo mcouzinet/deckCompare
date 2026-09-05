@@ -168,8 +168,7 @@
     }
     .hint-configure svg { width: 15px; height: 15px; flex: none; }
     .hint-configure:hover { color: var(--b); border-color: var(--b); background: var(--elev); }
-    /* .hint-configure sets display:flex, which would beat the UA's [hidden] rule */
-    [hidden] { display: none !important; }
+    .hint-configure[hidden] { display: none; }   /* its display:flex would beat the UA's [hidden] rule */
 
     /* --- pool, a second brief ------------------------------------------------------ */
     .pool-entry {

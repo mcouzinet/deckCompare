@@ -52,7 +52,7 @@ document.getElementById('settings-loadfrom-label').textContent = chrome.i18n.get
 document.getElementById('settings-inject-label').textContent = chrome.i18n.getMessage('settingsInjectLabel');
 document.getElementById('settings-inject-hint').textContent = chrome.i18n.getMessage('settingsInjectHint');
 document.getElementById('inject-grant-text').textContent = chrome.i18n.getMessage('injectGrantMox');
-document.getElementById('inject-grant-main-text').textContent = chrome.i18n.getMessage('injectGrantMox');
+document.getElementById('inject-grant-main-text').textContent = chrome.i18n.getMessage('injectGrantHere');
 document.getElementById('onboarding-title').textContent = chrome.i18n.getMessage('onboardingTitle');
 document.getElementById('onboarding-step1').textContent = chrome.i18n.getMessage('onboardingStep1');
 document.getElementById('onboarding-step2').textContent = chrome.i18n.getMessage('onboardingStep2');
@@ -324,35 +324,44 @@ const OPTIONAL_ORIGINS = Shared.OPTIONAL_SCRIPTS.map(s => s.origin);
 // without a reload (registerContentScripts only applies to later loads, and the storage
 // listener that mounts the button live only fires where the script already runs), and the
 // page whose popup should offer the grant.
-const onOptionalHost = (url) => {
-  if (!url) return false;
-  let host;
-  try { host = new URL(url).hostname; } catch (_) { return false; }
-  return OPTIONAL_ORIGINS.some(o => Shared.originMatchesHost(o, host));
-};
+const onOptionalHost = (url, origins = OPTIONAL_ORIGINS) => Shared.isOptionalHost(url, origins);
 
 // "Allow the button on Moxfield" shows only while the button is on and those hosts are not
 // granted — the one state where a supported deck page carries no button. Under the toggle
 // always; on the main view only when this very tab is such a page.
+// One check per origin, as background.js registers per origin: after a partial revoke
+// (one twin host removed under Site access) Moxfield must not be re-offered when it works.
+async function missingOptionalOrigins() {
+  const checks = await Promise.all(OPTIONAL_ORIGINS.map(async (o) => {
+    try { return (await chrome.permissions.contains({ origins: [o] })) ? null : o; } catch (_) { return o; }
+  }));
+  return checks.filter(Boolean);
+}
 async function refreshInjectGrant() {
-  let granted = false;
-  try { granted = await chrome.permissions.contains({ origins: OPTIONAL_ORIGINS }); } catch (_) {}
-  const missing = settingsInject.checked && !granted;
-  injectGrant.hidden = !missing;
-  injectGrantMain.hidden = !(missing && detectedSite && onOptionalHost(currentTab?.url));
+  const missing = settingsInject.checked ? await missingOptionalOrigins() : [];
+  injectGrant.hidden = !missing.length;
+  // The main-view offer says "this site": only when this tab's own host is among the missing.
+  injectGrantMain.hidden = !(missing.length && detectedSite && onOptionalHost(currentTab?.url, missing));
 }
 
-async function requestInjectGrant() {
+// The optional origins that cover the current tab — what an "on this site" grant needs.
+const currentTabOrigins = () => OPTIONAL_ORIGINS.filter(o => Shared.isOptionalHost(currentTab?.url, [o]));
+
+// Requesting a subset keeps Chrome's dialog honest: the main-view button says "this site",
+// so it asks for this tab's host only; the Settings button turns the button on everywhere it
+// can go, so it asks for all of them. Both run from a click — Chrome grants no other way.
+async function requestInjectGrant(origins = OPTIONAL_ORIGINS) {
+  if (!origins.length) origins = OPTIONAL_ORIGINS;
   let granted = false;
-  try { granted = await chrome.permissions.request({ origins: OPTIONAL_ORIGINS }); }
+  try { granted = await chrome.permissions.request({ origins }); }
   catch (_) { granted = false; }
   if (granted) setStatus(onOptionalHost(currentTab?.url) ? chrome.i18n.getMessage('injectReload') : '');
   else setStatus(chrome.i18n.getMessage('injectDeclined'), true);
   await refreshInjectGrant();
 }
 
-injectGrant.addEventListener('click', requestInjectGrant);
-injectGrantMain.addEventListener('click', requestInjectGrant);
+injectGrant.addEventListener('click', () => requestInjectGrant());                    // Settings: every optional host
+injectGrantMain.addEventListener('click', () => requestInjectGrant(currentTabOrigins())); // main view: just this site
 
 settingsInject.addEventListener('change', async () => {
   if (!settingsInject.checked) {

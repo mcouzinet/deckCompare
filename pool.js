@@ -47,7 +47,6 @@
     $("intro").classList.toggle("hide", hasPool);
     const showFields = !hasPool || inputExpanded;
     $("input-fields").classList.toggle("hide", !showFields);
-    $("add-toggle").classList.toggle("hide", !hasPool || inputExpanded);
     $("fields-close").classList.toggle("hide", !(hasPool && inputExpanded));
     const asModal = hasPool && inputExpanded;
     $("input-panel").classList.toggle("modal-open", asModal);
@@ -422,7 +421,14 @@
     const count = filters.length ? `${activeIdx.length}/${pooledDecks.length}` : String(pooledDecks.length);
     // Header stays pinned; only the deck rows (.dp-list) scroll, so a 100-deck pool can't
     // push the card preview below the fold. Errors sit under the scroll area, still in view.
-    const head = `<div class="dp-head">${M("poolDecksInPool")} <span class="dp-c">${count}</span></div>`;
+    // "+ Add" lives with the list it feeds, pinned in the head: the input opens as a popin
+    // now, so the full-width dashed bar that used to sit above the hero had no job left.
+    // Only once there is a pool — while it is empty the inline form is already on screen.
+    const PLUS = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg>`;
+    const add = pooledDecks.length
+      ? `<button type="button" class="dp-add" title="${M("poolAddDecksBtn")}" aria-label="${M("poolAddDecksBtn")}">${PLUS}${M("poolAddDecksShort")}</button>`
+      : "";
+    const head = `<div class="dp-head">${M("poolDecksInPool")} <span class="dp-c">${count}</span>${add}</div>`;
     const rows = pooledDecks.map((d, i) => {
       const name = esc(deckDisplayName(d));
       const off = !kept.has(i);
@@ -617,6 +623,19 @@
     const cards = kind === "shared" ? analysis.cardStats.filter(inEveryDeck) : analysis.cardStats;
     return cards.map((c) => c.name);
   }
+  // The two stats share one live region. Clearing it and writing on the next task makes a
+  // repeat announce (same-task clear+set coalesces into "no change"); one timer owns the reset,
+  // so a second copy 0.5 s after the first is announced and not cut short by the first flash.
+  let statusTimer;
+  function announce(text) {
+    const status = $("hero-status");
+    status.textContent = "";
+    clearTimeout(statusTimer);
+    statusTimer = setTimeout(() => {
+      status.textContent = text;
+      statusTimer = setTimeout(() => { status.textContent = ""; }, 1200);
+    }, 50);
+  }
   const statFlash = {};   // kind -> the timer that ends its "copied!" flash (a re-click re-arms it)
   function copyStat(el) {
     const kind = el.dataset.copystat;
@@ -629,14 +648,13 @@
         el.classList.add("copied");
         label.textContent = M("poolCopiedLabel");
       }
-      $("hero-status").textContent = M("poolCopiedLabel");   // the same word, for screen readers
+      announce(M("poolCopiedLabel"));   // the same word, for screen readers
       clearTimeout(statFlash[kind]);
       statFlash[kind] = setTimeout(() => {
         label.textContent = el.dataset.label;
         delete el.dataset.label;
         el.classList.remove("copied");
         el.style.minWidth = "";
-        $("hero-status").textContent = "";
       }, 1200);
     });
   }
@@ -657,7 +675,6 @@
     $("topbar-meta").textContent = M("poolAnalysis");
     $("intro-title").textContent = M("poolAnalysis");
     $("intro-sub").textContent = M("poolIntro");
-    $("add-toggle").textContent = M("poolAddDecksBtn");
     $("fields-close").title = M("poolCloseInput");
     $("tabpick-label").textContent = M("openTabsLabel");
     $("links-label").textContent = M("poolLinksLabel");
@@ -676,11 +693,16 @@
       const item = e.target.closest(".tabpick-item");
       if (item) stageTabUrl(item.dataset.tabUrl);
     });
-    $("add-toggle").addEventListener("click", () => { inputExpanded = true; applyInputState(); $("urls").focus(); });
-    $("fields-close").addEventListener("click", () => { inputExpanded = false; applyInputState(); });
-    $("modal-backdrop").addEventListener("click", () => { inputExpanded = false; applyInputState(); });
+    // The "+ Add" pill is re-rendered with the deck panel (innerHTML), so the panel — which
+    // persists — listens for it; closing the popin hands focus back to that pill.
+    const closeAdd = () => { inputExpanded = false; applyInputState(); $("deck-panel").querySelector(".dp-add")?.focus(); };
+    $("deck-panel").addEventListener("click", (e) => {
+      if (e.target.closest(".dp-add")) { inputExpanded = true; applyInputState(); $("urls").focus(); }
+    });
+    $("fields-close").addEventListener("click", closeAdd);
+    $("modal-backdrop").addEventListener("click", closeAdd);
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && pooledDecks.length && inputExpanded) { inputExpanded = false; applyInputState(); }
+      if (e.key === "Escape" && pooledDecks.length && inputExpanded) closeAdd();
     });
     updateCount();
     applyInputState();

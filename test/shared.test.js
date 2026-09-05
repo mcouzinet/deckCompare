@@ -121,3 +121,25 @@ test("injectEnabled: the in-page button is on unless explicitly switched off (1.
   assert.equal(injectEnabled(true), true);
   assert.equal(injectEnabled(false), false);      // the only value that removes the button
 });
+
+test("isOptionalHost: only the optional origins (Moxfield, the non-www twins) need a granted permission", () => {
+  const { isOptionalHost } = require("../shared.js");
+  assert.equal(isOptionalHost("https://www.moxfield.com/decks/abc"), true);
+  assert.equal(isOptionalHost("https://mtggoldfish.com/deck/1"), true);        // bare twin: optional
+  assert.equal(isOptionalHost("https://www.mtggoldfish.com/deck/1"), false);   // declared statically
+  assert.equal(isOptionalHost("https://www.moxfield.com/decks/abc", ["https://mtgtop8.com/*"]), false);  // restricted set
+  assert.equal(isOptionalHost(undefined), false);
+  assert.equal(isOptionalHost("not a url"), false);
+});
+
+test("injectResetOnUpdate: an update from any pre-1.1 build clears the toggle, a 1.1.x reload keeps it", () => {
+  const { injectResetOnUpdate } = require("../shared.js");
+  assert.equal(injectResetOnUpdate("1.0.13"), true);    // the live version: its `false` may be a declined prompt
+  assert.equal(injectResetOnUpdate("1.0.0"), true);
+  assert.equal(injectResetOnUpdate("0.9.0"), true);
+  assert.equal(injectResetOnUpdate("1.1.1"), false);    // dev iteration within the 1.1 line
+  assert.equal(injectResetOnUpdate("1.2.0"), false);
+  assert.equal(injectResetOnUpdate("2.0.0"), false);
+  assert.equal(injectResetOnUpdate(undefined), false);  // reason "install" carries no previousVersion
+  assert.equal(injectResetOnUpdate("garbage"), false);
+});

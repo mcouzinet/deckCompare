@@ -80,6 +80,16 @@
   // one definition, so "absent" cannot mean on in one file and off in another.
   const INJECT_KEY = "injectButton";
   const injectEnabled = (value) => value !== false;
+  // 1.1 turned the button on by default. A 1.0.x install can hold a stored `false` that was
+  // never a choice (1.0.13 also wrote it when the Moxfield permission prompt was declined),
+  // and the two cannot be told apart — so an update from any pre-1.1 build clears the key
+  // once: everyone gets the button, and switching it off is again one click away. A dev
+  // reload within the 1.1 line (1.1.1 → 1.1.2) keeps the setting.
+  const injectResetOnUpdate = (previousVersion) => {
+    const [major, prod] = String(previousVersion || "").split(".").map(Number);
+    if (!Number.isFinite(major) || !Number.isFinite(prod)) return false;
+    return major < 1 || (major === 1 && prod < 1);
+  };
 
   // ---- optional page access (single source of truth) ----
   // background.js registers/unregisters these content scripts as their origin is
@@ -106,6 +116,16 @@
       return hostname === base || hostname.endsWith("." + base);
     }
     return hostname === h;
+  }
+
+  // True when `url` sits on one of the optional origins — by default every OPTIONAL_SCRIPTS
+  // entry, or the subset passed in (e.g. the ones still ungranted). These are the deck pages
+  // where the in-page button needs a granted permission before it can appear.
+  function isOptionalHost(url, origins = OPTIONAL_SCRIPTS.map((s) => s.origin)) {
+    if (!url) return false;
+    let host;
+    try { host = new URL(url).hostname; } catch (_) { return false; }
+    return origins.some((o) => originMatchesHost(o, host));
   }
 
   // ---- saved decks (written by the popup's Settings panel) ----
@@ -169,7 +189,7 @@
 
   const api = {
     fixCommanderHeuristic, sumBoard, normalizeName, cacheRead, cacheMerge,
-    setDocumentLang, OPTIONAL_SCRIPTS, originMatchesHost, INJECT_KEY, injectEnabled,
+    setDocumentLang, OPTIONAL_SCRIPTS, originMatchesHost, isOptionalHost, INJECT_KEY, injectEnabled, injectResetOnUpdate,
     SUPPORTED_SITES, getOpenDeckTabs,
     DECK_SOURCE_IDS, getSavedDecks, populateSavedDeckSelect
   };

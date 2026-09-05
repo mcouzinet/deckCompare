@@ -243,7 +243,7 @@ Pills for anything you press or select (999px). Sheets are rounded like paper: 1
 - **Primary (`.mat-btn--go`):** Action Teal, white text, the action lift; hover to Action Deep.
 - **Flat (`.mat-btn--flat`):** no edge until reached for; hover fills Paper Well.
 - **Icon (`.mat-btn--icon`):** the same pill at 10px padding — the popup's settings gear, the pool's close.
-- **Dashed (`.add-toggle`, `.hint-configure`):** a dashed Hairline Strong pill or sheet for "add" affordances.
+- **Dashed (`.dp-add`, `.hint-configure`):** a dashed Hairline Strong pill or sheet for "add" affordances.
 
 ### Segments
 - **Style:** a white pill group with a Hairline edge and 3px padding.

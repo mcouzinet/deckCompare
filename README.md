@@ -14,7 +14,8 @@ Chrome extension to compare Magic: The Gathering decklists side by side, across 
 - **Cross-site comparison** — compare a Moxfield deck against an mtgtop8 list, etc.
 - **In-page Compare button** *(on by default)* — adds a Compare button to each site's own
   toolbar, so a comparison starts without opening the popup. Switch it off under the gear
-  icon → *Compare button on deck sites*; Moxfield needs one extra click there to allow it.
+  icon → *Compare button on deck sites*; Moxfield needs one extra click to allow it (in
+  Settings, or in the popup itself when it opens on a Moxfield tab).
 - **Your own decks** — enter your username under the gear icon and load your public decks
   from Moxfield, Archidekt or Magic-Ville; the Deck 2 field then searches all of them
 - **Board filters** — All / Commanders / Mainboard / Sideboard, with every figure on the
@@ -39,8 +40,9 @@ Chrome extension to compare Magic: The Gathering decklists side by side, across 
 ### Permissions
 
 The extension asks only for the sites it reads decks from, and the in-page button works
-there out of the box. A few hosts are optional and asked for from the Settings panel, and
-only then: Moxfield's own pages (its decks come from `api2.moxfield.com`, so the page itself
+there out of the box. A few hosts are optional and only ever asked for on a click — from the
+Settings panel, or from the popup when it opens on such a page — never at install: Moxfield's
+own pages (its decks come from `api2.moxfield.com`, so the page itself
 was never needed) and the www/non-www twins of sites declared under a single form. Declining
 costs you the button on those hosts and nothing else; switching the button off revokes them.
 

@@ -1,6 +1,15 @@
 // Service worker – handles deck fetching from APIs (avoids CORS)
 importScripts('shared.js', 'parsers.js');
 
+// 1.1 turned the in-page button on by default: an update from any pre-1.1 build drops the
+// stored toggle once (Shared.injectResetOnUpdate says why a stored `false` from 1.0.x cannot
+// be trusted). An absent key reads as "on" everywhere; Settings still switches it off.
+chrome.runtime.onInstalled.addListener(({ reason, previousVersion }) => {
+  if (reason === 'update' && Shared.injectResetOnUpdate(previousVersion)) {
+    chrome.storage.local.remove(Shared.INJECT_KEY);
+  }
+});
+
 // --- Dev-build marker -------------------------------------------------------
 // Chrome injects `update_url` into the manifest of Web Store installs; an unpacked
 // (locally loaded) extension has none. Used to make a local build unmistakable, so

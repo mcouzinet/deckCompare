@@ -9,12 +9,13 @@ decks. Pas de build : Chrome charge le dossier tel quel. Tests : `npm test` (nod
 `manifest.json` suit **`major.prod.dev`** :
 
 - **major** — release majeure/cassante.
-- **prod** — numéro de la version de production. **Reste `0` tant que cette version prod n'est
-  pas réellement publiée sur le Chrome Web Store.**
+- **prod** — numéro de la ligne de production en cours. **Il n'avance d'un que lorsqu'on ouvre la
+  ligne suivante après une publication sur le Chrome Web Store** ; la version publiée part telle
+  quelle (1.0.13 en ligne → l'arbre passe à `1.1.<dev>`).
 - **dev** — compteur d'itérations de dev. **On le bumpe à CHAQUE lot de modifs que l'utilisateur
   va tester dans le navigateur.**
 
-État au 2026-09-05 : **`1.1.1`** dans l'arbre de travail. La **1.0.13** est publiée sur le Chrome
+État au 2026-09-05 : **`1.1.3`** dans l'arbre de travail (1.1.1 = `b7c4dbf`). La **1.0.13** est publiée sur le Chrome
 Web Store (la v1.0.0 taguée le 2026-09-02 n'a jamais été mise en ligne) : c'est la baseline
 permissions. La ligne suivante se lit `1.1.<dev>` (1.1.1, 1.1.2…) jusqu'à sa publication ;
 `prod` avance d'un quand on ouvre une nouvelle ligne, pas au moment de la publication (la

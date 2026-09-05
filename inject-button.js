@@ -205,13 +205,11 @@
   // --- markup (inside the shadow root, so these class names are private) ---
 
   // The extension's two-overlapping-cards mark, redrawn as inline SVG so it stays sharp
-  // at any size and needs no web_accessible_resources. Monochrome (currentColor) with
-  // depth from opacity, so it reads on any background. Used on the button and, so the
-  // panel is identifiably ours, in the panel header.
-  // Card fills are classed rather than hardcoded so the same markup can be monochrome on
-  // the coloured button and two-tone (the icon's orange + teal) on the panel's paper. The
-  // rule lines use a translucent black, which works over either fill — an earlier version
-  // stroked them in the button colour, which made them vanish anywhere else.
+  // at any size and needs no web_accessible_resources. Two-tone wherever it appears — the
+  // icon's orange and teal cards, filled through the .c-back/.c-front classes — with rule
+  // lines in a translucent black that reads over either fill (an earlier version stroked
+  // them in the button colour, which made them vanish anywhere else). Used on the button
+  // and, so the panel is identifiably ours, in the panel header.
   const MARK = `
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <rect class="c-back" x="3.2" y="5" width="9.6" height="14" rx="2.2"
@@ -228,8 +226,10 @@
          light hairline and the two-tone icon, so it reads as "added by the extension" on
          any site (CLAUDE.md). The panel it opens is ours — a sheet of "The Memo", the world
          of theme.css and the popup: cream paper, warm ink, teal for the one action, red for
-         the alarm only. Its tokens are copied here because the host page never sees
-         theme.css's custom properties; keep the two in step. */
+         the alarm only — set in the host's system font, because a content script cannot load
+         web fonts (no web_accessible_resources, and @font-face is per document, not per shadow
+         root); only the palette and shapes travel. Those tokens are copied here because the
+         host page never sees theme.css's custom properties; keep the two in step. */
       :host {
         --dc-btn: #141414; --dc-btn-hi: #1e1e1e; --dc-btn-line: rgba(255,255,255,.18);  /* on-site button */
         --dc-card-a: #e3a24f;     /* the icon's orange card (the icon keeps its own amber) */
@@ -241,8 +241,8 @@
         --dc-a: #a8540f; --dc-b: #137083; --dc-b-hi: #0f5d6d; --dc-brand: #8a1f16;
         --dc-lift: 0 6px 12px rgba(36,28,24,.06), 0 24px 56px rgba(36,28,24,.14);
         --dc-brand-lift: 0 2px 10px rgba(19,112,131,.30);
-        --dc-font: "Archivo", system-ui, -apple-system, "Segoe UI", Helvetica, sans-serif;
-        --dc-font-mark: "Bricolage Grotesque", "Archivo", system-ui, sans-serif;
+        --dc-font: system-ui, -apple-system, "Segoe UI", Helvetica, sans-serif;
+        --dc-font-mark: var(--dc-font);
       }
       :host, * { box-sizing: border-box; }
       .fab {
@@ -253,11 +253,9 @@
       }
       .fab:hover { background: var(--dc-btn-hi); }
       .fab svg { width: 15px; height: 15px; flex: none; }
-      /* Two-tone brand icon on the black button — the colour lives in the icon now. */
-      .fab .c-back { fill: var(--dc-card-a); }
-      .fab .c-front { fill: var(--dc-card-b); }
-      .brand .c-back { fill: var(--dc-card-a); }
-      .brand .c-front { fill: var(--dc-card-b); }
+      /* The brand mark is two-tone on both surfaces — the colour lives in the icon. */
+      .c-back { fill: var(--dc-card-a); }
+      .c-front { fill: var(--dc-card-b); }
       /* Inline mode: sit in the site's own action bar. Deliberately keeps our brand
          colour instead of mimicking the site's buttons — the button must read as
          "added by the extension", not as a native feature of the page. */
@@ -292,7 +290,7 @@
          popup. The locked wordmark, as in the popup: the icon, "Deck" warm, bold "Compare" cool. */
       .brand { display: flex; align-items: center; gap: 8px; min-width: 0; }
       .brand svg { width: 18px; height: 18px; flex: none; }
-      .brand-name { font: 700 14px/1 var(--dc-font-mark); letter-spacing: -0.01em; color: var(--dc-a); }
+      .brand-name { font: 700 15px/1 var(--dc-font-mark); letter-spacing: -0.01em; color: var(--dc-a); }
       .brand-name b { color: var(--dc-b); font-weight: 800; }
       .x {
         flex: none; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 999px;
@@ -396,7 +394,9 @@
     const setOpen = (open, returnFocus = true) => {
       panel.hidden = !open;
       fab.setAttribute('aria-expanded', String(open));
-      if (open) { fillSavedDecks(select); placePanel(); input.focus(); }
+      // The saved-deck picker resolves later and may un-hide the <select>: place the panel
+      // now so it appears at once, then again when the sheet has its final height.
+      if (open) { placePanel(); input.focus(); fillSavedDecks(select).then(() => { if (!panel.hidden) placePanel(); }); }
       else if (returnFocus) fab.focus();
     };
 

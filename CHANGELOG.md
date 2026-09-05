@@ -3,8 +3,9 @@
 Toutes les modifications notables de **Deck Compare — MTG** sont consignées ici.
 Le format s'inspire de [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 Les versions du manifeste suivent le schéma **`major.prod.dev`** (voir `CLAUDE.md`) : `prod`
-avance d'un à chaque nouvelle ligne publiée sur le Web Store (1.0.13 en ligne → la suivante
-se lit `1.1.<dev>`), `dev` est bumpé à chaque itération testée.
+avance d'un quand on ouvre la ligne qui suit une publication sur le Web Store, jamais au moment
+de publier (1.0.13 partie telle quelle → la suivante se lit `1.1.<dev>`) ; `dev` est bumpé à
+chaque itération testée.
 
 ## [Non publié]
 
@@ -24,14 +25,35 @@ se lit `1.1.<dev>`), `dev` est bumpé à chaque itération testée.
   est désormais là dès l'installation sur les sites dont l'extension lit déjà les pages, et
   le réglage sert à le retirer. Moxfield et les variantes sans www demandent une autorisation
   que Chrome n'accorde que sur un clic : elle se donne depuis les Réglages (« Autoriser le
-  bouton sur Moxfield »), ou depuis le popup ouvert sur un onglet Moxfield ; refuser ne coûte
-  que ces sites, plus tout le bouton comme avant. Ceux qui avaient décoché la case gardent
-  leur choix.
+  bouton sur Moxfield »), ou depuis le popup ouvert sur l'un de ces sites (« Autoriser le
+  bouton sur ce site ») ; refuser ne coûte que ces sites, plus tout le bouton comme avant. À la
+  mise à jour depuis une 1.0.x, le réglage est remis à zéro pour tout le monde : en 1.0.13 un
+  simple refus de l'autorisation Moxfield décochait la case, et ce faux « non » ne se distingue
+  pas d'un vrai ; le bouton se retire de nouveau en un clic dans les Réglages.
 - **Le panneau « Comparer » injecté sur les sites passe au monde clair « Le mémo ».** Il
   gardait le fond noir et le CTA rouge de l'ancienne interface : désormais papier crème, encre
   chaude, wordmark orange/teal, libellé « Comparer ce deck » en teal avec sa pastille, champs en
   feuilles blanches à filet, pilule teal « Comparer → » (le rouge ne reste que pour l'erreur).
   Le bouton noir posé sur le site ne change pas.
+- **« + Ajouter des decks » rejoint l'en-tête du panneau « Decks comparés »**, en petite pilule
+  à droite, le compteur venant se coller au titre. La barre pointillée pleine largeur en tête de
+  colonne était le reste du formulaire qui se dépliait là ; depuis qu'il s'ouvre en popin,
+  l'action vit avec la liste qu'elle alimente, toujours visible dans le rail, et le commandant
+  remonte en haut de la page. À la fermeture de la popin, le focus revient sur la pilule.
+
+### Corrigé
+
+- **Panneau « Comparer » injecté** : à la première ouverture, il se plaçait avant que la liste
+  des decks enregistrés n'ajoute son champ et pouvait recouvrir le bouton flottant ; il se
+  replace une fois la liste chargée. Les polices web qu'il nommait (impossibles à charger
+  depuis un content-script) laissent place à la police système, palette du mémo conservée.
+- **Comparaison croisée** : deux copies rapprochées des stats n'étaient annoncées qu'une fois
+  aux lecteurs d'écran, et la première coupait l'annonce de la seconde.
+- **Popup** : « Autoriser le bouton sur Moxfield » s'affichait aussi sur mtgtop8, MTGGoldfish,
+  Magic-Ville et mtgdecks sans www. L'offre dit désormais « sur ce site », ne demande que
+  l'hôte de l'onglet courant (la fenêtre Chrome ne liste plus que ce site), n'apparaît que si
+  cet hôte manque vraiment (vérification origine par origine) et le refus parle de « ces
+  sites ». Le réglage, lui, demande toujours tous les hôtes optionnels d'un coup.
 
 ## [1.0.13] — 2026-09-03
 

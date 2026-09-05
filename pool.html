@@ -47,9 +47,6 @@
     .run-row { display:flex; align-items:center; justify-content:space-between; margin-top:16px; }
     .count { font-size:var(--fs-xs); color:var(--ink-3); }
     .err { color:var(--brand); font-size:var(--fs-sm); margin-top:10px; }
-    .add-toggle { width:100%; padding:12px; border:1px dashed var(--line-strong); background:transparent; color:var(--ink-2);
-      border-radius:var(--r-pill); cursor:pointer; font-family:var(--font-ui); font-weight:600; font-size:var(--fs-sm); transition:all 0.14s; box-shadow:none; }
-    .add-toggle:hover { border-color:var(--b); color:var(--b); background:var(--elev); transform:none; box-shadow:none; }
     #input-panel { position:relative; }
     .fields-close { position:absolute; top:16px; right:0; z-index:2; border:0; background:var(--elev); color:var(--ink-3);
       width:30px; height:30px; border-radius:50%; cursor:pointer; line-height:1; transition:all 0.14s; box-shadow:var(--lift-1); }
@@ -123,7 +120,13 @@
     /* The list is capped at ~7 rows and scrolls on its own; the head stays pinned, so a
        100-deck pool never pushes the held card out of the rail. */
     .dp-list { max-height:264px; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; }
-    .dp-c { margin-left:auto; font-family:var(--font-mono); background:var(--bg-deep); color:var(--ink-2); padding:1px 9px; border-radius:var(--r-pill); font-size:var(--fs-micro); letter-spacing:0; }
+    .dp-c { font-family:var(--font-mono); background:var(--bg-deep); color:var(--ink-2); padding:1px 9px; border-radius:var(--r-pill); font-size:var(--fs-micro); letter-spacing:0; }
+    /* "+ Add", the dashed add affordance, pinned at the right of the head with the list it feeds */
+    .dp-add { margin-left:auto; display:inline-flex; align-items:center; gap:4px; padding:3px 10px 3px 7px; border:1px dashed var(--line-strong);
+      background:transparent; color:var(--ink-2); border-radius:var(--r-pill); cursor:pointer; font-family:var(--font-ui); font-weight:600;
+      font-size:var(--fs-xs); letter-spacing:0; text-transform:none; line-height:1.2; transition:color .14s, border-color .14s, background .14s; }
+    .dp-add svg { width:12px; height:12px; flex:none; }
+    .dp-add:hover { border-color:var(--b); color:var(--b); background:var(--bg); }
     .dp-item { display:flex; align-items:center; gap:6px; padding:8px 10px 8px 14px; border-bottom:1px solid var(--line); }
     .dp-item:last-child { border-bottom:0; }
     .dp-item:hover { background:var(--bg); }
@@ -262,7 +265,6 @@
           <h1 id="intro-title"></h1>
           <p class="sub" id="intro-sub"></p>
         </div>
-        <button class="mat-btn add-toggle hide" id="add-toggle"></button>
         <div id="input-fields">
           <div class="tabpick hide" id="tabpick">
             <div class="tabpick-label" id="tabpick-label"></div>
