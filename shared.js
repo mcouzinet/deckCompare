@@ -32,6 +32,24 @@
     return String(name).split(/\s*\/\/?\s*/)[0].trim();
   }
 
+  // Every deck goes through here once, where it enters the app (background fetch, DOM
+  // read, pasted text, restored pool): each board is re-keyed by front-face name with
+  // quantities merged, so every consumer counts and compares on identical keys instead
+  // of each one normalizing (compare.js did, pool-analyze.js did not). Idempotent.
+  function normalizeDeck(deck) {
+    if (!deck) return deck;
+    for (const board of ["commanders", "mainboard", "sideboard"]) {
+      if (!deck[board]) continue;
+      const merged = {};
+      for (const [name, qty] of Object.entries(deck[board])) {
+        const key = normalizeName(name);
+        merged[key] = (merged[key] || 0) + qty;
+      }
+      deck[board] = merged;
+    }
+    return deck;
+  }
+
   // Deck-page URL matching, shared by every surface that scans open tabs (the popup's
   // "compare with this tab" and the pool analyzer's tab picker). `deckRe` is the strict
   // form — a deck-detail URL, not a homepage or listing — so a one-click shortcut can
@@ -188,7 +206,7 @@
   }
 
   const api = {
-    fixCommanderHeuristic, sumBoard, normalizeName, cacheRead, cacheMerge,
+    fixCommanderHeuristic, sumBoard, normalizeName, normalizeDeck, cacheRead, cacheMerge,
     setDocumentLang, OPTIONAL_SCRIPTS, originMatchesHost, isOptionalHost, INJECT_KEY, injectEnabled, injectResetOnUpdate,
     SUPPORTED_SITES, getOpenDeckTabs,
     DECK_SOURCE_IDS, getSavedDecks, populateSavedDeckSelect

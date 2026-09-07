@@ -43,6 +43,16 @@ chaque itération testée.
 
 ### Corrigé
 
+- **Un seul point de normalisation des noms de cartes.** Chaque deck est ré-indexé par le nom
+  de sa face avant à l'entrée de l'extension (lecture API, lecture de la page, texte collé,
+  pool restauré) ; la comparaison croisée comptait deux fois une carte recto/verso venue de deux
+  sources (« Life // Death » Moxfield contre « Life/Death » mtgtop8), seule la comparaison directe
+  normalisait. Les filtres par carte enregistrés suivent.
+- **Comparaison directe : la légende dit ce qu'elle compte.** « En commun · 42 » comptait des
+  exemplaires, commandant et terrains de base compris, quand la comparaison croisée affichait
+  « 27 cartes en commun » pour les deux mêmes decks : elle compte des noms distincts du deck
+  principal. Les deux calculs sont justes ; la légende de la barre affiche désormais les deux
+  mesures pour chaque segment (« 42 exemplaires · 28 cartes »).
 - **Panneau « Comparer » injecté** : à la première ouverture, il se plaçait avant que la liste
   des decks enregistrés n'ajoute son champ et pouvait recouvrir le bouton flottant ; il se
   replace une fois la liste chargée. Les polices web qu'il nommait (impossibles à charger

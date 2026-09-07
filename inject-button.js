@@ -467,7 +467,7 @@
     targetPromise.catch(() => {});
 
     setMsg(M('readingDeck'));
-    let deckA = DomParsers.parseDeckFromCurrentSite(document, location.href);
+    let deckA = Shared.normalizeDeck(DomParsers.parseDeckFromCurrentSite(document, location.href));
 
     if (!deckA || deckA._needsApiFetch || boardsEmpty(deckA)) {
       setMsg(M('fetchingApi'));

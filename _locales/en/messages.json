@@ -9,6 +9,8 @@
   "qtyMismatch":            { "message": "quantity mismatch" },
   "qtyMismatches":          { "message": "quantity mismatches" },
   "sharedCardsLabel":       { "message": "Shared cards" },
+  "copySingular":           { "message": "copy" },
+  "copyPlural":             { "message": "copies" },
   "lands":                  { "message": "Lands" },
   "creatures":              { "message": "Creatures" },
   "spells":                 { "message": "Spells" },

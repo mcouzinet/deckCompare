@@ -144,7 +144,7 @@
       const m = line.match(/^(\d+)\s*[xX]?\s+(.+)$/);
       if (m) add(deck[section], clean(m[2]), parseInt(m[1], 10));
     }
-    return Shared.fixCommanderHeuristic(deck);
+    return Shared.fixCommanderHeuristic(Shared.normalizeDeck(deck));
   }
 
   // ---- input ----
@@ -323,13 +323,13 @@
     try { stored = await chrome.storage.local.get([POOL_KEY, FILTER_KEY]); } catch (e) { return false; }
     const saved = stored && stored[POOL_KEY];
     if (!Array.isArray(saved) || !saved.length) return false;
-    pooledDecks.push(...saved);
+    pooledDecks.push(...saved.map(Shared.normalizeDeck));   // pools saved before 1.1.4 hold raw keys
     for (const d of saved) if (d._rawText) pastedTextsSeen.add(d._rawText);
     // The filters are a view on that pool: restore them with it (shape-checked — storage
     // is ours, but a stale or hand-edited entry must not break the page).
     for (const f of Array.isArray(stored[FILTER_KEY]) ? stored[FILTER_KEY] : []) {
       if (f && typeof f.name === "string" && BOARDS.includes(f.board) && (f.mode === "with" || f.mode === "without")) {
-        filters.push({ name: f.name, board: f.board, mode: f.mode });
+        filters.push({ name: Shared.normalizeName(f.name), board: f.board, mode: f.mode });
       }
     }
     inputExpanded = false;

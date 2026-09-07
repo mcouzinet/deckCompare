@@ -390,6 +390,7 @@ async function fetchDeckByUrl(url) {
   else if (url.includes('melee.gg')) deck = await fetchMeleeDeck(url);
   else if (url.includes('getpaird.io')) deck = await fetchGetpairdDeck(url);
   else throw new Error(chrome.i18n.getMessage('errUnsupportedSource'));
+  Shared.normalizeDeck(deck);
 
   // Guard: a page that yielded no cards (an archetype/listing page, or a parser
   // that silently found nothing) surfaces a clear error instead of an empty deck

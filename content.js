@@ -4,7 +4,7 @@
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === 'GET_DECKLIST') {
-    const deck = DomParsers.parseDeckFromCurrentSite(document, window.location.href);
+    const deck = Shared.normalizeDeck(DomParsers.parseDeckFromCurrentSite(document, window.location.href));
     sendResponse({ deck });
   }
   return true;

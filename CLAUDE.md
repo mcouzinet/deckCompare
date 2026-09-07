@@ -15,7 +15,7 @@ decks. Pas de build : Chrome charge le dossier tel quel. Tests : `npm test` (nod
 - **dev** — compteur d'itérations de dev. **On le bumpe à CHAQUE lot de modifs que l'utilisateur
   va tester dans le navigateur.**
 
-État au 2026-09-05 : **`1.1.3`** dans l'arbre de travail (1.1.1 = `b7c4dbf`). La **1.0.13** est publiée sur le Chrome
+État au 2026-09-05 : **`1.1.4`** dans l'arbre de travail (1.1.1 = `b7c4dbf`). La **1.0.13** est publiée sur le Chrome
 Web Store (la v1.0.0 taguée le 2026-09-02 n'a jamais été mise en ligne) : c'est la baseline
 permissions. La ligne suivante se lit `1.1.<dev>` (1.1.1, 1.1.2…) jusqu'à sa publication ;
 `prod` avance d'un quand on ouvre une nouvelle ligne, pas au moment de la publication (la
@@ -64,7 +64,9 @@ changements de permissions le font.)
   « Switch to Text ») pour lire le deck via le fetch `/mtgo?d=` indépendant de la vue.
 - **Cartes recto/verso** : la clé de comparaison est la face avant, mais le séparateur varie
   (`Life // Death` Moxfield vs `Life/Death` export MTGO mtgtop8) → `Shared.normalizeName` splitte
-  sur `/` ou ` // `. Même tolérance dans `enrich.js:nameKeys`.
+  sur `/` ou ` // `. Même tolérance dans `enrich.js:nameKeys`. Depuis 1.1.4, **`Shared.normalizeDeck`** ré-indexe
+  chaque deck à son entrée (background `fetchDeckByUrl`, `content.js`, `inject-button.js`, pool.js
+  texte collé + restauration) : ne pas re-normaliser en aval, ne pas indexer des noms bruts.
 
 Voir `CHANGELOG.md` (section « Non publié ») pour le détail du lot en cours, et
 `.claude/projects/.../memory/` pour l'historique de session.

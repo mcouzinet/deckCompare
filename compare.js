@@ -260,7 +260,7 @@
     const deckSize = Math.max(totalA, totalB, 1);
     const similarity = Math.round((sharedQty / deckSize) * 100);
 
-    return { similarity, distinctShared,
+    return { similarity, distinctShared, distinctA: uniqueA.length, distinctB: uniqueB.length,
       uniqueACount: uniqueAQty, uniqueBCount: uniqueBQty, sharedQty, qtyDiffs };
   }
 
@@ -286,9 +286,13 @@
     document.querySelector(".seam-seg.a").style.flexBasis = (M.uniqueACount / total) * 100 + "%";
     document.querySelector(".seam-seg.s").style.flexBasis = (M.sharedQty / total) * 100 + "%";
     document.querySelector(".seam-seg.b").style.flexBasis = (M.uniqueBCount / total) * 100 + "%";
-    document.getElementById("lg-a").textContent = M.uniqueACount;
-    document.getElementById("lg-s").textContent = M.sharedQty;
-    document.getElementById("lg-b").textContent = M.uniqueBCount;
+    // Two measures per segment: copies drive the bar and the score, names are what the
+    // cross-compare page counts — the same two decks used to read "42" here and "27" there.
+    const legend = (copies, names) =>
+      `<b>${copies}</b> ${chrome.i18n.getMessage(copies === 1 ? "copySingular" : "copyPlural")} · <b>${names}</b> ${chrome.i18n.getMessage(names === 1 ? "poolCardSingular" : "poolCardPlural")}`;
+    document.getElementById("lg-a").innerHTML = legend(M.uniqueACount, M.distinctA);
+    document.getElementById("lg-s").innerHTML = legend(M.sharedQty, M.distinctShared);
+    document.getElementById("lg-b").innerHTML = legend(M.uniqueBCount, M.distinctB);
   }
 
   // ===== card grids =====

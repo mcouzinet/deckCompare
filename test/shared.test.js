@@ -143,3 +143,18 @@ test("injectResetOnUpdate: an update from any pre-1.1 build clears the toggle, a
   assert.equal(injectResetOnUpdate(undefined), false);  // reason "install" carries no previousVersion
   assert.equal(injectResetOnUpdate("garbage"), false);
 });
+
+test("normalizeDeck re-keys every board by front face and merges quantities (one entry point for all sources)", () => {
+  const { normalizeDeck } = require("../shared.js");
+  const { analyzePool } = require("../pool-analyze.js");
+  const mox = normalizeDeck({ name: "A", _needsApiFetch: true, commanders: { "Raffine, Scheming Seer": 1 },
+    mainboard: { "Life // Death": 1, "Life/Death": 2, "Island": 7 }, sideboard: {} });
+  assert.deepEqual(mox.mainboard, { Life: 3, Island: 7 });
+  assert.deepEqual(mox.commanders, { "Raffine, Scheming Seer": 1 });
+  assert.equal(mox._needsApiFetch, true);                       // other fields untouched
+  assert.equal(normalizeDeck(null), null);                      // parseDeckFromCurrentSite may yield null
+  // a Moxfield deck and an mtgtop8 export share the split card once they went through it
+  const top8 = normalizeDeck({ name: "B", mainboard: { "Life/Death": 1 }, sideboard: {}, commanders: {} });
+  const stats = analyzePool([mox, top8], new Map(), [], 50).cardStats;
+  assert.deepEqual(stats.filter((c) => c.name.startsWith("Life")).map((c) => [c.name, c.deck_count]), [["Life", 2]]);
+});
