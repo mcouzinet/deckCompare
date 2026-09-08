@@ -122,3 +122,31 @@ Two new sites supported at full parity with the existing six: Melee (melee.gg) a
 **v0.8**
 
 Magic-Ville fixed (including Duel Commander commander detection), clearer error messages on unreadable pages, automated checks on supported sites.
+
+---
+
+## Media (1.1, 2026-09-08)
+
+All in the light « Le mémo » world, French UI, captured from the real 1.1 build in a driven
+Chrome for Testing with the extension loaded (real sites, real decks, real Scryfall images).
+Store screenshots are 1280×800 PNG, in this order:
+
+1. `store/screenshots/1-bouton-et-panneau-sur-archidekt.png` — Archidekt deck page, the black
+   « Comparer » button in the site's own toolbar, the panel open with a second deck URL.
+2. `store/screenshots/2-comparaison.png` — the results page: « Lore Of The Rings (budget build) »
+   vs its upgrade build, 82 %, the bar with the « exemplaires · cartes » legend, a card held.
+3. `store/screenshots/3-comparaison-croisee.png` — cross-compare seeded from the mtgtop8
+   « Aragorn, King of Gondor » archetype (23 decks), the « + Ajouter » pill, a card hovered.
+4. `store/screenshots/4-popup.png` — the popup over that Archidekt page: deck detected, the
+   other open deck tab offered. **Staged**: real popup markup and code, but the tab list and
+   the saved-decks line are supplied by a harness (a popup opened as a page cannot see another
+   active tab).
+
+Alternates (full-page captures by the user, reduced): `store/alternates/`.
+
+Promo images, English (one set serves every locale), redrawn on cream paper with the current
+icon: `promo-small-440x280.jpg`, `promo-marquee-1400x560.jpg` (the marquee embeds a crop of
+screenshot 2). Two site names at most appear in a row, as in the descriptions.
+
+Pipeline: `scratchpad/shots/*.js` (puppeteer-core + Chrome for Testing, `--load-extension`;
+the branded Chrome ≥ 137 refuses that flag), 2× capture then Lanczos resize to exact size.
