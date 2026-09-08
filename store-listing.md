@@ -91,7 +91,7 @@ still shows).
 
 **v1.1**
 
-Le bouton « Comparer » est désormais présent d'office sur les sites de decks, désactivable dans les Réglages ; Moxfield s'autorise en un clic. Le panneau qu'il ouvre adopte le monde clair de l'extension. Comparaison croisée : « + Ajouter » rejoint la liste des decks, les cartes en commun et distinctes se copient d'un clic, et les cartes recto-verso sont reconnues d'une source à l'autre. La légende de la comparaison directe précise exemplaires et cartes. Aucune permission supplémentaire à la mise à jour.
+Le bouton « Comparer » est désormais présent d'office sur les sites de decks, désactivable dans les Réglages ; Moxfield s'autorise en un clic. Le panneau qu'il ouvre adopte le monde clair de l'extension. Comparaison croisée : « + Ajouter » rejoint la liste des decks, les cartes en commun et distinctes se copient d'un clic, et les cartes recto-verso sont reconnues d'une source à l'autre. La légende de la comparaison directe précise exemplaires et cartes. Quand Cloudflare bloque la lecture directe d'un deck (MTGGoldfish notamment), elle repasse par un onglet. Aucune permission supplémentaire à la mise à jour.
 
 **v1.0.13**
 
@@ -109,7 +109,7 @@ Magic-Ville réparé — les decks Magic-Ville ne se chargeaient plus. C'est cor
 
 **v1.1**
 
-The Compare button now ships on the deck sites out of the box, and can be switched off in Settings; Moxfield is one click away. The panel it opens takes the extension's light look. Cross-compare: "+ Add" moves next to the deck list, shared and distinct cards copy in one click, and double-faced cards are matched across sources. The direct comparison's legend now states copies and cards. No new permission on update.
+The Compare button now ships on the deck sites out of the box, and can be switched off in Settings; Moxfield is one click away. The panel it opens takes the extension's light look. Cross-compare: "+ Add" moves next to the deck list, shared and distinct cards copy in one click, and double-faced cards are matched across sources. The direct comparison's legend now states copies and cards. When Cloudflare blocks a direct deck read (MTGGoldfish among others), the read goes through a tab instead. No new permission on update.
 
 **v1.0.13**
 
