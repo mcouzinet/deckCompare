@@ -137,6 +137,7 @@ test("injectResetOnUpdate: an update from any pre-1.1 build clears the toggle, a
   assert.equal(injectResetOnUpdate("1.0.13"), true);    // the live version: its `false` may be a declined prompt
   assert.equal(injectResetOnUpdate("1.0.0"), true);
   assert.equal(injectResetOnUpdate("0.9.0"), true);
+  assert.equal(injectResetOnUpdate("1.1"), false);      // a release is X.Y: same line, keep the setting
   assert.equal(injectResetOnUpdate("1.1.1"), false);    // dev iteration within the 1.1 line
   assert.equal(injectResetOnUpdate("1.2.0"), false);
   assert.equal(injectResetOnUpdate("2.0.0"), false);

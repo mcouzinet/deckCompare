@@ -25,6 +25,10 @@ console and is not otherwise versioned anywhere.
 > Paste the v1.0.13 notes below in its place. **Note (1.1):** the description bullets below
 > already describe 1.1, where the Compare button is on by default; a 1.0.13 console update
 > must keep « désactivé par défaut » / "off by default" until 1.1 is live.
+>
+> **2026-09-08 — 1.1 cut** (manifest `1.1`, tag `v1.1`, `deckcompare-v1.1.zip`): the bullets
+> below now match the shipped build. Console to-do at upload: replace both descriptions, and
+> paste the **v1.1** and **v1.0.13** patch notes (newest first) in place of the v1.0 one.
 
 ---
 
@@ -80,9 +84,14 @@ Aucun compte, aucune connexion, aucune analyse d'audience, aucune donnée collec
 ## Patch notes
 
 Shown under the detailed description in both listings, newest first, one short paragraph per
-version. The **v1.0.13** note replaces the v1.0 note.
+version. Newest first: **v1.1**, then **v1.0.13** (which replaces the v1.0 note the console
+still shows).
 
 ### Français
+
+**v1.1**
+
+Le bouton « Comparer » est désormais présent d'office sur les sites de decks, désactivable dans les Réglages ; Moxfield s'autorise en un clic. Le panneau qu'il ouvre adopte le monde clair de l'extension. Comparaison croisée : « + Ajouter » rejoint la liste des decks, les cartes en commun et distinctes se copient d'un clic, et les cartes recto-verso sont reconnues d'une source à l'autre. La légende de la comparaison directe précise exemplaires et cartes. Aucune permission supplémentaire à la mise à jour.
 
 **v1.0.13**
 
@@ -97,6 +106,10 @@ Prise en charge de deux nouveaux sites, au même niveau que les six existants : 
 Magic-Ville réparé — les decks Magic-Ville ne se chargeaient plus. C'est corrigé, y compris la détection du commandant en Duel Commander. Messages d'erreur plus clairs quand une page ne contient pas de decklist lisible. Vérifications automatiques ajoutées sur les sites supportés.
 
 ### English
+
+**v1.1**
+
+The Compare button now ships on the deck sites out of the box, and can be switched off in Settings; Moxfield is one click away. The panel it opens takes the extension's light look. Cross-compare: "+ Add" moves next to the deck list, shared and distinct cards copy in one click, and double-faced cards are matched across sources. The direct comparison's legend now states copies and cards. No new permission on update.
 
 **v1.0.13**
 

@@ -6,20 +6,22 @@ decks. Pas de build : Chrome charge le dossier tel quel. Tests : `npm test` (nod
 
 ## Règle de versioning (IMPORTANT)
 
-`manifest.json` suit **`major.prod.dev`** :
+`manifest.json` suit **`X.Y` pour une release, `X.Y.Z` pour un build de dev** :
 
-- **major** — release majeure/cassante.
-- **prod** — numéro de la ligne de production en cours. **Il n'avance d'un que lorsqu'on ouvre la
-  ligne suivante après une publication sur le Chrome Web Store** ; la version publiée part telle
-  quelle (1.0.13 en ligne → l'arbre passe à `1.1.<dev>`).
-- **dev** — compteur d'itérations de dev. **On le bumpe à CHAQUE lot de modifs que l'utilisateur
-  va tester dans le navigateur.**
+- **Release** — `X.Y` (1.1, 1.2…) : la version publiée sur le Chrome Web Store, taguée `vX.Y`.
+  `Y` avance d'un à chaque release ; `X` pour une release majeure/cassante.
+- **Dev** — `X.Y.Z` entre deux releases : après la release `X.Y`, les builds de test se lisent
+  `X.Y.1`, `X.Y.2`… **On bumpe `Z` à CHAQUE lot de modifs que l'utilisateur va tester dans le
+  navigateur.** La release suivante repasse à deux chiffres (`X.(Y+1)`).
+- Chrome compare composant par composant, un composant absent vaut 0 : `1.1` = 1.1.0 < `1.1.5`
+  < `1.2`. Une release doit rester strictement supérieure à la version publiée précédente
+  (`1.1` > `1.0.13`, OK).
 
-État au 2026-09-05 : **`1.1.4`** dans l'arbre de travail (1.1.1 = `b7c4dbf`). La **1.0.13** est publiée sur le Chrome
-Web Store (la v1.0.0 taguée le 2026-09-02 n'a jamais été mise en ligne) : c'est la baseline
-permissions. La ligne suivante se lit `1.1.<dev>` (1.1.1, 1.1.2…) jusqu'à sa publication ;
-`prod` avance d'un quand on ouvre une nouvelle ligne, pas au moment de la publication (la
-1.0.13 est partie telle quelle).
+État au 2026-09-08 : **`1.1`** = release taguée `v1.1`, paquet `deckcompare-v1.1.zip` à déposer
+sur le Web Store (fait par l'utilisateur). La **1.0.13** reste en ligne jusque-là ; la 1.1 n'ajoute
+aucun hôte requis (baseline permissions inchangée). La suite du dev reprend à **`1.1.5`** (les
+builds 1.1.1 → 1.1.4 ont précédé la release) ; la release suivante sera `1.2`, puis le dev
+`1.2.1`, `1.2.2`…
 
 **Pourquoi bumper à chaque itération** : Chrome ne recharge PAS les content-scripts d'un onglet
 déjà ouvert quand on recharge l'extension. Le numéro visible dans `chrome://extensions` est le

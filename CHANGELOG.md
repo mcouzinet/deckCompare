@@ -2,12 +2,16 @@
 
 Toutes les modifications notables de **Deck Compare — MTG** sont consignées ici.
 Le format s'inspire de [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
-Les versions du manifeste suivent le schéma **`major.prod.dev`** (voir `CLAUDE.md`) : `prod`
-avance d'un quand on ouvre la ligne qui suit une publication sur le Web Store, jamais au moment
-de publier (1.0.13 partie telle quelle → la suivante se lit `1.1.<dev>`) ; `dev` est bumpé à
-chaque itération testée.
+Les releases sont numérotées **`X.Y`** (1.1, 1.2…) et taguées `vX.Y` ; entre deux releases, les
+builds de dev se lisent **`X.Y.Z`** (1.1.5, 1.1.6… après la 1.1), `Z` bumpé à chaque itération
+testée (voir `CLAUDE.md`).
 
-## [Non publié]
+## [1.1] — 2026-09-08
+
+Deuxième version publiée sur le Chrome Web Store, quatre builds de dev après la 1.0.13 (1.1.1 →
+1.1.4) et première release numérotée `X.Y`. **Aucune permission requise ajoutée** : le manifest
+ne change que par l'ajout de `shared.js` au script des pages archétype mtgtop8, sur un hôte déjà
+permis.
 
 ### Ajouté
 
@@ -296,7 +300,7 @@ le wordmark sont inchangés ; le monde est construit autour d'eux.
 ### Ajouté
 - Séparation des créatures, vue en liste, cartes plus grandes et nettoyage de code.
 
-[Non publié]: https://github.com/mcouzinet/deckCompare/compare/v1.0.13...HEAD
+[1.1]: https://github.com/mcouzinet/deckCompare/compare/v1.0.13...v1.1
 [1.0.13]: https://github.com/mcouzinet/deckCompare/compare/v0.9.0...v1.0.13
 [0.9.0]: https://github.com/mcouzinet/deckCompare/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/mcouzinet/deckCompare/compare/v0.7.0...v0.8.0
