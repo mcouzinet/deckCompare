@@ -65,6 +65,19 @@
     { pattern: "getpaird.io/decklists/",          deckRe: /getpaird\.io\/decklists\/[^/?#]+/,                                                                     label: "getpaird" }
   ];
 
+  // Same deck page, seen from two places: the hash (mtggoldfish's #paper/#online) and a
+  // `www.` prefix are display detail, not identity. Lets the background fetcher recognise
+  // the deck it wants among the open tabs.
+  function sameDeckPage(a, b) {
+    const key = (u) => {
+      try {
+        const x = new URL(u);
+        return x.host.replace(/^www\./, "") + x.pathname.replace(/\/$/, "") + x.search;
+      } catch { return String(u); }
+    };
+    return key(a) === key(b);
+  }
+
   // Open browser tabs that are deck-detail pages, deduped by URL and minus `excludeUrl`
   // (the calling page itself). Extension surfaces only — chrome.tabs is absent in content
   // scripts; returns [] wherever it (or the query) is unavailable.
@@ -208,7 +221,7 @@
   const api = {
     fixCommanderHeuristic, sumBoard, normalizeName, normalizeDeck, cacheRead, cacheMerge,
     setDocumentLang, OPTIONAL_SCRIPTS, originMatchesHost, isOptionalHost, INJECT_KEY, injectEnabled, injectResetOnUpdate,
-    SUPPORTED_SITES, getOpenDeckTabs,
+    SUPPORTED_SITES, getOpenDeckTabs, sameDeckPage,
     DECK_SOURCE_IDS, getSavedDecks, populateSavedDeckSelect
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

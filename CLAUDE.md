@@ -19,7 +19,7 @@ decks. Pas de build : Chrome charge le dossier tel quel. Tests : `npm test` (nod
 
 État au 2026-09-08 : **`1.1`** = release taguée `v1.1`, paquet `deckcompare-v1.1.zip` à déposer
 sur le Web Store (fait par l'utilisateur). La **1.0.13** reste en ligne jusque-là ; la 1.1 n'ajoute
-aucun hôte requis (baseline permissions inchangée). La suite du dev reprend à **`1.1.5`** (les
+aucun hôte requis (baseline permissions inchangée). Le dev a repris à **`1.1.5`** (les
 builds 1.1.1 → 1.1.4 ont précédé la release) ; la release suivante sera `1.2`, puis le dev
 `1.2.1`, `1.2.2`…
 
@@ -61,6 +61,12 @@ changements de permissions le font.)
   ailleurs). Moxfield et les jumeaux www/sans-www restent des `optional_host_permissions`
   demandées sur un clic (la case, ou « Autoriser le bouton sur Moxfield ») ; un refus ne
   décoche plus la case, il ne coûte que ces hôtes.
+- **Sites derrière Cloudflare** (MTGGoldfish, mtgdecks, Magic-Ville) : le fetch du service
+  worker part de `chrome-extension://…` (cross-site, sans Referer ni cookie de challenge) et
+  se fait 403 « Just a moment… » quand Cloudflare durcit. Depuis 1.1.5, un **403 seul** est
+  taggé `blocked` et `fetchDeckByUrl` rebascule sur un **onglet** (`deckFromTab` : celui déjà
+  ouvert sur ce deck, sinon un onglet d'arrière-plan ouvert puis refermé) où le content-script
+  lit le DOM. Ne pas élargir ce repli aux autres erreurs : un deck introuvable doit échouer vite.
 - **mtgtop8** : la vue « visuelle » (cookie collant `mtgtop8_deck_display=visual`) n'a pas de
   `deck_line`/`L14` → `parseMtgTop8` renvoie vide → on pose `_needsApiFetch` (via la bascule
   « Switch to Text ») pour lire le deck via le fetch `/mtgo?d=` indépendant de la vue.

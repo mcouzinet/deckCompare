@@ -159,3 +159,18 @@ test("normalizeDeck re-keys every board by front face and merges quantities (one
   const stats = analyzePool([mox, top8], new Map(), [], 50).cardStats;
   assert.deepEqual(stats.filter((c) => c.name.startsWith("Life")).map((c) => [c.name, c.deck_count]), [["Life", 2]]);
 });
+
+test("sameDeckPage ignores the hash and www (finding a deck's tab for the fetch fallback)", () => {
+  const { sameDeckPage } = require("../shared.js");
+  assert.equal(sameDeckPage("https://www.mtggoldfish.com/deck/7593392",
+                            "https://www.mtggoldfish.com/deck/7593392#paper"), true);
+  assert.equal(sameDeckPage("https://mtggoldfish.com/deck/7593392",
+                            "https://www.mtggoldfish.com/deck/7593392#online"), true);
+  assert.equal(sameDeckPage("https://mtgdecks.net/Modern/burn-decklist-by-x/",
+                            "https://mtgdecks.net/Modern/burn-decklist-by-x"), true);
+  assert.equal(sameDeckPage("https://www.mtggoldfish.com/deck/7593392",
+                            "https://www.mtggoldfish.com/deck/7593393"), false);
+  // mtgtop8 puts the deck id in the query string — it is identity, not decoration.
+  assert.equal(sameDeckPage("https://www.mtgtop8.com/event?e=90366&d=885960",
+                            "https://www.mtgtop8.com/event?e=90366&d=885961"), false);
+});

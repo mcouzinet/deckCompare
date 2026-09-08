@@ -6,6 +6,20 @@ Les releases sont numérotées **`X.Y`** (1.1, 1.2…) et taguées `vX.Y` ; entr
 builds de dev se lisent **`X.Y.Z`** (1.1.5, 1.1.6… après la 1.1), `Z` bumpé à chaque itération
 testée (voir `CLAUDE.md`).
 
+## [Non publié]
+
+### Corrigé
+
+- **Les decks MTGGoldfish (et mtgdecks, Magic-Ville) ne renvoient plus « bloque la
+  récupération automatique » dès que Cloudflare est de mauvaise humeur.** Le service worker
+  demande `/deck/download/<id>` depuis `chrome-extension://…` : requête cross-site, sans
+  Referer, sans cookie de challenge — Cloudflare répond « Just a moment… » en 403. La page,
+  elle, s'ouvre normalement dans un onglet, et le content-script sait déjà la lire. Sur un
+  403 (et seulement là — un deck introuvable échoue toujours aussi vite), la récupération
+  repasse donc par un onglet : celui déjà ouvert sur ce deck s'il existe, sinon un onglet
+  d'arrière-plan ouvert puis refermé. Corrigé en un point (`fetchDeckByUrl`), donc valable
+  pour le popup, le bouton injecté et le pool à la fois.
+
 ## [1.1] — 2026-09-08
 
 Deuxième version publiée sur le Chrome Web Store, quatre builds de dev après la 1.0.13 (1.1.1 →

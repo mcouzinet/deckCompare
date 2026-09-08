@@ -332,7 +332,7 @@ async function listMagicVilleDecks(username) {
   // mtgdecks) — credentials:'include' attaches the user's Magic-Ville session cookie.
   const res = await fetch(`https://www.magic-ville.com/fr/decks/resultats?joueur=${encodeURIComponent(username)}`, { credentials: 'include' });
   if (!res.ok) {
-    if (res.status === 403) throw new Error(chrome.i18n.getMessage('errMagicVilleBlocked'));
+    if (res.status === 403) throw blocked(chrome.i18n.getMessage('errMagicVilleBlocked'));
     throw new Error(`${chrome.i18n.getMessage('errMagicVilleStatus')} ${res.status}`);
   }
 
@@ -373,6 +373,68 @@ const ALLOWED_DECK_HOSTS = [
   'getpaird.io', 'www.getpaird.io'
 ];
 
+// --- Reading a deck from a browser tab (the way past Cloudflare) -------------
+// Fallback for `fetchDeckByUrl`: the page the service worker can't fetch loads fine in a
+// tab, and content.js parses it there. Reuses a tab already open on that deck; otherwise
+// opens one in the background and closes it again.
+
+const tabDeckUsable = (d) => !!d && !d._needsApiFetch
+  && Shared.sumBoard(d.mainboard) + Shared.sumBoard(d.commanders) > 0;
+
+function askTabForDeck(tabId) {
+  return new Promise((resolve) => {
+    try {
+      chrome.tabs.sendMessage(tabId, { type: 'GET_DECKLIST' }, (resp) => {
+        void chrome.runtime.lastError;   // no content script on that tab — not an error here
+        resolve(resp && resp.deck ? resp.deck : null);
+      });
+    } catch { resolve(null); }
+  });
+}
+
+// 'complete' fires on the Cloudflare interstitial too, and document_idle lands after it, so
+// poll instead of guessing a single delay. ~6s covers a challenge that resolves itself.
+async function askTabUntilReady(tabId) {
+  for (let i = 0; i < 12; i++) {
+    const deck = await askTabForDeck(tabId);
+    if (tabDeckUsable(deck)) return deck;
+    await new Promise(r => setTimeout(r, 500));
+  }
+  return null;
+}
+
+function tabLoaded(tabId, timeoutMs = 15000) {
+  return new Promise((resolve) => {
+    const finish = () => { chrome.tabs.onUpdated.removeListener(onUpdated); clearTimeout(timer); resolve(); };
+    const onUpdated = (id, info) => { if (id === tabId && info.status === 'complete') finish(); };
+    const timer = setTimeout(finish, timeoutMs);
+    chrome.tabs.onUpdated.addListener(onUpdated);
+  });
+}
+
+async function deckFromTab(url) {
+  let tabs = [];
+  try { tabs = await chrome.tabs.query({}); } catch { /* no tabs API — the fetch error stands */ }
+  const open = (tabs || []).find(t => t.url && Shared.sameDeckPage(t.url, url));
+  if (open) {
+    const deck = await askTabForDeck(open.id);
+    if (tabDeckUsable(deck)) return deck;
+  }
+
+  let tab;
+  try { tab = await chrome.tabs.create({ url, active: false }); } catch { return null; }
+  try {
+    await tabLoaded(tab.id);
+    return await askTabUntilReady(tab.id);
+  } finally {
+    try { chrome.tabs.remove(tab.id); } catch { /* already gone */ }
+  }
+}
+
+// A 403 from a Cloudflare-fronted site means the request was refused, not that the deck is
+// missing — the only failure worth re-trying through a real tab (see deckFromTab).
+const blocked = (message) => Object.assign(new Error(message), { blocked: true });
+
 async function fetchDeckByUrl(url) {
   try {
     const parsed = new URL(url);
@@ -380,6 +442,21 @@ async function fetchDeckByUrl(url) {
   } catch {
     throw new Error(chrome.i18n.getMessage('errUnsupportedSource'));
   }
+
+  try {
+    return await fetchDeckOverHttp(url);
+  } catch (err) {
+    if (!err.blocked) throw err;
+    // Cloudflare refuses the service worker's cross-site fetch (no Referer, extension
+    // origin, no challenge cookie) but serves the very same page to a tab, where the
+    // content script already knows how to read it. Slower, so only once HTTP has failed.
+    const deck = await deckFromTab(url);
+    if (!deck) throw err;
+    return deck;
+  }
+}
+
+async function fetchDeckOverHttp(url) {
   let deck;
   if (url.includes('moxfield.com')) deck = await fetchMoxfieldDeck(url);
   else if (url.includes('archidekt.com')) deck = await fetchArchidektDeck(url);
@@ -460,7 +537,7 @@ async function fetchMagicVilleDeck(url) {
   // without it the site now 403s the service worker's cookie-less request.
   const res = await fetch(`https://www.magic-ville.com/fr/decks/showdeck?ref=${match[1]}&decklanglocal=eng`, { credentials: 'include' });
   if (!res.ok) {
-    if (res.status === 403) throw new Error(chrome.i18n.getMessage('errMagicVilleBlocked'));
+    if (res.status === 403) throw blocked(chrome.i18n.getMessage('errMagicVilleBlocked'));
     throw new Error(`${chrome.i18n.getMessage('errMagicVilleStatus')} ${res.status}`);
   }
 
@@ -485,7 +562,7 @@ async function fetchMtgDecksDeck(url) {
   // extension's host permission lets the SW read the cross-origin response).
   const res = await fetch(`https://mtgdecks.net${parsed.pathname}`, { credentials: 'include' });
   if (!res.ok) {
-    if (res.status === 403) throw new Error(chrome.i18n.getMessage('errMtgdecksBlocked'));
+    if (res.status === 403) throw blocked(chrome.i18n.getMessage('errMtgdecksBlocked'));
     throw new Error(`${chrome.i18n.getMessage('errMtgdecksStatus')} ${res.status}`);
   }
 
@@ -508,7 +585,7 @@ async function fetchMtgGoldfishDeck(url) {
   if (!res.ok) {
     // 403 despite credentials:'include' means no valid cf_clearance cookie (user
     // hasn't opened mtggoldfish in this browser lately) — give an actionable message.
-    if (res.status === 403) throw new Error(chrome.i18n.getMessage('errMtggoldfishBlocked'));
+    if (res.status === 403) throw blocked(chrome.i18n.getMessage('errMtggoldfishBlocked'));
     throw new Error(`${chrome.i18n.getMessage('errMtggoldfishStatus')} ${res.status}`);
   }
 
