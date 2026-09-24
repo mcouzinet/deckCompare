@@ -84,9 +84,9 @@ between targets (`scripts/build.js`); the source tree stays browser-neutral.
 ## Tech
 
 - WebExtension Manifest V3 — Chrome, Edge and the other Chromium browsers, Firefox 128+
-- Vanilla JS, no build step
+- Vanilla JS, no bundler: the folder loads as is; `npm run build` only packages it per browser
 - Card images via [Scryfall API](https://scryfall.com/docs/api)
-- Fonts: Bricolage Grotesque + Geist
+- Fonts: Archivo (interface), Beleren (figures and deck names), Geist Mono (measurements), Bricolage Grotesque (wordmark)
 
 ## Privacy
 

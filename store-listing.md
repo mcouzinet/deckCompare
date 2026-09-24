@@ -36,6 +36,7 @@ console and is not otherwise versioned anywhere.
 > `dist/deckcompare-1.2-chrome.zip` to the Chrome Web Store and to Edge Add-ons,
 > `dist/deckcompare-1.2-firefox.zip` to addons.mozilla.org (first Firefox listing — see
 > *Firefox and Edge listings* below for the fields those two consoles ask for).
+> Edge Add-ons: 1.2 submitted on 2026-09-24 (first Edge listing, logo + EN/FR descriptions).
 
 ## Short description (132 characters max)
 
@@ -137,6 +138,65 @@ Magic-Ville fixed (including Duel Commander commander detection), clearer error 
 
 ---
 
+## Privacy practices (Chrome Web Store dashboard)
+
+The dashboard's **Privacy practices** tab. Every field is required; answers stay in place from one
+version to the next. English on purpose: these texts are read by the reviewers, not shown on the
+listing. Each justification field takes up to 1,000 characters. Reuse them wherever another store
+asks the same thing (Edge, Opera, an AMO reviewer).
+
+**Single purpose description**
+
+> Compare Magic: The Gathering decklists. The extension reads decklists from supported deck sites
+> (or pasted text) and shows how two decks differ — cards unique to each, shared cards, quantity
+> gaps and a similarity score — or what a group of decks has in common (cross-compare).
+
+**activeTab justification**
+
+> When the user clicks the toolbar icon, the popup reads the page open in the active tab — its
+> address and, on a supported deck site, its decklist — so that deck can be the first side of the
+> comparison. Access is limited to that tab, happens only on that click, and no other page is read.
+
+**storage justification**
+
+> Stores data locally in the browser only (chrome.storage.local): the user's settings (the in-page
+> button switch, the deck-site usernames they enter to list their own public decks, the results
+> page's display density), the decks they add to a cross-comparison and its card filters, the
+> comparison handed from the popup to the results page, and a cache of card data (types and image
+> URLs) from Scryfall so pages do not refetch it. Nothing is synced or sent anywhere.
+
+**scripting justification**
+
+> Used only to register the extension's own packaged content script — the in-page Compare button —
+> on the optional hosts (Moxfield deck pages and the www / non-www variants of supported sites),
+> after the user grants those hosts from the settings, and to unregister it when they are revoked.
+> No code is injected from strings and nothing is fetched to be executed.
+
+**Host permission justification**
+
+> Each host is a deck site the extension reads decklists from, or Scryfall for card data:
+> api2.moxfield.com (Moxfield's deck API); archidekt.com, www.mtggoldfish.com, www.mtgtop8.com,
+> www.magic-ville.com, mtgdecks.net, melee.gg and getpaird.io (deck pages the extension reads and
+> adds its Compare button to); api.scryfall.com and cards.scryfall.io (card types and images).
+> Requests are made only to fetch a deck the user chose to compare and the cards on screen. The
+> optional hosts (moxfield.com pages, www / non-www twins) are requested at runtime, only when the
+> user turns on the in-page button.
+
+**Are you using remote code?** No.
+
+> All JavaScript ships in the package (CSP script-src 'self'). Data fetched from the deck sites and
+> Scryfall — JSON, HTML and plain-text decklists — is parsed as data and never executed.
+
+**Data usage**
+
+- What user data do you plan to collect: tick **Website content** only (the decklists read from
+  the pages), as the live listing already declares. Nothing else — no personal, authentication,
+  location, history or activity data.
+- Tick the three certifications: no sale or transfer to third parties outside the approved use
+  cases; no use unrelated to the single purpose; no use for creditworthiness or lending.
+
+**Privacy policy URL**: https://mcouzinet.github.io/deckCompare/privacy-policy.html
+
 ## Firefox and Edge listings (1.2)
 
 Same name, short and detailed descriptions, screenshots and promo images as the Chrome Web
@@ -161,8 +221,13 @@ Store. What differs:
 **Edge Add-ons** (Partner Center)
 
 - Package: `dist/deckcompare-1.2-chrome.zip` — the Chrome package, unchanged.
-- Category: Entertainment. Privacy policy URL as above. Same screenshots (1280×800) and promo
-  tiles (440×280 small, 1400×560 large).
+- Category: Entertainment. Privacy policy URL as above.
+- Required for **each language in the package** — English and French, since `_locales` ships both:
+  a description and the **extension logo** `store/logo-300x300.png` (1:1, 300×300 recommended,
+  128×128 minimum). Fill English, then use **Duplicate** for French.
+- Optional: screenshots (1280×800, six at most — the five in `store/screenshots/`) and the promo
+  tiles `store/promo-small-440x280.png` and `store/promo-marquee-1400x560.png`. Edge takes PNG;
+  the Chrome Web Store accepts the same files (24-bit, no alpha).
 
 ## Media (1.1, 2026-09-08)
 
@@ -188,7 +253,7 @@ Store screenshots are 1280×800 PNG, in this order:
 Alternates (full-page captures by the user, reduced): `store/alternates/`.
 
 Promo images, English (one set serves every locale), redrawn on cream paper with the current
-icon: `promo-small-440x280.jpg`, `promo-marquee-1400x560.jpg` (the marquee embeds a crop of
+icon: `store/promo-small-440x280.png`, `store/promo-marquee-1400x560.png` (the marquee embeds a crop of
 screenshot 2). Two site names at most appear in a row, as in the descriptions.
 
 Pipeline: `scratchpad/shots/*.js` (puppeteer-core + Chrome for Testing, `--load-extension`;

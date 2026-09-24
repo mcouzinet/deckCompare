@@ -1,8 +1,9 @@
 # Deck Compare — notes pour agents
 
-Extension Chrome (MV3) qui compare deux decklists Magic côte à côte + analyse un **pool** de
-decks. Pas de build : Chrome charge le dossier tel quel. Tests : `npm test` (node:test + jsdom ;
-`npm install` une fois pour jsdom).
+Extension navigateur (MV3 ; Chrome, Edge, Firefox) qui compare deux decklists Magic côte à côte
+et analyse un **pool** de decks (la « comparaison croisée »). En dev, le navigateur charge le
+dossier tel quel ; `npm run build` ne sert qu'à produire les paquets des stores. Tests :
+`npm test` (node:test + jsdom ; `npm install` une fois pour jsdom).
 
 ## Règle de versioning (IMPORTANT)
 
@@ -17,12 +18,20 @@ decks. Pas de build : Chrome charge le dossier tel quel. Tests : `npm test` (nod
   < `1.2`. Une release doit rester strictement supérieure à la version publiée précédente
   (`1.1` > `1.0.13`, OK).
 
-État au 2026-09-24 : **`1.2`** = release taguée `v1.2` ; paquets `npm run build` →
-`dist/deckcompare-1.2-chrome.zip` (Chrome Web Store **et** Edge Add-ons) et
-`dist/deckcompare-1.2-firefox.zip` (addons.mozilla.org, première version Firefox ; id gecko
-`deckcompare@mcouzinet.github.io` validé par l'utilisateur), déposés par l'utilisateur. La **1.1**
-est en ligne sur Chrome depuis le 2026-09-09 ; la 1.2 n'ajoute aucun hôte requis. Le dev reprend à
-**`1.2.1`** ; la release suivante sera `1.3`.
+L'état courant se lit dans l'environnement, pas ici : version dans `manifest.json`, releases
+dans les tags git `vX.Y`, lot en cours en tête de `CHANGELOG.md` (« Non publié »).
+
+**Couper une release `X.Y`** (fait quand les zips sont dans `dist/` et le tag sur `origin`) :
+
+1. `manifest.json` → `"X.Y"` ; `CHANGELOG.md` : « Non publié » devient `[X.Y] — date`, avec son
+   lien de comparaison en bas ; `store-listing.md` : note de version `vX.Y` FR et EN.
+2. `npm test`, `npm run build`, puis `npx web-ext lint --source-dir dist/firefox` (0 erreur).
+   Vérifier qu'aucun hôte **requis** n'a été ajouté depuis la release précédente
+   (`git diff vX.(Y-1) -- manifest.json`).
+3. Commit `chore(release): X.Y`, tag **léger** `vX.Y`, puis `git push origin main` **et**
+   `git push origin vX.Y` : un tag léger ne part pas avec `--follow-tags`.
+4. Les dépôts (Chrome Web Store, Edge Add-ons, addons.mozilla.org) sont faits par l'utilisateur,
+   avec `dist/deckcompare-X.Y-chrome.zip` (Chrome et Edge) et `dist/deckcompare-X.Y-firefox.zip`.
 
 **Pourquoi bumper à chaque itération** : Chrome ne recharge PAS les content-scripts d'un onglet
 déjà ouvert quand on recharge l'extension. Le numéro visible dans `chrome://extensions` est le
@@ -53,21 +62,20 @@ changements de permissions le font.)
   (`REQUIRED_ORIGINS` = host_permissions ∪ matches, un seul `permissions.request`) tant que
   `permissions.contains` est faux ; sur Chrome ce bouton ne s'affiche jamais. Le badge DEV est
   désactivé quand `browser_specific_settings` est présent (aucun install Firefox n'a d'`update_url`).
-  Vérification : `npx web-ext lint --source-dir dist/firefox` (0 erreur attendue ; les
-  avertissements `UNSAFE_VAR_ASSIGNMENT` sont les innerHTML échappés via `esc()`), et
-  `web-ext run --args=-headless --args=--remote-debugging-port=9333` + puppeteer BiDi pour un test
-  réel (Firefox 134 n'a pas `webExtension.install`, `installExtension` de puppeteer échoue).
+  Les avertissements `UNSAFE_VAR_ASSIGNMENT` du linter Mozilla sont les `innerHTML` échappés via
+  `esc()`. Test réel sur Firefox : `web-ext run --args=-headless --args=--remote-debugging-port=9333`
+  puis puppeteer en WebDriver BiDi (`installExtension` échoue sur Firefox 134).
 
 - **Pas de permission requise ajoutée** sans prévenir : ça désactive l'extension pour tous les
   utilisateurs jusqu'à ré-acceptation. Nouveaux hôtes → `optional_host_permissions`. Ajouter un
   content-script sur un **path** d'un hôte **déjà permis** (ex. `mtgtop8.com/archetype*` alors que
   `www.mtgtop8.com/*` est déjà là) ne déclenche rien.
-- **Pas de couche UI partagée** : popup / compare / pool ont chacun leur palette et leur `esc()`.
-  `theme.css` centralise le monde visuel des pages ; `shared.js` centralise la logique
-  (normalisation, sites supportés, scan d'onglets…).
-- **`deckDisplayName` (pool.js) lit `d.label`**, PAS `d.name`. `label` est posé par
-  **`pool-analyze.js`** (`label: d.name || "Deck N"`) sur les objets `analysis.decks` que le
-  rendu affiche. Piège vécu cette session : le passer à `.name` casse tout l'affichage.
+- **Deux sources partagées, pas plus** : `theme.css` porte le monde visuel des trois pages
+  (popup, compare, pool) et `shared.js` la logique commune (normalisation, sites supportés, scan
+  d'onglets…). Chaque page garde son propre `esc()`.
+- **`deckDisplayName` (pool.js) reçoit deux formes de deck** : les decks du pool portent `name`,
+  les références d'analyse portent `label` (posé par `pool-analyze.js` : `label: d.name || "Deck N"`).
+  Il lit `label || name` ; n'en lire qu'un seul casse l'affichage de l'autre moitié des appels.
 - **Deux boutons injectés** partagent le même langage visuel : `inject-button.js` (« Comparer »,
   formes flottant/inline/compact) et `inject-archetype.js` (« Comparer tous les decks »). Design
   actuel : **noir `#141414` + liseré `rgba(255,255,255,.18)` + icône deux-tons orange/teal**
@@ -114,5 +122,11 @@ changements de permissions le font.)
   chaque deck à son entrée (background `fetchDeckByUrl`, `content.js`, `inject-button.js`, pool.js
   texte collé + restauration) : ne pas re-normaliser en aval, ne pas indexer des noms bruts.
 
-Voir `CHANGELOG.md` (section « Non publié ») pour le détail du lot en cours, et
-`.claude/projects/.../memory/` pour l'historique de session.
+## Où trouver quoi
+
+- Lot en cours et historique des versions : `CHANGELOG.md`.
+- Textes des fiches, réponses de confidentialité, médias : `store-listing.md` ; images dans `store/`.
+- Icône : la source est `icons/icon.svg` ; les PNG 16/48/128 et `store/logo-300x300.png` en
+  dérivent. La rendre avec Chrome (puppeteer) : ImageMagick rend ses dégradés faux.
+- Avant de toucher à l'interface : `DESIGN.md` (le monde « Le mémo », tokens et règles nommées).
+- Public, objectifs et principes du produit : `PRODUCT.md`.

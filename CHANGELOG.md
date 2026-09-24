@@ -4,7 +4,7 @@ Toutes les modifications notables de **Deck Compare — MTG** sont consignées i
 Le format s'inspire de [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 Les releases sont numérotées **`X.Y`** (1.1, 1.2…) et taguées `vX.Y` ; entre deux releases, les
 builds de dev se lisent **`X.Y.Z`** (1.1.5, 1.1.6… après la 1.1), `Z` bumpé à chaque itération
-testée (voir `CLAUDE.md`).
+testée (voir `AGENTS.md`).
 
 ## [1.2] — 2026-09-24
 

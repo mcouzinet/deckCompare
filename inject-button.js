@@ -254,7 +254,7 @@
     <style>
       /* Two surfaces, two treatments. The button sits on someone else's page: black with a
          light hairline and the two-tone icon, so it reads as "added by the extension" on
-         any site (CLAUDE.md). The panel it opens is ours — a sheet of "The Memo", the world
+         any site (AGENTS.md). The panel it opens is ours — a sheet of "The Memo", the world
          of theme.css and the popup: cream paper, warm ink, teal for the one action, red for
          the alarm only — set in the host's system font, because a content script cannot load
          web fonts (no web_accessible_resources, and @font-face is per document, not per shadow
