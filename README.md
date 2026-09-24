@@ -52,16 +52,38 @@ costs you the button on those hosts and nothing else; switching the button off r
 
 **[Install Deck Compare — MTG](https://chromewebstore.google.com/detail/deck-compare-%E2%80%93-mtg/miijiappldgijnnokopjfiponelkdhcg)**
 
+### Edge, Brave, Opera, Vivaldi
+
+Chromium browsers install the same package: use the Chrome Web Store link above (Edge asks
+once to allow extensions from other stores). An Edge Add-ons listing may follow.
+
+### Firefox
+
+A Firefox package is built from the same source (`npm run build` → `dist/deckcompare-<version>-firefox.zip`);
+the addons.mozilla.org listing is on its way. One Firefox difference: host permissions are
+optional at install, so the popup shows a one-click **Allow Deck Compare on the deck sites**
+button until you grant them.
+
 ### Manual install (developer mode)
 
 1. Clone this repo
-2. Go to `chrome://extensions/`
-3. Enable **Developer mode**
-4. Click **Load unpacked** and select the project folder
+2. Chrome / Edge: go to `chrome://extensions/` (`edge://extensions/`), enable **Developer mode**,
+   click **Load unpacked** and select the project folder
+3. Firefox: `npm run build`, then `about:debugging#/runtime/this-firefox` → **Load Temporary
+   Add-on…** → pick `dist/firefox/manifest.json`
+
+### Build the store packages
+
+```bash
+npm run build
+```
+
+Writes `dist/chrome/` and `dist/firefox/` plus one zip per browser. Only the manifest differs
+between targets (`scripts/build.js`); the source tree stays browser-neutral.
 
 ## Tech
 
-- Chrome Extension Manifest V3
+- WebExtension Manifest V3 — Chrome, Edge and the other Chromium browsers, Firefox 128+
 - Vanilla JS, no build step
 - Card images via [Scryfall API](https://scryfall.com/docs/api)
 - Fonts: Bricolage Grotesque + Geist

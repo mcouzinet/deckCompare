@@ -151,7 +151,7 @@
         if (t.toLowerCase() === 'sideboard') { section = 'sideboard'; continue; }
         const m = t.match(/^(\d+)\s+(.+)$/);
         if (m) {
-          const name = m[2].replace(/\s*\([A-Z0-9]+\)\s*\d*$/, '').trim();
+          const name = m[2].trim();  // "(SET) 123": Shared.normalizeDeck strips it
           deck[section][name] = (deck[section][name] || 0) + parseInt(m[1], 10);
         }
       }
@@ -271,14 +271,17 @@
     // BOTH labels because the toggle reads "Switch to Visual" in text view and "Switch to
     // Text" in visual view — anchoring on one alone loses the button in the other view.
     { host: 'mtgtop8.com',   sel: 'a[href*="switch=visual"], a[href*="switch=text"]', up: 1 },
-    // title-anchored: these sites sit behind bot checks/consent walls, so the hook is a
-    // selector the shipped parser relies on (see parseMagicVille / parseMtgGoldfish /
-    // parseMtgDecks) rather than a guess.
+    // Magic-Ville sits behind a bot check, so its hook is a selector the shipped parser
+    // already relies on (see parseMagicVille) rather than a guess.
     // Magic-Ville's action menu is a stack of one-link .lil_menu rows (Anglais, MWS,
     // Historique, Proxies…). Anchor on the Proxies row's route and step up, so the
     // button becomes a new row at the end of that menu rather than sitting inside one.
     { host: 'magic-ville.com', sel: '.lil_menu a[href*="proxy"]', up: 1 },
-    { host: 'mtggoldfish.com', sel: 'h1.title' },
+    // MTGGoldfish's deck toolbar: a nav-pills row (Stats / View Options) followed by the
+    // price menu. Anchor on the row's last pill, so the button becomes one more pill of
+    // that group. It used to hang off h1.title, which the site now renders as a block above
+    // "Report Deck Name": the button sat stranded on its own line.
+    { host: 'mtggoldfish.com', sel: 'ul.deck-action-menu > li.nav-item:last-of-type' },
     // mtgdecks has a real tab bar (Deck View / Arena Export / Tools & Download /
     // Comments) whose hash routes are stable; step up to the <li> so the button becomes
     // another tab. Anchoring on the h1 left it stranded on its own line under the title.

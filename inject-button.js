@@ -35,6 +35,7 @@
   let enabled = false;    // mirrors the storage toggle, re-checked before any mount
   let cancelWait = null;  // cancels a pending mountWhenReady observer/timer
   let unwire = null;      // removes wire()'s window/document listeners
+  let cancelReanchor = null;  // stops the post-fallback watch for a late toolbar
 
   // --- lifecycle: mount/unmount so the popup toggle applies without a page reload ---
 
@@ -53,6 +54,7 @@
   // to leave the observer armed, which mounted the button after the setting was off.
   function unmount() {
     if (cancelWait) cancelWait();
+    if (cancelReanchor) cancelReanchor();
     if (unwire) { unwire(); unwire = null; }
     if (host) { host.remove(); host = null; }
   }
@@ -190,6 +192,9 @@
       clearTimeout(timer);
       cancelWait = null;
       mount();
+      // Gave up floating? The toolbar may still be coming (Moxfield's "Loading…" screen
+      // can outlast the wait): keep looking and move into place when it shows up.
+      if (host && !host.classList.contains('inline')) watchForAnchor();
     };
     const obs = new MutationObserver(() => { if (anchorFor(document)) finish(); });
     obs.observe(document.documentElement, { childList: true, subtree: true });
@@ -200,6 +205,31 @@
       clearTimeout(timer);
       cancelWait = null;
     };
+  }
+
+  // After the floating fallback, watch a while longer for the site's action bar and
+  // re-anchor the same host (its panel and listeners intact) the moment it appears. Skips
+  // while the panel is open — moving it mid-use would yank it from under the pointer —
+  // and stops on its own after 90 s, on unmount, or once anchored.
+  function watchForAnchor() {
+    if (!hasAnchorEntry()) return;
+    if (cancelReanchor) cancelReanchor();
+    const obs = new MutationObserver(() => {
+      if (!host || host.classList.contains('inline')) { stop(); return; }
+      const anchor = anchorFor(document);
+      if (!anchor || !anchor.parentElement) return;
+      const panel = host.shadowRoot && host.shadowRoot.querySelector('.panel');
+      if (panel && !panel.hidden) return;
+      host.classList.add('inline');
+      host.style.cssText = 'all:initial;display:inline-flex;vertical-align:middle;';
+      anchor.insertAdjacentElement('afterend', host);
+      matchAnchorBox(host, anchor, host.shadowRoot);
+      stop();
+    });
+    const timer = setTimeout(() => stop(), 90000);
+    const stop = () => { obs.disconnect(); clearTimeout(timer); if (cancelReanchor === stop) cancelReanchor = null; };
+    cancelReanchor = stop;
+    obs.observe(document.documentElement, { childList: true, subtree: true });
   }
 
   // --- markup (inside the shadow root, so these class names are private) ---

@@ -28,8 +28,35 @@
   // export writes a bare slash with no spaces ("Life/Death") — so split on either form
   // (one or two slashes, any surrounding spaces) and a cross-source shared card keys
   // identically instead of landing in both "unique" columns.
+  // Same job for the decorations exports hang off a card name — they differ per source
+  // ("Dispatch [EOC]" in MTGGoldfish's list, "Sol Ring (LTC) 284 *F* [Ramp]" in a Moxfield
+  // export, a typographic apostrophe or an &nbsp; in a scraped cell) and each one used to
+  // send the same card into both "unique" columns. Stripped here, once, in the order they
+  // appear from the right; no real card name ends with a bracket or a set code.
+  const DECORATIONS = [
+    [/[\u2018\u2019]/g, "'"],            // Urza’s Saga -> Urza's Saga
+    [/\s+/g, ' '],                       // &nbsp; and double spaces
+    [/\s+#.*$/, ''],                     // trailing comment
+    [/\s*\[[^\]]*\]\s*$/, ''],            // [EOC], [Ramp Package]
+    [/\s*\*[A-Za-z]\*\s*$/, ''],         // *F* foil marker
+    [/\s*\([A-Za-z0-9]{2,6}\)\s*[A-Za-z0-9-]*$/, '']  // (LTC) 284
+  ];
+
+  // A name typed by hand ("4 dispatch", "4 SOL RING") carries no case information, and the
+  // comparison keys on the name — so it would sit next to the site's "Dispatch" as a false
+  // difference. Only those two forms are rewritten: every real source writes canonical case,
+  // and re-casing a correct name would break the ones that need it ("R&D's Secret Lair").
+  const SMALL_WORDS = new Set(['of', 'the', 'and', 'a', 'an', 'in', 'into', 'to', 'for', 'from', 'with', 'on', 'at', 'or', 'but']);
+  const capitalize = (w) => w.replace(/(^|-)([\p{Ll}])/gu, (m, sep, c) => sep + c.toUpperCase());
+  function fixCaselessName(s) {
+    if (s !== s.toLowerCase() && s !== s.toUpperCase()) return s;   // the source cased it: keep it
+    return s.toLowerCase().split(' ').map((w, i) => (i && SMALL_WORDS.has(w) ? w : capitalize(w))).join(' ');
+  }
+
   function normalizeName(name) {
-    return String(name).split(/\s*\/\/?\s*/)[0].trim();
+    let s = String(name);
+    for (const [re, to] of DECORATIONS) s = s.replace(re, to);
+    return fixCaselessName(s.split(/\s*\/\/?\s*/)[0].trim());
   }
 
   // Every deck goes through here once, where it enters the app (background fetch, DOM
@@ -56,6 +83,10 @@
   // never resolve to a page a comparison would fail on.
   const SUPPORTED_SITES = [
     { pattern: "mtggoldfish.com/deck/",           deckRe: /mtggoldfish\.com\/deck\/\d+/,                                                                          label: "MTGGoldfish" },
+    // An archetype page shows one full deck with the deck page's own DOM (hidden decklist
+    // input, deck table, Stats / View Options toolbar); the background resolves its "Deck
+    // Page" link to the numeric deck when fetching by URL.
+    { pattern: "mtggoldfish.com/archetype/",      deckRe: /mtggoldfish\.com\/archetype\/[^/?#]+/,                                                                 label: "MTGGoldfish" },
     { pattern: "mtgtop8.com/event",               deckRe: /mtgtop8\.com\/event\?[^#]*\bd=\d+/,                                                                    label: "mtgtop8" },
     { pattern: "archidekt.com/decks/",            deckRe: /archidekt\.com\/decks\/\d+/,                                                                           label: "Archidekt" },
     { pattern: "moxfield.com/decks/",             deckRe: /moxfield\.com\/decks\/(?!(?:personal|public|liked|following|bookmarks)(?:[/?#]|$))[^/?#]+/,           label: "Moxfield" },
@@ -130,7 +161,7 @@
     { id: "moxfield-www",     origin: "https://www.moxfield.com/*",  matches: ["https://www.moxfield.com/decks/*"] },
     { id: "moxfield-bare",    origin: "https://moxfield.com/*",      matches: ["https://moxfield.com/decks/*"] },
     { id: "mtgtop8-bare",     origin: "https://mtgtop8.com/*",       matches: ["https://mtgtop8.com/event*"] },
-    { id: "mtggoldfish-bare", origin: "https://mtggoldfish.com/*",   matches: ["https://mtggoldfish.com/deck/*"] },
+    { id: "mtggoldfish-bare", origin: "https://mtggoldfish.com/*",   matches: ["https://mtggoldfish.com/deck/*", "https://mtggoldfish.com/archetype/*"] },
     { id: "magicville-bare",  origin: "https://magic-ville.com/*",   matches: ["https://magic-ville.com/fr/decks/showdeck*"] },
     { id: "mtgdecks-www",     origin: "https://www.mtgdecks.net/*",  matches: ["https://www.mtgdecks.net/*"] }
   ];

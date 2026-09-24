@@ -3,7 +3,7 @@
   "name": "__MSG_appName__",
   "short_name": "__MSG_appShortName__",
   "description": "__MSG_appDescription__",
-  "version": "1.1",
+  "version": "1.1.11",
   "default_locale": "en",
   "permissions": [
     "activeTab",
@@ -25,7 +25,8 @@
   "content_scripts": [
     {
       "matches": [
-        "https://www.mtggoldfish.com/deck/*"
+        "https://www.mtggoldfish.com/deck/*",
+        "https://www.mtggoldfish.com/archetype/*"
       ],
       "js": [
         "shared.js",

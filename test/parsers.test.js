@@ -40,13 +40,24 @@ test("MTGGoldfish: text decklist with Sideboard divider", () => {
 });
 
 test("mtgdecks: arena_deck textarea, set codes stripped, commander split", () => {
-  const d = P.parseMtgDecks(fx("mtgdecks.html"));
+  // Set codes are stripped at the entry point (background.js normalizes every fetched
+  // deck), not by the parser — so assert the deck as the app actually sees it.
+  const d = require("../shared.js").normalizeDeck(P.parseMtgDecks(fx("mtgdecks.html")));
   assert.match(d.name, /Aragorn, King of Gondor/);
   assert.deepEqual(Object.keys(d.commanders), ["Aragorn, King of Gondor"]);
   assert.equal(d.mainboard["Sol Ring"], 1);              // "(LTC) 280" stripped
   assert.ok(!Object.keys(d.mainboard).some((n) => /\(/.test(n)));
   assert.equal(sum(d.mainboard), 7);                     // 1+4+1+1
   assert.equal(sum(d.sideboard), 1);
+});
+
+test("HTML-scraped names come back decoded whatever entity form the site uses", () => {
+  // Melee is ASP.NET (&#x27;), Magic-Ville writes &#39;, mtgdecks escapes inside the textarea.
+  const melee = P.parseMelee('<div class="decklist-category"><div class="decklist-category-title">Deck</div>' +
+    '<span class="decklist-record-quantity">4</span><a class="decklist-record-name">Urza&#x27;s Saga</a></div>');
+  assert.equal(melee.mainboard["Urza's Saga"], 4);
+  const md = P.parseMtgDecks('<textarea id="arena_deck">Deck\n1 Urza&#39;s Saga (MH2) 259\n</textarea>');
+  assert.equal(md.mainboard["Urza's Saga (MH2) 259"], 1);   // set code stripped later, by normalizeDeck
 });
 
 // ---- Magic-Ville: the v0.7 regression case ----
@@ -95,4 +106,11 @@ test("getpaird: command_zone→commanders; brace-counter survives '};' in oracle
 
 test("getpaird: missing _deckCards blob throws 'parseFailed'", () => {
   assert.throws(() => P.parseGetpaird("<html><body>no data here</body></html>"), /parseFailed/);
+});
+
+test("MTGGoldfish archetype page: the deck id is the first /deck/<id> link (Deck Page), not the similar decks", () => {
+  const html = '<a href="/deck/7945486">Deck Page</a> <a href="/deck/7945486/edit">Edit</a> <a href="/deck/7969867#online">Izzet Prowess</a>';
+  assert.equal(P.mtggoldfishDeckId(html), "7945486");
+  assert.equal(P.mtggoldfishDeckId('<a href="/deck/download/123?type=arena">Download</a>'), "123");
+  assert.equal(P.mtggoldfishDeckId("<p>no deck here</p>"), null);
 });

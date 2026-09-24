@@ -87,6 +87,8 @@
   "settingsBtnTitle":          { "message": "Settings" },
   "injectDeclined":            { "message": "Permission declined — the button stays off on those sites." },
   "injectReload":              { "message": "Reload this page to see the Compare button." },
+  "siteAccessGrant":           { "message": "Allow Deck Compare on the deck sites" },
+  "siteAccessDeclined":        { "message": "Without this access the extension cannot read any deck." },
   "injectGrantMox":            { "message": "Allow the button on Moxfield" },
   "injectGrantHere":           { "message": "Allow the button on this site" },
   "openTabsLabel":             { "message": "Your open deck tabs" },

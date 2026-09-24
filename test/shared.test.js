@@ -8,6 +8,7 @@ const siteMatch = (url) => (SUPPORTED_SITES.find((s) => s.deckRe.test(url)) || {
 test("SUPPORTED_SITES matches deck-detail URLs (popup + pool tab pickers)", () => {
   assert.equal(siteMatch("https://www.moxfield.com/decks/AbC123_-x"), "Moxfield");
   assert.equal(siteMatch("https://www.mtgtop8.com/event?e=90366&d=885960&f=EDH"), "mtgtop8");
+  assert.equal(siteMatch("https://www.mtggoldfish.com/archetype/modern-izzet-prowess#paper"), "MTGGoldfish");  // archetype page = one full deck
   assert.equal(siteMatch("https://archidekt.com/decks/12345/krenko"), "Archidekt");
   assert.equal(siteMatch("https://getpaird.io/decklists/abc-def"), "getpaird");
   assert.equal(siteMatch("https://melee.gg/Decklist/View/123e4567-e89b-12d3-a456-426614174000"), "Melee");
@@ -18,6 +19,7 @@ test("SUPPORTED_SITES rejects homepages and listings (no false one-click shortcu
   assert.equal(siteMatch("https://www.mtgtop8.com/event?e=90366&f=EDH"), undefined); // no d=
   assert.equal(siteMatch("https://archidekt.com/decks/"), undefined);
   assert.equal(siteMatch("https://www.moxfield.com/"), undefined);
+  assert.equal(siteMatch("https://www.mtggoldfish.com/archetype/"), undefined);   // the archetype index, no deck
 });
 
 test("getOpenDeckTabs keeps deck tabs, drops the caller, non-decks and dupes", async () => {
@@ -92,6 +94,32 @@ test("fixCommanderHeuristic ignores a 3+ card sideboard", () => {
 test("normalizeName keeps the front face of split/DFC cards", () => {
   assert.equal(normalizeName("Brazen Borrower // Petty Theft"), "Brazen Borrower");
   assert.equal(normalizeName("Fire // Ice"), "Fire");
+});
+
+test("normalizeName drops what exports hang off the name (set code, foil, category, comment)", () => {
+  assert.equal(normalizeName("Dispatch [EOC]"), "Dispatch");           // MTGGoldfish list
+  assert.equal(normalizeName("Dispatch (EOC) 42"), "Dispatch");        // Arena / mtgdecks
+  assert.equal(normalizeName("Sol Ring (LTC) 284 *F* [Ramp]"), "Sol Ring");  // Moxfield export
+  assert.equal(normalizeName("Sol Ring # pas cher"), "Sol Ring");
+  assert.equal(normalizeName("Fire // Ice [MH2]"), "Fire");
+  // Not a set code: a parenthesised part of a real card name stays.
+  assert.equal(normalizeName("Erase (Not the Urza's Legacy One)"), "Erase (Not the Urza's Legacy One)");
+});
+
+test("normalizeName re-cases a hand-typed name so it meets the site's spelling", () => {
+  assert.equal(normalizeName("dispatch"), "Dispatch");
+  assert.equal(normalizeName("SOL RING"), "Sol Ring");
+  assert.equal(normalizeName("sword of fire and ice"), "Sword of Fire and Ice");
+  assert.equal(normalizeName("nicol bolas, god-pharaoh"), "Nicol Bolas, God-Pharaoh");
+  assert.equal(normalizeName("urza's saga"), "Urza's Saga");
+  // A source that cased the name is never rewritten — some spellings can't be guessed.
+  assert.equal(normalizeName("R&D's Secret Lair"), "R&D's Secret Lair");
+  assert.equal(normalizeName("Krenko, Mob Boss"), "Krenko, Mob Boss");
+});
+
+test("normalizeName keys a card the same whatever quotes/spaces the source uses", () => {
+  assert.equal(normalizeName("Urza\u2019s Saga"), "Urza's Saga");        // typographic apostrophe
+  assert.equal(normalizeName("Urza's\u00a0Saga"), "Urza's Saga");        // &nbsp; from a scraped cell
 });
 
 test("normalizeName leaves single-name cards untouched", () => {

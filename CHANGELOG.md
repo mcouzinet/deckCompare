@@ -6,6 +6,54 @@ Les releases sont numérotées **`X.Y`** (1.1, 1.2…) et taguées `vX.Y` ; entr
 builds de dev se lisent **`X.Y.Z`** (1.1.5, 1.1.6… après la 1.1), `Z` bumpé à chaque itération
 testée (voir `CLAUDE.md`).
 
+## [Non publié] — 1.1.11
+
+### Ajouté
+
+- **Les pages d'archétype MTGGoldfish sont reconnues.** `/archetype/<nom>` affiche un deck complet
+  avec la même page qu'un deck ordinaire, mais l'extension n'y voyait rien : pas de bouton, et
+  « Aucun deck détecté » dans le popup. Le bouton y apparaît désormais, le popup lit le deck, et
+  l'URL d'un archétype se colle comme second deck (l'extension retrouve le deck numéroté que la
+  page montre). Même hôte déjà autorisé : aucune nouvelle permission.
+- **Un paquet par navigateur, depuis la même source.** `npm run build` produit les paquets
+  Chrome (qui sert aussi à Edge, Brave, Opera et Vivaldi) et **Firefox** (128 et plus). Seul le
+  manifest diffère : Firefox n'a pas de service worker de fond, il charge les mêmes scripts en
+  page d'arrière-plan ; l'extension y porte un identifiant d'add-on et la déclaration « aucune
+  donnée collectée » que Mozilla exige. Sur Firefox, les accès aux sites sont optionnels à
+  l'installation : le popup propose « Autoriser Deck Compare sur les sites de decks » en un clic
+  tant qu'ils ne sont pas accordés (jamais affiché sur Chrome, où ils le sont d'office).
+
+### Corrigé
+
+- **MTGGoldfish : le bouton « Comparer » retrouve la barre d'outils du deck.** Il s'accrochait au
+  titre, que le site affiche désormais en bloc : le bouton se retrouvait seul sur sa ligne, sous
+  « by … », loin de toute action. Il ferme maintenant le groupe « Stats · View Options », juste
+  avant le menu des prix.
+- **Le bouton « Comparer » rejoint la barre du site même quand elle arrive tard.** Il attend
+  la barre 8 secondes, puis se repliait en pilule flottante en bas à droite pour de bon : sur
+  Moxfield, dont l'écran « Loading Moxfield… » dure parfois plus longtemps, le bouton finissait
+  toujours flottant, facile à manquer. Après le repli, il continue de guetter la barre (90 s au
+  plus) et s'y installe dès qu'elle apparaît, panneau et écouteurs conservés ; il ne bouge pas
+  tant que son panneau est ouvert.
+- **Le code d'édition collé au nom d'une carte ne crée plus de faux écart.** Certains exports
+  (la liste MTGGoldfish, l'export Arena) écrivent `Dispatch [EOC]` ou `Dispatch (EOC) 42` :
+  la carte se retrouvait en « unique » des deux côtés face à un deck qui écrit `Dispatch`.
+  `Shared.normalizeName` retire maintenant tout ce que les exports accrochent au nom (code
+  d'édition, `*F*` foil, `[Catégorie]`, commentaire `#`), donc tous les decks entrent indexés
+  pareil (le `normalizeDeck` de 1.1.4 s'applique à toutes les entrées). Les trois nettoyages
+  partiels qui traînaient (parser mtgdecks ×2, parser de texte collé) sont supprimés.
+- **Les apostrophes des decks lus en HTML ne cassent plus l'appariement.** Melee (ASP.NET)
+  écrit `Urza&#x27;s Saga`, Magic-Ville `&#39;`, mtgdecks n'était pas décodé du tout : le nom
+  arrivait tel quel et ne matchait ni Moxfield ni Scryfall. Le décodage d'entités est
+  maintenant numérique (décimal + hexa) et couvre aussi mtgdecks.
+- **Une decklist tapée à la main en minuscules (ou en capitales) s'apparie enfin.** `4 dispatch`
+  ou `4 SOL RING` restaient à côté du `Dispatch` du site. Ces deux formes ne portent aucune
+  information de casse : `Shared.normalizeName` les repasse en casse de titre (petits mots en
+  minuscule, capitale après un trait d'union). Un nom déjà casé par une source n'est jamais
+  réécrit — `R&D's Secret Lair` ne se devine pas.
+- **Apostrophe typographique et espace insécable** (`Urza’s Saga`, `&nbsp;` dans une cellule
+  scrapée) ramenés à la forme droite/simple, même raison.
+
 ## [1.1] — 2026-09-08
 
 Deuxième version publiée sur le Chrome Web Store, cinq builds de dev après la 1.0.13 (1.1.1 →

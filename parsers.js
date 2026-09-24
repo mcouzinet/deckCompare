@@ -77,21 +77,31 @@
         if (t.toLowerCase() === 'sideboard') { section = 'sideboard'; continue; }
         const m = t.match(/^(\d+)\s+(.+)$/);
         if (m) {
-          const name = m[2].replace(/\s*\([A-Z0-9]+\)\s*\d*$/, '').trim();
+          const name = decodeEntities(m[2].trim());  // "(SET) 123": Shared.normalizeDeck strips it
           deck[section][name] = (deck[section][name] || 0) + parseInt(m[1], 10);
         }
       }
     }
     const title = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
-    if (title) deck.name = title[1].replace(/<[^>]+>/g, '').trim();
+    if (title) deck.name = decodeEntities(title[1].replace(/<[^>]+>/g, '').trim());
     return deck;
   }
 
   // ---- Magic-Ville (HTML scrape; unquoted attrs, multi-line rows) ----
   // Throws Error('notFound') / Error('parseFailed') — background.js localizes these.
-  const decodeEntities = (s) => s
-    .replace(/&#0?39;|&apos;/g, "'").replace(/&quot;/g, '"')
-    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+  // These parsers read raw HTML (the DOM paths get decoded text for free), and each site
+  // escapes differently: Melee is ASP.NET and writes &#x27; for an apostrophe, Magic-Ville
+  // writes &#39;, others &apos;. Decode numerically rather than name by name, or "Urza&#x27;s
+  // Saga" ends up keyed apart from the same card read anywhere else.
+  const NAMED_ENTITIES = { apos: "'", quot: '"', lt: '<', gt: '>', amp: '&', nbsp: ' ', rsquo: '\u2019', lsquo: '\u2018' };
+  const codePoint = (raw, base, m) => {
+    const cp = parseInt(raw, base);
+    return cp > 0 && cp <= 0x10ffff ? String.fromCodePoint(cp) : m;
+  };
+  const decodeEntities = (s) => String(s)
+    .replace(/&#x([0-9a-f]+);/gi, (m, h) => codePoint(h, 16, m))
+    .replace(/&#(\d+);/g, (m, d) => codePoint(d, 10, m))
+    .replace(/&(apos|quot|lt|gt|amp|nbsp|rsquo|lsquo);/g, (m, n) => NAMED_ENTITIES[n]);
 
   function parseMagicVille(html) {
     // Magic-Ville returns HTTP 200 with a tiny body for a missing/private deck.
@@ -222,7 +232,16 @@
     return getpairdDeckFromData(data, name);
   }
 
-  const api = { parseMoxfield, parseArchidekt, parseMtgTop8, parseMtgGoldfish, parseMtgDecks, parseMagicVille, parseMelee, parseGetpaird };
+  // ---- MTGGoldfish archetype page → the deck it shows ----
+  // /archetype/<slug> renders one full deck; its sidebar "Deck Page" link is the first
+  // /deck/<id> href in the markup (the similar-decks list comes later). The download
+  // endpoint needs that numeric id.
+  function mtggoldfishDeckId(html) {
+    const m = String(html).match(/href="\/deck\/(\d+)/) || String(html).match(/\/deck\/download\/(\d+)/);
+    return m ? m[1] : null;
+  }
+
+  const api = { parseMoxfield, parseArchidekt, parseMtgTop8, parseMtgGoldfish, parseMtgDecks, parseMagicVille, parseMelee, parseGetpaird, mtggoldfishDeckId };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else global.Parsers = api;
 })(typeof self !== 'undefined' ? self : globalThis);

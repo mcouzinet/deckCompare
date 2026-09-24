@@ -132,7 +132,6 @@
   function parseDecklistText(text, name) {
     const deck = { name: name || M("poolPastedDeckName"), source: "text", url: "", mainboard: {}, sideboard: {}, commanders: {} };
     const add = (b, n, q) => { if (n && q > 0) b[n] = (b[n] || 0) + q; };
-    const clean = (s) => s.replace(/\s*\([A-Za-z0-9]{2,6}\)\s*[A-Za-z0-9-]*\s*$/, "").replace(/\s*\[[^\]]*\]\s*$/, "").replace(/\s+\*F\*\s*$/i, "").replace(/\s+#.*$/, "").trim();
     let section = "mainboard";
     for (const raw of text.split("\n")) {
       const line = raw.trim();
@@ -142,7 +141,7 @@
       if (/^(deck|mainboard|maindeck|main|deck principal)$/.test(h)) { section = "mainboard"; continue; }
       if (/^(sideboard|réserve|reserve|companion|compagnon)$/.test(h)) { section = "sideboard"; continue; }
       const m = line.match(/^(\d+)\s*[xX]?\s+(.+)$/);
-      if (m) add(deck[section], clean(m[2]), parseInt(m[1], 10));
+      if (m) add(deck[section], m[2].trim(), parseInt(m[1], 10));  // set code / foil / comment: Shared.normalizeDeck strips them
     }
     return Shared.fixCommanderHeuristic(Shared.normalizeDeck(deck));
   }

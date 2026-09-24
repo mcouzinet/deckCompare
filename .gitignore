@@ -1,5 +1,6 @@
 .DS_Store
 *.zip
+dist/
 node_modules/
 
 # Impeccable: keep the critique snapshots, drop the transient decision-server logs

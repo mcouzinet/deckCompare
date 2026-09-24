@@ -86,6 +86,7 @@ deckUrlInput.placeholder = chrome.i18n.getMessage('deck2Placeholder');
   }
 
   await loadSavedDecks();
+  refreshSiteAccess();
 
   // Land the caret where the work happens: with a URL already copied, the popup is
   // open-paste-Enter instead of open-click-paste-click.
@@ -343,6 +344,32 @@ async function refreshInjectGrant() {
   // The main-view offer says "this site": only when this tab's own host is among the missing.
   injectGrantMain.hidden = !(missing.length && detectedSite && onOptionalHost(currentTab?.url, missing));
 }
+
+// Firefox MV3 treats every host permission as optional at install: until the user grants
+// them, deck pages can't be read, the tab scan sees no URLs and the content scripts stay
+// off. One button asks for all the origins the manifest declares (host_permissions plus the
+// content-script matches) in a single prompt. On Chrome those are granted at install, so
+// `contains` is true and the button never shows.
+const REQUIRED_ORIGINS = (() => {
+  const m = chrome.runtime.getManifest();
+  const set = new Set(m.host_permissions || []);
+  for (const cs of m.content_scripts || []) for (const p of cs.matches || []) set.add(p);
+  return [...set];
+})();
+const siteAccess = document.getElementById('site-access');
+document.getElementById('site-access-text').textContent = chrome.i18n.getMessage('siteAccessGrant');
+async function refreshSiteAccess() {
+  let granted = true;
+  try { granted = await chrome.permissions.contains({ origins: REQUIRED_ORIGINS }); } catch (_) {}
+  siteAccess.hidden = granted;
+}
+siteAccess.addEventListener('click', async () => {
+  let granted = false;
+  try { granted = await chrome.permissions.request({ origins: REQUIRED_ORIGINS }); } catch (_) {}
+  await refreshSiteAccess();
+  if (granted) setStatus(detectedSite ? chrome.i18n.getMessage('injectReload') : '');
+  else setStatus(chrome.i18n.getMessage('siteAccessDeclined'), true);
+});
 
 // The optional origins that cover the current tab — what an "on this site" grant needs.
 const currentTabOrigins = () => OPTIONAL_ORIGINS.filter(o => Shared.isOptionalHost(currentTab?.url, [o]));

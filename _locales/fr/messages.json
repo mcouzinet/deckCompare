@@ -87,6 +87,8 @@
   "settingsBtnTitle":          { "message": "Réglages" },
   "injectDeclined":            { "message": "Autorisation refusée — le bouton reste absent sur ces sites." },
   "injectReload":              { "message": "Recharge cette page pour voir le bouton Compare." },
+  "siteAccessGrant":           { "message": "Autoriser Deck Compare sur les sites de decks" },
+  "siteAccessDeclined":        { "message": "Sans cet accès, l'extension ne peut lire aucun deck." },
   "injectGrantMox":            { "message": "Autoriser le bouton sur Moxfield" },
   "injectGrantHere":           { "message": "Autoriser le bouton sur ce site" },
   "openTabsLabel":             { "message": "Tes onglets de deck ouverts" },

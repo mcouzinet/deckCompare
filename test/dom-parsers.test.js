@@ -91,7 +91,7 @@ test("Archidekt (DOM): no __NEXT_DATA__ falls back to API", () => {
 });
 
 test("mtgdecks (DOM): arena_deck textarea, set codes stripped", () => {
-  const d = D.parseMtgDecks(doc("mtgdecks.html"));
+  const d = require("../shared.js").normalizeDeck(D.parseMtgDecks(doc("mtgdecks.html")));  // content.js normalizes
   assert.deepEqual(Object.keys(d.commanders), ["Aragorn, King of Gondor"]);
   assert.equal(d.mainboard["Sol Ring"], 1);
   assert.equal(sum(d.mainboard), 7);
@@ -140,10 +140,10 @@ test("Moxfield (DOM): defers to the API but still marks a deck page", () => {
 });
 
 // ---- in-page button anchors ----
-// These guard the selectors the button attaches to. Three sites (Magic-Ville,
-// MTGGoldfish, mtgdecks) sit behind bot checks or consent walls and could not be
-// inspected live, so their anchors reuse a selector the parser already depends on —
-// which is exactly what these fixtures pin down.
+// These guard the selectors the button attaches to. Magic-Ville sits behind a bot
+// check and could not be inspected live, so its anchor reuses a selector the parser
+// already depends on; MTGGoldfish's and mtgdecks' toolbars were read from the live
+// pages — which is exactly what these fixtures pin down.
 test("anchors: resolve against real fixtures", () => {
   const cases = [
     ["melee.html",        "https://melee.gg/Decklist/View/x",        "BUTTON"],
@@ -151,6 +151,7 @@ test("anchors: resolve against real fixtures", () => {
     ["magicville-dc.html", "https://www.magic-ville.com/fr/decks/showdeck?ref=1", "DIV"],
     ["magicville-dc.html", "https://magic-ville.com/fr/decks/showdeck?ref=1", "DIV"],  // www-less
     ["mtgdecks.html",     "https://mtgdecks.net/x",                  "LI"],
+    ["dom-mtggoldfish.html", "https://www.mtggoldfish.com/deck/1",  "LI"],   // the last action pill
     ["dom-archidekt.html", "https://archidekt.com/decks/x",          "DIV"],
     ["moxfield.html",     "https://moxfield.com/decks/x",            "DIV"],
     ["moxfield.html",     "https://www.moxfield.com/decks/x",        "DIV"],  // www twin

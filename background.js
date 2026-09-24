@@ -1,5 +1,7 @@
 // Service worker – handles deck fetching from APIs (avoids CORS)
-importScripts('shared.js', 'parsers.js');
+// Chrome runs this as a service worker (importScripts); the Firefox build lists shared.js
+// and parsers.js before this file in background.scripts, where importScripts does not exist.
+if (typeof importScripts === 'function') importScripts('shared.js', 'parsers.js');
 
 // 1.1 turned the in-page button on by default: an update from any pre-1.1 build drops the
 // stored toggle once (Shared.injectResetOnUpdate says why a stored `false` from 1.0.x cannot
@@ -14,7 +16,10 @@ chrome.runtime.onInstalled.addListener(({ reason, previousVersion }) => {
 // Chrome injects `update_url` into the manifest of Web Store installs; an unpacked
 // (locally loaded) extension has none. Used to make a local build unmistakable, so
 // it is never confused with the published one. No extra permission needed.
-const IS_DEV = !('update_url' in chrome.runtime.getManifest());
+// Firefox builds (browser_specific_settings set by scripts/build.js) never carry update_url,
+// signed or not, so the marker would brand every Firefox install: skip it there.
+const MANIFEST = chrome.runtime.getManifest();
+const IS_DEV = !('update_url' in MANIFEST) && !MANIFEST.browser_specific_settings;
 
 // Recolour the toolbar icon at runtime (swap the R/B channels) rather than shipping
 // a second icon set — nothing extra to package or to strip from the release zip.
@@ -573,7 +578,16 @@ async function fetchMtgDecksDeck(url) {
 // --- MTGGoldfish (via download endpoint – may be blocked by Cloudflare) ---
 
 async function fetchMtgGoldfishDeck(url) {
-  const match = url.match(/mtggoldfish\.com\/deck\/(\d+)/);
+  let match = url.match(/mtggoldfish\.com\/deck\/(\d+)/);
+  if (!match && /mtggoldfish\.com\/archetype\/[^/?#]+/.test(url)) {
+    // An archetype page shows one deck; read its numeric id off the page, then download
+    // that deck like any other. Same Cloudflare rule as below: a 403 here hands over to
+    // the tab, whose content script reads the archetype page's own decklist.
+    const page = await fetch(url, { credentials: 'include' });
+    if (page.status === 403) throw blocked(chrome.i18n.getMessage('errMtggoldfishBlocked'));
+    const id = page.ok ? Parsers.mtggoldfishDeckId(await page.text()) : null;
+    if (id) match = [null, id];
+  }
   if (!match) throw new Error(chrome.i18n.getMessage('errMtggoldfishInvalidUrl'));
 
   // MTGGoldfish's Cloudflare returns 403 to cookie-less requests on this endpoint.
