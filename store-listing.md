@@ -131,13 +131,17 @@ All in the light « Le mémo » world, French UI, captured from the real 1.1 bui
 Chrome for Testing with the extension loaded (real sites, real decks, real Scryfall images).
 Store screenshots are 1280×800 PNG, in this order:
 
-1. `store/screenshots/1-bouton-et-panneau-sur-archidekt.png` — Archidekt deck page, the black
+1. `store/screenshots/1-le-bouton-sur-huit-sites.png` — montage: the « Comparer » button captured
+   in the action bar of each of the eight sites (real pages: Moxfield, Archidekt, MTGGoldfish,
+   mtgtop8, Magic-Ville, mtgdecks, Melee, getpaird), laid out on the extension's paper. First
+   slot on purpose: the other captures are taken on Archidekt and read as "Archidekt only".
+2. `store/screenshots/2-bouton-et-panneau-sur-archidekt.png` — Archidekt deck page, the black
    « Comparer » button in the site's own toolbar, the panel open with a second deck URL.
-2. `store/screenshots/2-comparaison.png` — the results page: « Lore Of The Rings (budget build) »
+3. `store/screenshots/3-comparaison.png` — the results page: « Lore Of The Rings (budget build) »
    vs its upgrade build, 82 %, the bar with the « exemplaires · cartes » legend, a card held.
-3. `store/screenshots/3-comparaison-croisee.png` — cross-compare seeded from the mtgtop8
+4. `store/screenshots/4-comparaison-croisee.png` — cross-compare seeded from the mtgtop8
    « Aragorn, King of Gondor » archetype (23 decks), the « + Ajouter » pill, a card hovered.
-4. `store/screenshots/4-popup.png` — the popup over that Archidekt page: deck detected, the
+5. `store/screenshots/5-popup.png` — the popup over that Archidekt page: deck detected, the
    other open deck tab offered. **Staged**: real popup markup and code, but the tab list and
    the saved-decks line are supplied by a harness (a popup opened as a page cannot see another
    active tab).
@@ -150,3 +154,8 @@ screenshot 2). Two site names at most appear in a row, as in the descriptions.
 
 Pipeline: `scratchpad/shots/*.js` (puppeteer-core + Chrome for Testing, `--load-extension`;
 the branded Chrome ≥ 137 refuses that flag), 2× capture then Lanczos resize to exact size.
+Montage tiles: six sites cropped in a headful Chrome for Testing (Moxfield through a test copy of
+the package that declares its content script statically — the shipped build asks for that host
+at runtime); MTGGoldfish, Magic-Ville and mtgdecks sit behind Cloudflare challenges that block
+automated Chrome, so their tiles come from the user's own Chrome (page zoomed 2×, frame exported
+as GIF, cropped). Composition: `scratchpad/montage/montage.html` rendered at 2×.
