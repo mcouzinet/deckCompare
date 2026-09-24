@@ -6,6 +6,22 @@ Les releases sont numérotées **`X.Y`** (1.1, 1.2…) et taguées `vX.Y` ; entr
 builds de dev se lisent **`X.Y.Z`** (1.1.5, 1.1.6… après la 1.1), `Z` bumpé à chaque itération
 testée (voir `AGENTS.md`).
 
+## [Non publié]
+
+### Ajouté
+
+- **Licence MIT** (`LICENSE`). La police Beleren et les extraits de pages des fixtures de test
+  n'en relèvent pas ; le README le précise, avec la mention Fan Content de Wizards.
+
+### Modifié
+
+- **Politique de confidentialité réécrite** (`privacy-policy.html`, celle que lient les trois
+  stores). Elle datait de juin et décrivait une extension Chrome à six sites : elle couvre
+  désormais Chrome, Edge et Firefox, les huit sites, tout ce qui est gardé en local (comparaison,
+  pool et filtres, réglages, cache Scryfall de 30 jours), les requêtes vers les sites (cookies
+  transmis pour passer leur anti-bot, onglet d'arrière-plan en cas de blocage), Scryfall et Google
+  Fonts, et chaque permission. Contact : les issues GitHub.
+
 ## [1.2] — 2026-09-24
 
 Troisième version publiée sur le Chrome Web Store, six builds de dev après la 1.1 (1.1.6 →
@@ -362,6 +378,7 @@ le wordmark sont inchangés ; le monde est construit autour d'eux.
 ### Ajouté
 - Séparation des créatures, vue en liste, cartes plus grandes et nettoyage de code.
 
+[Non publié]: https://github.com/mcouzinet/deckCompare/compare/v1.2...HEAD
 [1.2]: https://github.com/mcouzinet/deckCompare/compare/v1.1...v1.2
 [1.1]: https://github.com/mcouzinet/deckCompare/compare/v1.0.13...v1.1
 [1.0.13]: https://github.com/mcouzinet/deckCompare/compare/v0.9.0...v1.0.13

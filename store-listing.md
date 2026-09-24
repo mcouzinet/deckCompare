@@ -212,7 +212,7 @@ Store. What differs:
   FR : *Sur Firefox, autorisez l'accès aux sites de decks en un clic depuis le popup, la première fois.*
 - Category: Games & Entertainment. Support site: https://github.com/mcouzinet/deckCompare.
   Privacy policy: https://mcouzinet.github.io/deckCompare/privacy-policy.html.
-- License: to pick in the console (the repository has no LICENSE file).
+- License: MIT (the repository's `LICENSE`).
 - Source code: not needed — nothing is minified or bundled; the build only rewrites the manifest.
   If a reviewer asks, point to the GitHub tag `v1.2` and `npm run build`.
 - Data collection: declared in the manifest as none.

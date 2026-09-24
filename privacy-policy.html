@@ -3,79 +3,86 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
   <title>Deck Compare — Privacy Policy</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #0c0e13; color: #c4c9d6; font-size: 15px; line-height: 1.7;
-      min-height: 100vh; padding: 40px 20px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, sans-serif;
+      background: #f8f5f2; color: #5e524b; font-size: 15px; line-height: 1.7;
+      min-height: 100vh; padding: 48px 20px;
     }
-    .container { max-width: 640px; margin: 0 auto; }
-    h1 { color: #eef0f6; font-size: 28px; margin-bottom: 8px; }
-    .subtitle { color: #868da0; font-size: 13px; margin-bottom: 32px; }
-    h2 { color: #eef0f6; font-size: 18px; margin: 28px 0 10px; }
+    .container { max-width: 660px; margin: 0 auto; }
+    h1 { color: #241c18; font-size: 28px; line-height: 1.2; margin-bottom: 8px; }
+    .subtitle { color: #7a6d64; font-size: 13px; margin-bottom: 32px; }
+    h2 { color: #241c18; font-size: 18px; margin: 30px 0 10px; }
     p { margin-bottom: 14px; }
     ul { margin: 0 0 14px 20px; }
     li { margin-bottom: 6px; }
-    a { color: #e76074; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.07); font-size: 12px; color: #5b6273; }
+    strong { color: #241c18; }
+    code { font-size: 13px; background: #efe9e3; padding: 1px 5px; border-radius: 4px; }
+    a { color: #137083; text-decoration: underline; text-underline-offset: 2px; }
+    a:hover { color: #0f5d6d; }
+    .footer { margin-top: 44px; padding-top: 20px; border-top: 1px solid #e8dfd8; font-size: 12px; color: #7a6d64; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Deck Compare — Privacy Policy</h1>
-    <p class="subtitle">Last updated: June 4, 2026</p>
+    <p class="subtitle">Last updated: September 24, 2026</p>
 
     <h2>Overview</h2>
-    <p>Deck Compare is a Chrome extension that compares Magic: The Gathering decklists across multiple websites. Your privacy matters — the extension is designed to work entirely on your device with no data collection.</p>
+    <p>Deck Compare is a browser extension for Chrome, Edge and Firefox that compares Magic: The Gathering decklists. It runs entirely in your browser: there is no account, no server of ours, and nothing about you is collected.</p>
 
     <h2>Data we collect</h2>
-    <p><strong>None.</strong> Deck Compare does not collect, store, or transmit any personal data to any server.</p>
+    <p><strong>None.</strong> The developer receives no data from the extension: no personal information, no browsing history, no usage statistics.</p>
 
-    <h2>What the extension does</h2>
+    <h2>What the extension reads</h2>
     <ul>
-      <li><strong>Reads decklist data</strong> from publicly available deck pages on supported sites (Moxfield, MTGGoldfish, Archidekt, mtgtop8, Magic-Ville, mtgdecks.net) — only card names and quantities.</li>
-      <li><strong>Fetches card images</strong> from the Scryfall API for display purposes.</li>
-      <li><strong>Fetches deck data</strong> from supported site APIs to retrieve decklists for comparison.</li>
+      <li><strong>Decklists</strong> (card names, quantities and the deck's name) from the deck pages you open or the deck links you give it, on the supported sites: Moxfield, Archidekt, MTGGoldfish, mtgtop8, Magic-Ville, mtgdecks, Melee and getpaird; and from decklists you paste yourself.</li>
+      <li><strong>The address of the tab you are on</strong>, when you click the extension's icon, to recognise a supported deck page.</li>
+      <li><strong>Your public decks</strong>, if you enter your username for Moxfield, Archidekt or Magic-Ville: the list of that user's public decks on that site.</li>
+    </ul>
+    <p>The extension only reads decks. It never posts, edits or changes anything on these sites.</p>
+
+    <h2>Network requests</h2>
+    <p>The extension contacts only the following:</p>
+    <ul>
+      <li><strong>The supported deck sites</strong>, to fetch the decks you chose to compare. Requests to MTGGoldfish, mtgdecks and Magic-Ville carry the cookies your browser already holds for those sites, so that their bot protection lets them through; the extension never reads or stores those cookies. When one of these sites blocks a direct request, the extension opens the deck page in a background tab, reads it and closes it.</li>
+      <li><strong>Scryfall</strong> (<code>api.scryfall.com</code>, <code>cards.scryfall.io</code>), to get card types and images: the names of the cards on screen are sent to Scryfall for that purpose. See <a href="https://scryfall.com/docs/api">Scryfall's API terms</a>.</li>
+      <li><strong>Google Fonts</strong> (<code>fonts.googleapis.com</code>, <code>fonts.gstatic.com</code>), to load the typefaces of the extension's own pages. See <a href="https://policies.google.com/privacy">Google's privacy policy</a>.</li>
     </ul>
 
-    <h2>Local storage</h2>
-    <p>The extension uses Chrome's local storage (<code>chrome.storage.local</code>) to save:</p>
+    <h2>Stored on your device</h2>
+    <p>The extension keeps the following in the browser's extension storage (<code>storage.local</code>), on your device only:</p>
     <ul>
-      <li>Comparison data (two parsed decklists) so the results page can display them.</li>
-      <li>Your Moxfield username and cached deck list, if you choose to enter it, to avoid re-fetching on every popup open.</li>
+      <li>the two decks of the comparison in progress, so the results page can show them;</li>
+      <li>the decks you add to a cross-comparison, and the card filters you set on it;</li>
+      <li>your settings: whether the Compare button shows on deck sites, the usernames you entered and the public deck lists fetched for them, and the results page's display density;</li>
+      <li>a cache of card data from Scryfall (card types and image addresses), kept for 30 days so pages load faster.</li>
     </ul>
-    <p>This data stays entirely on your device. It is never sent to any external server.</p>
-
-    <h2>Third-party services</h2>
-    <p>The extension makes requests to the following third-party services:</p>
-    <ul>
-      <li><strong>Scryfall</strong> (api.scryfall.com, cards.scryfall.io) — to fetch card images. Subject to <a href="https://scryfall.com/docs/api">Scryfall's terms</a>.</li>
-      <li><strong>Google Fonts</strong> (fonts.googleapis.com, fonts.gstatic.com) — to load display fonts.</li>
-      <li><strong>Supported deck sites</strong> — to fetch publicly available deck data via their APIs or pages.</li>
-    </ul>
-    <p>No user data is sent to these services. Only public deck identifiers and card names are used in requests.</p>
-
-    <h2>Analytics and tracking</h2>
-    <p>Deck Compare does not use any analytics, tracking, cookies, or telemetry of any kind.</p>
+    <p>Nothing is synced across devices or sent anywhere. Uninstalling the extension deletes all of it.</p>
 
     <h2>Permissions</h2>
     <ul>
-      <li><strong>activeTab</strong> — to read the decklist from the currently open tab.</li>
-      <li><strong>storage</strong> — to save comparison data and Moxfield username locally.</li>
-      <li><strong>Host permissions</strong> — to fetch deck data and card images from supported sites and Scryfall.</li>
+      <li><strong>activeTab</strong>: read the address and the decklist of the tab you are on, when you click the extension's icon.</li>
+      <li><strong>storage</strong>: keep the data listed above on your device.</li>
+      <li><strong>scripting</strong>: show the Compare button on the optional sites you allow.</li>
+      <li><strong>Access to the supported deck sites and Scryfall</strong>: read decklists and card data, and show the Compare button on deck pages. On Firefox, you grant this access from the extension's popup the first time.</li>
+      <li><strong>Optional access</strong> to Moxfield's pages and to the www / non-www variants of the supported sites: requested only when you turn on the Compare button, and removed when you turn it off.</li>
     </ul>
 
+    <h2>Analytics and tracking</h2>
+    <p>None. No analytics, no telemetry, no advertising, and the extension sets no cookies of its own.</p>
+
     <h2>Changes to this policy</h2>
-    <p>If this policy is updated, the changes will be reflected on this page with an updated date.</p>
+    <p>Changes are published on this page, with a new date at the top.</p>
 
     <h2>Contact</h2>
-    <p>For questions about this privacy policy, you can reach out via <a href="https://buymeacoffee.com/mcouzinet">Buy Me a Coffee</a>.</p>
+    <p>For any question about this policy, open an issue on <a href="https://github.com/mcouzinet/deckCompare/issues">GitHub</a>.</p>
 
     <div class="footer">
-      Deck Compare is an open-source Chrome extension. No data is collected. No accounts required.
+      Deck Compare is open source under the MIT license. It is unofficial Fan Content permitted under the Fan Content Policy, not approved or endorsed by Wizards of the Coast. Portions of the materials used are property of Wizards of the Coast. © Wizards of the Coast LLC.
     </div>
   </div>
 </body>

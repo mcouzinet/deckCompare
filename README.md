@@ -94,6 +94,15 @@ No data collected. No analytics. No cookies. Everything runs locally.
 
 See the full [Privacy Policy](https://mcouzinet.github.io/deckCompare/privacy-policy.html).
 
+## License
+
+[MIT](LICENSE). Not covered by it: the Beleren typeface in `fonts/`, property of Wizards of the
+Coast, and the page excerpts in `test/fixtures/`, which remain their sites' property.
+
+Deck Compare is unofficial Fan Content permitted under the Fan Content Policy. Not
+approved/endorsed by Wizards. Portions of the materials used are property of Wizards of the
+Coast. ©Wizards of the Coast LLC.
+
 ## Support
 
 If you find this useful, consider [buying me a coffee](https://buymeacoffee.com/mcouzinet).

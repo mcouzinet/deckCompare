@@ -2,6 +2,7 @@
   "name": "deck-compare",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "description": "Deck Compare — MTG browser extension. npm test: unit tests (node:test + jsdom, no network). npm run build: one store package per browser in dist/.",
   "scripts": {
     "test": "node --test",

@@ -66,6 +66,10 @@ changements de permissions le font.)
   `esc()`. Test réel sur Firefox : `web-ext run --args=-headless --args=--remote-debugging-port=9333`
   puis puppeteer en WebDriver BiDi (`installExtension` échoue sur Firefox 134).
 
+- **Politique de confidentialité et réponses des stores suivent le code** : toute permission,
+  donnée stockée ou requête réseau nouvelle se reporte dans `privacy-policy.html` (servie par
+  GitHub Pages, liée par les trois stores) et dans la section « Privacy practices » de
+  `store-listing.md`, dans le même commit.
 - **Pas de permission requise ajoutée** sans prévenir : ça désactive l'extension pour tous les
   utilisateurs jusqu'à ré-acceptation. Nouveaux hôtes → `optional_host_permissions`. Ajouter un
   content-script sur un **path** d'un hôte **déjà permis** (ex. `mtgtop8.com/archetype*` alors que
