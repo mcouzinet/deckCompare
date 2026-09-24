@@ -32,6 +32,11 @@ console and is not otherwise versioned anywhere.
 
 ---
 
+> **2026-09-24 — 1.2 cut** (manifest `1.2`, tag `v1.2`). Three uploads, same texts and media:
+> `dist/deckcompare-1.2-chrome.zip` to the Chrome Web Store and to Edge Add-ons,
+> `dist/deckcompare-1.2-firefox.zip` to addons.mozilla.org (first Firefox listing — see
+> *Firefox and Edge listings* below for the fields those two consoles ask for).
+
 ## Short description (132 characters max)
 
 Comes from `_locales/*/messages.json` → `appDescription`. Unchanged, not flagged.
@@ -84,10 +89,13 @@ Aucun compte, aucune connexion, aucune analyse d'audience, aucune donnée collec
 ## Patch notes
 
 Shown under the detailed description in both listings, newest first, one short paragraph per
-version. Newest first: **v1.1**, then **v1.0.13** (which replaces the v1.0 note the console
-still shows).
+version. Newest first: **v1.2**, **v1.1**, then **v1.0.13**.
 
 ### Français
+
+**v1.2**
+
+Les pages d'archétype MTGGoldfish sont reconnues : le bouton y apparaît et le popup lit le deck. Sur MTGGoldfish, le bouton « Comparer » retrouve sa place dans la barre du deck ; sur Moxfield, il rejoint la barre même quand la page charge lentement. Les noms de cartes s'apparient mieux d'un site à l'autre : codes d'édition, apostrophes, listes tapées à la main. Aucune permission supplémentaire à la mise à jour.
 
 **v1.1**
 
@@ -107,6 +115,10 @@ Magic-Ville réparé — les decks Magic-Ville ne se chargeaient plus. C'est cor
 
 ### English
 
+**v1.2**
+
+MTGGoldfish archetype pages are now recognized: the button shows up and the popup reads the deck. On MTGGoldfish the Compare button is back in the deck toolbar; on Moxfield it joins the toolbar even when the page loads slowly. Card names match better across sites: set codes, apostrophes, hand-typed lists. No new permission on update.
+
 **v1.1**
 
 The Compare button now ships on the deck sites out of the box, and can be switched off in Settings; Moxfield is one click away. The panel it opens takes the extension's light look. Cross-compare: "+ Add" moves next to the deck list, shared and distinct cards copy in one click, and double-faced cards are matched across sources. The direct comparison's legend now states copies and cards. When Cloudflare blocks a direct deck read (MTGGoldfish among others), the read goes through a tab instead. No new permission on update.
@@ -124,6 +136,33 @@ Two new sites supported at full parity with the existing six: Melee (melee.gg) a
 Magic-Ville fixed (including Duel Commander commander detection), clearer error messages on unreadable pages, automated checks on supported sites.
 
 ---
+
+## Firefox and Edge listings (1.2)
+
+Same name, short and detailed descriptions, screenshots and promo images as the Chrome Web
+Store. What differs:
+
+**addons.mozilla.org** (Firefox, first listing)
+
+- Package: `dist/deckcompare-1.2-firefox.zip`. Add-on id `deckcompare@mcouzinet.github.io`
+  (in the manifest; permanent once published).
+- Summary (250 characters max): the short description above.
+- Add one sentence to the detailed description, Firefox only —
+  EN: *On Firefox, allow access to the deck sites in one click from the popup the first time.*
+  FR : *Sur Firefox, autorisez l'accès aux sites de decks en un clic depuis le popup, la première fois.*
+- Category: Games & Entertainment. Support site: https://github.com/mcouzinet/deckCompare.
+  Privacy policy: https://mcouzinet.github.io/deckCompare/privacy-policy.html.
+- License: to pick in the console (the repository has no LICENSE file).
+- Source code: not needed — nothing is minified or bundled; the build only rewrites the manifest.
+  If a reviewer asks, point to the GitHub tag `v1.2` and `npm run build`.
+- Data collection: declared in the manifest as none.
+- Version notes — EN: *First release for Firefox.* FR : *Première version pour Firefox.*
+
+**Edge Add-ons** (Partner Center)
+
+- Package: `dist/deckcompare-1.2-chrome.zip` — the Chrome package, unchanged.
+- Category: Entertainment. Privacy policy URL as above. Same screenshots (1280×800) and promo
+  tiles (440×280 small, 1400×560 large).
 
 ## Media (1.1, 2026-09-08)
 

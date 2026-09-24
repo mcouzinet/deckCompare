@@ -17,11 +17,12 @@ decks. Pas de build : Chrome charge le dossier tel quel. Tests : `npm test` (nod
   < `1.2`. Une release doit rester strictement supérieure à la version publiée précédente
   (`1.1` > `1.0.13`, OK).
 
-État au 2026-09-08 : **`1.1`** = release taguée `v1.1`, paquet `deckcompare-v1.1.zip` à déposer
-sur le Web Store (fait par l'utilisateur). La **1.0.13** reste en ligne jusque-là ; la 1.1 n'ajoute
-aucun hôte requis (baseline permissions inchangée). Le dev reprend à **`1.1.6`** (les builds
-1.1.1 → 1.1.5 ont précédé la release, la 1.1.5 y étant reprise) ; la release suivante sera `1.2`,
-puis le dev `1.2.1`, `1.2.2`…
+État au 2026-09-24 : **`1.2`** = release taguée `v1.2` ; paquets `npm run build` →
+`dist/deckcompare-1.2-chrome.zip` (Chrome Web Store **et** Edge Add-ons) et
+`dist/deckcompare-1.2-firefox.zip` (addons.mozilla.org, première version Firefox ; id gecko
+`deckcompare@mcouzinet.github.io` validé par l'utilisateur), déposés par l'utilisateur. La **1.1**
+est en ligne sur Chrome depuis le 2026-09-09 ; la 1.2 n'ajoute aucun hôte requis. Le dev reprend à
+**`1.2.1`** ; la release suivante sera `1.3`.
 
 **Pourquoi bumper à chaque itération** : Chrome ne recharge PAS les content-scripts d'un onglet
 déjà ouvert quand on recharge l'extension. Le numéro visible dans `chrome://extensions` est le
