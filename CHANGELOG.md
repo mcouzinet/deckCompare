@@ -10,11 +10,21 @@ testée (voir `AGENTS.md`).
 
 ### Ajouté
 
+- **Paquet Safari** (`npm run build safari`), pour le packager d'extensions Safari d'Apple (App
+  Store Connect ou Xcode). Il porte `browser_specific_settings.safari`, sans quoi chaque install
+  Safari aurait affiché le badge DEV (aucune n'a d'`update_url`), et une icône 1024 px tirée de
+  `icons/icon.svg`, dont Apple fabrique l'icône de l'app : sinon, notre 128 px agrandie huit fois.
+  Safari 16.4 minimum. L'app macOS qui l'embarque est le projet Xcode de `safari/`, qui référence
+  `dist/safari/` au lieu d'en copier le code : identifiant `io.github.mcouzinet.deckcompare`,
+  macOS 12 minimum, catégorie Divertissement, chiffrement exempté déclaré.
 - **Licence MIT** (`LICENSE`). La police Beleren et les extraits de pages des fixtures de test
   n'en relèvent pas ; le README le précise, avec la mention Fan Content de Wizards.
 
 ### Modifié
 
+- **Description courte française raccourcie** : « Comparez deux decklists Magic: The Gathering côte
+  à côte, avec un diff visuel et un score de similarité. » L'ancienne faisait 125 caractères et
+  l'App Store refuse le paquet Safari au-delà de 112, langue par langue.
 - **Politique de confidentialité réécrite** (`privacy-policy.html`, celle que lient les trois
   stores). Elle datait de juin et décrivait une extension Chrome à six sites : elle couvre
   désormais Chrome, Edge et Firefox, les huit sites, tout ce qui est gardé en local (comparaison,

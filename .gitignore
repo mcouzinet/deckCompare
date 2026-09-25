@@ -9,3 +9,7 @@ node_modules/
 
 # Impeccable: finish-review captures are transient evidence
 .impeccable/review/
+
+# Xcode (Safari wrapper app in safari/): per-user state and build products
+xcuserdata/
+DerivedData/

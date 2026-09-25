@@ -202,3 +202,14 @@ test("sameDeckPage ignores the hash and www (finding a deck's tab for the fetch 
   assert.equal(sameDeckPage("https://www.mtgtop8.com/event?e=90366&d=885960",
                             "https://www.mtgtop8.com/event?e=90366&d=885961"), false);
 });
+
+test("every locale's appDescription fits Safari's 112-character limit (Chrome allows 132)", () => {
+  const fs = require("fs"); const path = require("path");
+  const dir = path.join(__dirname, "..", "_locales");
+  for (const loc of fs.readdirSync(dir)) {
+    const m = JSON.parse(fs.readFileSync(path.join(dir, loc, "messages.json"), "utf8"));
+    const d = m.appDescription && m.appDescription.message;
+    assert.equal(typeof d, "string", `${loc}: appDescription missing`);
+    assert.ok(d.length <= 112, `${loc}: appDescription is ${d.length} characters`);
+  }
+});

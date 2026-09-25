@@ -37,13 +37,17 @@ console and is not otherwise versioned anywhere.
 > `dist/deckcompare-1.2-firefox.zip` to addons.mozilla.org (first Firefox listing — see
 > *Firefox and Edge listings* below for the fields those two consoles ask for).
 > Edge Add-ons: 1.2 submitted on 2026-09-24 (first Edge listing, logo + EN/FR descriptions).
+> addons.mozilla.org: 1.2 submitted on 2026-09-24 (first Firefox listing).
+> Mac App Store: macOS app 1.2, build 2, submitted on 2026-09-25 (first Safari listing).
+> Chrome Web Store: 1.2 submitted on 2026-09-25.
 
 ## Short description (132 characters max)
 
-Comes from `_locales/*/messages.json` → `appDescription`. Unchanged, not flagged.
+Comes from `_locales/*/messages.json` → `appDescription`. **112 characters at most**: Safari rejects
+the package above that (the French one was shortened on 2026-09-24; a test guards the limit).
 
-- **EN** — Instantly compare two Magic: The Gathering decklists side by side with a visual diff and similarity score.
-- **FR** — Comparez instantanément deux listes de cartes Magic: The Gathering côte à côte avec un diff visuel et un score de similarité.
+- **EN**: Instantly compare two Magic: The Gathering decklists side by side with a visual diff and similarity score.
+- **FR**: Comparez deux decklists Magic: The Gathering côte à côte, avec un diff visuel et un score de similarité.
 
 ---
 
@@ -228,6 +232,69 @@ Store. What differs:
 - Optional: screenshots (1280×800, six at most — the five in `store/screenshots/`) and the promo
   tiles `store/promo-small-440x280.png` and `store/promo-marquee-1400x560.png`. Edge takes PNG;
   the Chrome Web Store accepts the same files (24-bit, no alpha).
+
+## App Store (Safari, macOS)
+
+Same texts and media as the other stores, packaged by Apple's **Safari Web Extension Packager**.
+Start with macOS only: iOS would need portrait screenshots and its own testing.
+
+**Package**: `dist/deckcompare-X.Y-safari.zip` (`npm run build safari`, or the default build).
+It differs from the Chrome package in two places: `browser_specific_settings.safari`
+(`strict_min_version` 16.4, and the key that keeps the DEV badge off) and a 1024 px icon, from
+which the packager builds the app's App Store icon. Without it, the icon is the 128 px one
+enlarged, visibly pixelated.
+
+**Upload through Xcode.** App Store Connect's web packager sits behind Xcode Cloud's onboarding,
+which starts in Xcode anyway (seen 2026-09-24: the Xcode Cloud page only offers « Ouvrir Xcode »).
+The wrapper app lives in `safari/Deck Compare/Deck Compare.xcodeproj`; it references
+`dist/safari/`, it does not copy it.
+
+1. App Store Connect › Apps › **New App**: platform **macOS**, name = the extension's `appName`, bundle ID
+   `io.github.mcouzinet.deckcompare` (registered in Certificates, Identifiers & Profiles; permanent),
+   SKU `deckcompare-safari`. Done on 2026-09-24.
+2. `npm run build safari`, then open the project in Xcode. Team `6DTUA72PA3`, automatic signing,
+   version and build number are already set in the project.
+3. Scheme **Deck Compare**, destination **Any Mac** › Product › **Archive**. In the Organizer:
+   **Distribute App** › App Store Connect › Distribute. Xcode creates the distribution certificate
+   if the team has none.
+4. Once the build is processed, attach it to version 1.2 in App Store Connect and submit. Test it
+   first with TestFlight on the Mac if you like.
+5. Each new upload needs a higher build number (`CURRENT_PROJECT_VERSION`), and each release the
+   new `MARKETING_VERSION`, both in the app **and** the extension target.
+
+**Listing** (fill English, then add the French localization)
+
+- Name: the extension's `appName` (`_locales/en/messages.json`).
+- Subtitle (30 max): EN `Compare MTG decklists` · FR `Comparez vos decklists MTG`.
+- Promotional text (170 max):
+  EN: Compare two Magic: The Gathering decklists side by side, right from the deck page: shared cards, exclusives, quantity gaps and a similarity score.
+  FR : Comparez deux decklists Magic: The Gathering côte à côte depuis la page du deck : cartes communes, exclusives, écarts de quantité et score de similarité.
+- Description (4,000 max): the detailed description above, plus:
+  EN: *In Safari, allow Deck Compare on the deck sites when Safari asks, or in Safari Settings ›
+  Extensions.* FR : *Dans Safari, autorisez Deck Compare sur les sites de decks quand Safari le
+  demande, ou dans Réglages › Extensions.*
+- Keywords (100 bytes max, no spaces): EN `mtg,magic,gathering,deck,decklist,compare,diff,commander,edh,cards,similarity` · FR `mtg,magic,deck,decklist,comparer,comparaison,commander,edh,cartes,similarité`. Site names stay out:
+  Apple's guideline 2.3.7 treats third-party trademarks in keywords as keyword stuffing.
+- Support URL: https://github.com/mcouzinet/deckCompare/issues · Marketing URL (optional):
+  https://github.com/mcouzinet/deckCompare · Privacy policy: https://mcouzinet.github.io/deckCompare/privacy-policy.html
+- Copyright: `2026 Mickael Couzinet`. Category: Entertainment, as on the Chrome Web Store.
+  Age rating: answer *none* throughout → 4+.
+- Screenshots (Mac, 1280×800, PNG without alpha, 1 to 10): the five in `store/screenshots/`.
+- App Privacy: **Data Not Collected** (App Privacy page, with the privacy policy URL; only an
+  Account Holder or Admin can publish it).
+- Content rights (App Information): the app **shows and accesses third-party content** (card
+  images and types from Scryfall, decklists read from the deck sites), used as fan content under
+  Wizards' Fan Content Policy and Scryfall's API terms. Answering it is the owner's own attestation.
+- App Review contact (version page): first name, last name, email and phone, seen by Apple only;
+  sign-in not required.
+- App Review notes: *The app installs a Safari web extension. In Safari › Settings › Extensions,
+  enable Deck Compare and allow it on archidekt.com, then open
+  https://archidekt.com/decks/4868475 and click « Compare » in the site's toolbar.*
+
+**Known limits on Safari**: Apple documents neither `optional_host_permissions` nor its
+behaviour: the in-page button on Moxfield and on the www / non-www variants may not appear.
+Guideline 4.4 wants the containing app to offer "some functionality, such as help screens"; the
+packager's app shows only how to enable the extension, which reviewers may question.
 
 ## Media (1.1, 2026-09-08)
 

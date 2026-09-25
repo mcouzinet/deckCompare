@@ -1,18 +1,23 @@
 #!/usr/bin/env node
 // Packages the extension for each browser from the one source tree: dist/<target>/ plus
-// dist/deckcompare-<version>-<target>.zip. No bundler — the files ship as they are; only
+// dist/deckcompare-<version>-<target>.zip. No bundler: the files ship as they are, only
 // the manifest differs per browser.
 //
-//   node scripts/build.js            → chrome + firefox
+//   node scripts/build.js            → chrome + firefox + safari
 //   node scripts/build.js firefox    → one target
 //
-// chrome  — as-is. Also the package for Edge, Brave, Opera and Vivaldi (Chromium, same store
+// chrome:  as is. Also the package for Edge, Brave, Opera and Vivaldi (Chromium, same store
 //           format; Edge has its own store, the others install from the Chrome Web Store).
-// firefox — background.scripts instead of a service worker (Firefox MV3 has no worker
+// firefox: background.scripts instead of a service worker (Firefox MV3 has no worker
 //           background; background.js guards importScripts), browser_specific_settings.gecko
-//           (the add-on id is permanent once published on AMO — never change it), and the
+//           (the add-on id is permanent once published on AMO, never change it), and the
 //           data-collection declaration AMO now requires. Host permissions are optional at
 //           install on Firefox: the popup asks for them in one click (site-access button).
+// safari:  the input for Apple's Safari Web Extension Packager (App Store Connect, or
+//           `xcrun safari-web-extension-packager`). browser_specific_settings is what keeps
+//           the DEV badge off: App Store installs never carry update_url either (see IS_DEV in
+//           background.js). Adds a 1024 px icon, since the packager builds the app's App Store
+//           icon from the largest manifest icon.
 "use strict";
 const fs = require("fs");
 const path = require("path");
@@ -49,7 +54,16 @@ const TARGETS = {
     };
     return out;
   },
+  safari: (m) => {
+    const out = JSON.parse(JSON.stringify(m));
+    out.browser_specific_settings = { safari: { strict_min_version: "16.4" } };   // scripting.registerContentScripts
+    out.icons = Object.assign({}, out.icons, { 1024: "icons/icon1024.png" });
+    return out;
+  },
 };
+
+// Files one target ships on top of FILES.
+const EXTRA_FILES = { safari: ["icons/icon1024.png"] };
 
 function build(target) {
   const transform = TARGETS[target];
@@ -63,7 +77,8 @@ function build(target) {
 
   const dir = path.join(DIST, target);
   fs.rmSync(dir, { recursive: true, force: true });
-  for (const f of FILES) {
+  const files = FILES.concat(EXTRA_FILES[target] || []);
+  for (const f of files) {
     const src = path.join(ROOT, f);
     if (!fs.existsSync(src)) throw new Error(`missing file: ${f}`);
     fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true });
@@ -75,7 +90,7 @@ function build(target) {
   fs.rmSync(zip, { force: true });
   execFileSync("zip", ["-X", "-r", "-q", zip, "."], { cwd: dir });
   const size = fs.statSync(zip).size;
-  console.log(`${target.padEnd(8)} ${path.relative(ROOT, zip)}  ${(size / 1024).toFixed(0)} KB  (${FILES.length} files, manifest ${manifest.version})`);
+  console.log(`${target.padEnd(8)} ${path.relative(ROOT, zip)}  ${(size / 1024).toFixed(0)} KB  (${files.length} files, manifest ${manifest.version})`);
 }
 
 fs.mkdirSync(DIST, { recursive: true });

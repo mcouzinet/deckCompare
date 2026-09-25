@@ -1,7 +1,7 @@
 {
   "appName":                { "message": "Deck Compare – MTG" },
   "appShortName":           { "message": "DeckCompare" },
-  "appDescription":         { "message": "Comparez instantanément deux listes de cartes Magic: The Gathering côte à côte avec un diff visuel et un score de similarité." },
+  "appDescription":         { "message": "Comparez deux decklists Magic: The Gathering côte à côte, avec un diff visuel et un score de similarité." },
 
   "similar":                { "message": "similaire" },
   "onlyIn":                 { "message": "Unique à" },

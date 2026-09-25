@@ -64,6 +64,12 @@ the addons.mozilla.org listing is on its way. One Firefox difference: host permi
 optional at install, so the popup shows a one-click **Allow Deck Compare on the deck sites**
 button until you grant them.
 
+### Safari
+
+A Safari package is built from the same source (`npm run build safari` → `dist/safari/`), and the
+macOS wrapper app that carries it is the Xcode project in `safari/`. The Mac App Store release is on
+its way.
+
 ### Manual install (developer mode)
 
 1. Clone this repo
@@ -78,7 +84,7 @@ button until you grant them.
 npm run build
 ```
 
-Writes `dist/chrome/` and `dist/firefox/` plus one zip per browser. Only the manifest differs
+Writes `dist/chrome/`, `dist/firefox/` and `dist/safari/` plus one zip per browser. Only the manifest differs
 between targets (`scripts/build.js`); the source tree stays browser-neutral.
 
 ## Tech

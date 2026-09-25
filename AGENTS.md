@@ -30,8 +30,10 @@ dans les tags git `vX.Y`, lot en cours en tête de `CHANGELOG.md` (« Non publi�
    (`git diff vX.(Y-1) -- manifest.json`).
 3. Commit `chore(release): X.Y`, tag **léger** `vX.Y`, puis `git push origin main` **et**
    `git push origin vX.Y` : un tag léger ne part pas avec `--follow-tags`.
-4. Les dépôts (Chrome Web Store, Edge Add-ons, addons.mozilla.org) sont faits par l'utilisateur,
-   avec `dist/deckcompare-X.Y-chrome.zip` (Chrome et Edge) et `dist/deckcompare-X.Y-firefox.zip`.
+4. Les dépôts (Chrome Web Store, Edge Add-ons, addons.mozilla.org, Mac App Store) sont faits par
+   l'utilisateur, avec `dist/deckcompare-X.Y-chrome.zip` (Chrome et Edge),
+   `dist/deckcompare-X.Y-firefox.zip`, et pour Safari une archive Xcode du projet `safari/` (versions
+   montées comme ci-dessus).
 
 **Pourquoi bumper à chaque itération** : Chrome ne recharge PAS les content-scripts d'un onglet
 déjà ouvert quand on recharge l'extension. Le numéro visible dans `chrome://extensions` est le
@@ -50,7 +52,7 @@ changements de permissions le font.)
 ## Contraintes durables
 
 - **Une source, un paquet par navigateur** : `npm run build` (`scripts/build.js`, sans dépendance)
-  écrit `dist/chrome/` + `dist/firefox/` et `dist/deckcompare-<version>-<cible>.zip` ; c'est
+  écrit `dist/chrome/`, `dist/firefox/`, `dist/safari/` et `dist/deckcompare-<version>-<cible>.zip` ; c'est
   désormais le paquet à déposer (le zip Chrome sert aussi à Edge/Brave/Opera/Vivaldi). Seul le
   manifest diffère par cible ; **le code source reste neutre** : pas de `if (isFirefox)` épars.
   Firefox : `background.scripts` (pas de service worker MV3) → `background.js` garde son
@@ -61,7 +63,20 @@ changements de permissions le font.)
   l'installation → le popup montre « Autoriser Deck Compare sur les sites de decks »
   (`REQUIRED_ORIGINS` = host_permissions ∪ matches, un seul `permissions.request`) tant que
   `permissions.contains` est faux ; sur Chrome ce bouton ne s'affiche jamais. Le badge DEV est
-  désactivé quand `browser_specific_settings` est présent (aucun install Firefox n'a d'`update_url`).
+  désactivé quand `browser_specific_settings` est présent : aucun install Firefox ni Safari n'a
+  d'`update_url`. **Toute nouvelle cible hors Chrome doit donc porter `browser_specific_settings`**,
+  sinon chaque utilisateur voit l'icône marquée DEV. Safari : `browser_specific_settings.safari`
+  (`strict_min_version` 16.4, pour `scripting.registerContentScripts`) et une icône 1024 dans le
+  manifest, dont le packager d'Apple tire l'icône App Store de l'app ; `optional_host_permissions`
+  n'est pas documenté par Apple. L'app hôte Safari est le projet Xcode
+  `safari/Deck Compare/Deck Compare.xcodeproj` : il **référence** `dist/safari/` (lancer
+  `npm run build safari` avant d'archiver) et porte l'identifiant `io.github.mcouzinet.deckcompare`
+  (définitif), l'équipe `6DTUA72PA3`, macOS 12 minimum, la catégorie Divertissement et le chiffrement
+  exempté. À chaque release, `MARKETING_VERSION` et `CURRENT_PROJECT_VERSION` montent dans les deux
+  cibles, app et extension. Modifier ce projet plutôt que le régénérer : le convertisseur d'Apple en
+  mode macOS ignore l'identifiant demandé pour l'app, met la version 1.0, cible la version de macOS
+  du SDK et omet la catégorie. L'envoi valide chaque `messages.json` : `appDescription` fait
+  **112 caractères au plus** dans chaque langue (test à l'appui).
   Les avertissements `UNSAFE_VAR_ASSIGNMENT` du linter Mozilla sont les `innerHTML` échappés via
   `esc()`. Test réel sur Firefox : `web-ext run --args=-headless --args=--remote-debugging-port=9333`
   puis puppeteer en WebDriver BiDi (`installExtension` échoue sur Firefox 134).
