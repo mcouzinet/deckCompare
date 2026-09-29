@@ -47,9 +47,9 @@ console and is not otherwise versioned anywhere.
 > `dist/deckcompare-1.3-firefox.zip` to addons.mozilla.org, and for the Mac App Store an Xcode
 > archive of `safari/` (1.3, build 1) once `npm run build safari` has written `dist/safari/`.
 > Both detailed descriptions now say nine sites; paste the **v1.3** patch notes above v1.2.
-> Media kept as they were: the first screenshot is still the eight-site montage
-> (`1-le-bouton-sur-huit-sites.png`) and the video still says eight sites (`store/reel/reel.html`,
-> two places); add ManaBox when they are next redone. The scripting and host permission
+> First screenshot redone with ManaBox: `1-le-bouton-sur-neuf-sites.png` replaces the eight-site
+> montage, in first position on every store (delete the old one in each console). The video still
+> says eight sites (`store/reel/reel.html`, two places). The scripting and host permission
 > justifications below already name manabox.app and the open deck tabs the extension lists.
 
 ## Short description (132 characters max)
@@ -330,10 +330,11 @@ All in the light « Le mémo » world, French UI, captured from the real 1.1 bui
 Chrome for Testing with the extension loaded (real sites, real decks, real Scryfall images).
 Store screenshots are 1280×800 PNG, in this order:
 
-1. `store/screenshots/1-le-bouton-sur-huit-sites.png` — montage: the « Comparer » button captured
-   in the action bar of each of the eight sites (real pages: Moxfield, Archidekt, MTGGoldfish,
-   mtgtop8, Magic-Ville, mtgdecks, Melee, getpaird), laid out on the extension's paper. First
-   slot on purpose: the other captures are taken on Archidekt and read as "Archidekt only".
+1. `store/screenshots/1-le-bouton-sur-neuf-sites.png` (1.3): the « Comparer » button captured in
+   the action bar of each of the nine sites (real pages), as clippings taped on the extension's
+   paper, each button ringed in orange marker, the site's name on the tape, ManaBox tagged
+   « Nouveau », a « 9 sites de decks » stamp. First slot on purpose: the other captures are
+   taken on Archidekt and read as "Archidekt only".
 2. `store/screenshots/2-bouton-et-panneau-sur-archidekt.png` — Archidekt deck page, the black
    « Comparer » button in the site's own toolbar, the panel open with a second deck URL.
 3. `store/screenshots/3-comparaison.png` — the results page: « Lore Of The Rings (budget build) »
@@ -367,6 +368,10 @@ the package that declares its content script statically — the shipped build as
 at runtime); MTGGoldfish, Magic-Ville and mtgdecks sit behind Cloudflare challenges that block
 automated Chrome, so their tiles come from the user's own Chrome (page zoomed 2×, frame exported
 as GIF, cropped). Composition: `scratchpad/montage/montage.html` rendered at 2×.
+The 1.3 collage takes fresh 2× tiles for Archidekt, getPaird and ManaBox (headless Chrome for
+Testing, a test copy of the package with the optional hosts granted at install) and reuses the
+1.2 tiles for the six others: Cloudflare now blocks automated Chrome on Moxfield and Melee too,
+and mtgtop8 shows a consent wall. To redo them, capture those pages from the user's own Chrome.
 
 ---
 
