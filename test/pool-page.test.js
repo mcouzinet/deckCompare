@@ -63,7 +63,9 @@ async function openPage(store, patch = () => {}) {
   // jsdom fires DOMContentLoaded on its own, after this synchronous setup: pool.js boots once.
   for (const f of ["shared.js", "enrich.js", "pool-analyze.js", "pool.js"]) window.eval(fs.readFileSync(path.join(ROOT, f), "utf8"));
   const $ = (s) => window.document.querySelector(s);
-  for (let i = 0; i < 200 && $("#results").classList.contains("hide"); i++) await new Promise((r) => setTimeout(r, 10));
+  // The final render: on a cold cache the results show early, with the loading line still up.
+  const pending = () => $("#results").classList.contains("hide") || !$("#loading").classList.contains("hide");
+  for (let i = 0; i < 400 && pending(); i++) await new Promise((r) => setTimeout(r, 10));
   return { window, $, $$: (s) => [...window.document.querySelectorAll(s)], store };
 }
 const tick = () => new Promise((r) => setTimeout(r, 20));
@@ -249,8 +251,8 @@ test("removing a deck keeps the keyboard in the list, on the row now in its plac
   const x = $('#deck-panel [data-rmdeck="0"]');
   x.focus();
   x.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
-  for (let i = 0; i < 30 && store.poolDecks.length === POOL.length; i++) await tick();
-  for (let i = 0; i < 30 && window.document.activeElement === window.document.body; i++) await tick();
+  for (let i = 0; i < 100 && store.poolDecks.length === POOL.length; i++) await tick();
+  for (let i = 0; i < 100 && window.document.activeElement === window.document.body; i++) await tick();
   assert.equal(store.poolDecks.length, POOL.length - 1);
   assert.equal(window.document.activeElement, $('#deck-panel [data-rmdeck="0"]'));   // Beta's, now first
   assert.equal($$("#deck-panel [data-rmdeck]").length, POOL.length - 1);

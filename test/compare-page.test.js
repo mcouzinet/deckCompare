@@ -157,7 +157,9 @@ test("a card hovered before Scryfall answers is not called imageless, and shows 
   await new Promise((r) => setTimeout(r, 120));               // past the hover debounce, before the answer
   assert.notEqual($("#hover-hint").textContent, "No image for this card");
   assert.equal($("#preview-name").textContent, "");
-  await new Promise((r) => setTimeout(r, 300));               // the lookup answered: the card is held
+  // the lookup answers (250 ms): the card is held. Polled, not a fixed wait: a loaded machine
+  // runs the timers late.
+  for (let i = 0; i < 100 && $("#preview-name").textContent !== "Goblin Guide"; i++) await new Promise((r) => setTimeout(r, 20));
   assert.equal($("#preview-name").textContent, "Goblin Guide");
   assert.equal($("#preview-img").getAttribute("src"), url);
 });
