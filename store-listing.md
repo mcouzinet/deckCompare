@@ -45,12 +45,14 @@ console and is not otherwise versioned anywhere.
 > **2026-09-29, 1.3 cut** (manifest `1.3`, tag `v1.3`). Same uploads as 1.2:
 > `dist/deckcompare-1.3-chrome.zip` to the Chrome Web Store and to Edge Add-ons,
 > `dist/deckcompare-1.3-firefox.zip` to addons.mozilla.org, and for the Mac App Store an Xcode
-> archive of `safari/` (1.3, build 1) once `npm run build safari` has written `dist/safari/`.
+> archive of `safari/` (1.3, build 4) once `npm run build safari` has written `dist/safari/`.
 > Both detailed descriptions now say nine sites; paste the **v1.3** patch notes above v1.2.
 > First screenshot redone with ManaBox: `1-le-bouton-sur-neuf-sites.png` replaces the eight-site
 > montage, in first position on every store (delete the old one in each console). The video still
 > says eight sites (`store/reel/reel.html`, two places). The scripting and host permission
 > justifications below already name manabox.app and the open deck tabs the extension lists.
+> Submitted on 2026-09-29 to all four: Chrome Web Store, Edge Add-ons, addons.mozilla.org and the
+> Mac App Store (1.3, build 4), with the texts, notes and first screenshot above.
 
 ## Short description (132 characters max)
 
@@ -286,7 +288,9 @@ The wrapper app lives in `safari/Deck Compare/Deck Compare.xcodeproj`; it refere
    if the team has none.
 4. Once the build is processed, attach it to version 1.2 in App Store Connect and submit. Test it
    first with TestFlight on the Mac if you like.
-5. Each new upload needs a higher build number (`CURRENT_PROJECT_VERSION`), and each release the
+5. Each new upload needs a higher build number (`CURRENT_PROJECT_VERSION`), higher than every build
+   already uploaded whatever its version (macOS never restarts at 1: 1.2 went up to build 3, 1.3
+   is build 4), and each release the
    new `MARKETING_VERSION`, both in the app **and** the extension target.
 
 **Listing** (fill English, then add the French localization)

@@ -73,7 +73,9 @@ changements de permissions le font.)
   `npm run build safari` avant d'archiver) et porte l'identifiant `io.github.mcouzinet.deckcompare`
   (définitif), l'équipe `6DTUA72PA3`, macOS 12 minimum, la catégorie Divertissement et le chiffrement
   exempté. À chaque release, `MARKETING_VERSION` et `CURRENT_PROJECT_VERSION` montent dans les deux
-  cibles, app et extension. Modifier ce projet plutôt que le régénérer : le convertisseur d'Apple en
+  cibles, app et extension ; le numéro de build ne repart jamais à 1 : le Mac App Store refuse un
+  build inférieur au dernier envoyé, toutes versions confondues (1.2 est allée au build 3, 1.3 est
+  le build 4). Modifier ce projet plutôt que le régénérer : le convertisseur d'Apple en
   mode macOS ignore l'identifiant demandé pour l'app, met la version 1.0, cible la version de macOS
   du SDK et omet la catégorie. L'envoi valide chaque `messages.json` : `appDescription` fait
   **112 caractères au plus** dans chaque langue (test à l'appui).
