@@ -230,6 +230,49 @@
     return deck;
   }
 
+  // --- ManaBox: the whole deck ships in the page ---
+  // A shared deck (manabox.app/decks/<id>) is an Astro page whose deck island carries the
+  // full list in its `props` attribute, in Astro's serialisation: every value is a
+  // [type, value] pair (0 = plain value or object, 1 = array). boardCategory is ManaBox's
+  // own enum (read from its deck.js): 0 commander, 1 oathbreaker, 2 signature spell,
+  // 3 mainboard, 4 sideboard, 5 maybeboard. The first three sit in the command zone; the
+  // maybeboard is left out, as Archidekt's is. Foil and normal copies come as separate
+  // lines of the same name, hence the sum.
+  function astroValue(v) {
+    if (Array.isArray(v) && typeof v[0] === 'number') {
+      if (v.length < 2) return undefined;
+      if (v[0] === 1) return (v[1] || []).map(astroValue);
+      return v[0] === 0 ? astroValue(v[1]) : v[1];
+    }
+    if (v && typeof v === 'object' && !Array.isArray(v)) {
+      const out = {};
+      for (const k of Object.keys(v)) out[k] = astroValue(v[k]);
+      return out;
+    }
+    return v;
+  }
+
+  const MANABOX_BOARDS = { 0: 'commanders', 1: 'commanders', 2: 'commanders', 3: 'mainboard', 4: 'sideboard' };
+
+  function parseManaBox(doc) {
+    let data = null;
+    for (const el of doc.querySelectorAll('astro-island[props]')) {
+      let props;
+      try { props = astroValue(JSON.parse(el.getAttribute('props'))); } catch (_) { continue; }
+      if (props && props.deck && Array.isArray(props.deck.cards)) { data = props.deck; break; }
+    }
+    if (!data) return null;
+    const deck = { mainboard: {}, sideboard: {}, commanders: {}, source: 'manabox' };
+    for (const c of data.cards) {
+      const board = MANABOX_BOARDS[c && c.boardCategory];
+      const qty = (c && parseInt(c.quantity, 10)) || 0;
+      if (!board || !c.name || qty <= 0) continue;
+      deck[board][c.name] = (deck[board][c.name] || 0) + qty;
+    }
+    deck.name = (data.name || '').trim() || 'ManaBox Deck';
+    return deck;
+  }
+
   function parseDeckFromCurrentSite(doc, url) {
     if (url.includes('moxfield.com')) return parseMoxfield(doc);
     if (url.includes('mtggoldfish.com')) return parseMtgGoldfish(doc);
@@ -239,6 +282,7 @@
     if (url.includes('mtgdecks.net')) return parseMtgDecks(doc);
     if (url.includes('melee.gg')) return parseMelee(doc);
     if (url.includes('getpaird.io')) return parseGetpaird(doc);
+    if (url.includes('manabox.app')) return parseManaBox(doc);
     return null;
   }
 
@@ -290,7 +334,12 @@
     // #subheader-more is a real id, unlike the row's other hook (xQ0_bw2aqoYGKBWqhsjz),
     // which is a build hash and would break on their next deploy. Stepping up to its
     // wrapper puts the button at the end of the row instead of splitting the group.
-    { host: 'moxfield.com', sel: '#subheader-more', up: 1 }
+    { host: 'moxfield.com', sel: '#subheader-more', up: 1 },
+    // ManaBox's deck header ends on an action bar (Buy menu, two hidden buy forms, Download);
+    // the button follows Download, the bar's last <button>, which stays true once our host sits
+    // after it. Tailwind classes are the only hooks, but this combination is unique on the page
+    // (verified live).
+    { host: 'manabox.app', sel: 'div.ml-auto.flex.items-center.gap-2 > button:last-of-type' }
   ];
 
   // `isVisible` is supplied by the content script (getBoundingClientRect); tests and
@@ -345,7 +394,7 @@
     return decks;
   }
 
-  const api = { parseMoxfield, parseMtgGoldfish, parseMtgTop8, parseArchidekt, parseMagicVille, parseMtgDecks, parseMelee, parseGetpaird, parseDeckFromCurrentSite, findActionBarAnchor, parseArchetypeDecks, parseArchetypeTitle, ANCHORS };
+  const api = { parseMoxfield, parseMtgGoldfish, parseMtgTop8, parseArchidekt, parseMagicVille, parseMtgDecks, parseMelee, parseGetpaird, parseManaBox, parseDeckFromCurrentSite, findActionBarAnchor, parseArchetypeDecks, parseArchetypeTitle, ANCHORS };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else global.DomParsers = api;
 })(typeof self !== 'undefined' ? self : globalThis);

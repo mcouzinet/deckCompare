@@ -13,3 +13,6 @@ node_modules/
 # Xcode (Safari wrapper app in safari/): per-user state and build products
 xcuserdata/
 DerivedData/
+
+# Promo video renders (store/reel/render.js)
+store/reel/out/

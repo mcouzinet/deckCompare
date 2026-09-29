@@ -3,14 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Deck Compare — Cross-compare</title>
+  <title>Deck Compare</title>
   <meta name="color-scheme" content="light">
   <!-- Critical: theme.css is external, so the popup would paint white for one
        frame before it lands. One ground colour, kept in step with --bg. -->
   <style>html{background-color:#f8f5f2}</style>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Geist+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <!-- The card images' host: its connection is open before the first card asks. -->
+  <link rel="preconnect" href="https://cards.scryfall.io">
+  <!-- The fonts that paint first: the interface and the wordmark. -->
+  <link rel="preload" href="fonts/Archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/BricolageGrotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/GeistMono-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- Beleren sets the figures and names that land first; requested from the stylesheet, it
+       arrived after them and they drew in the fallback serif for a frame. -->
+  <link rel="preload" href="fonts/Beleren2016-Bold.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="theme.css">
   <style>
     :root {
@@ -31,7 +37,24 @@
     .topbar-meta { font-size:var(--fs-micro); font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--ink-3); }
 
     .shell { display:grid; grid-template-columns:minmax(0,1fr) 320px; gap:32px; max-width:1280px; margin:0 auto; padding:28px var(--gutter) 40px; align-items:start; }
-    @media (max-width:1000px){ .shell{ grid-template-columns:minmax(0,1fr);} .rail{ display:none !important;} }
+    /* Below 1000px (two windows side by side: the deck site and this page) the rail keeps only the
+       deck list, compact, above the content: adding decks, my list and pinning stay in reach; the
+       held card, the curve and the sideboard go. */
+    @media (max-width:1000px){
+      .shell{ grid-template-columns:minmax(0,1fr); }
+      /* .shell > .rail: the base .rail rule comes later in this sheet and, as specific, won; the
+         list then stuck over the content, a third of a split window. */
+      .shell > .rail{ position:static; order:-1; max-height:none; overflow:visible; padding:0; margin:0; }
+      .rail > :not(#deck-panel):not(.preview-card){ display:none !important; }
+      /* No rail for the held card: it floats in the window's corner away from the row it shows,
+         only while a card is held, and lets the pointer through (as on the results page). */
+      .rail > .preview-card{ position:fixed; right:16px; bottom:16px; width:min(240px, 60vw); z-index:50; pointer-events:none; box-shadow:var(--lift-3); }
+      .rail > .preview-card.left{ left:16px; right:auto; }
+      .rail > .preview-card.top{ top:16px; bottom:auto; }
+      .rail > .preview-card:not(:has(.preview-stage.has)){ display:none; }   /* .rail > : the base rules come later */
+      .rail .dp-list{ max-height:176px; }
+    }
+    #deck-panel:empty { display:none; }
 
     .panel { padding:24px 0; border-bottom:1px solid var(--line); margin-bottom:24px; }
     h1 { font-family:var(--font-display); font-weight:400; font-size:clamp(22px,2.8vw,34px); color:var(--ink); letter-spacing:-0.01em; line-height:1.1; }
@@ -87,7 +110,7 @@
     .cpips { display:inline-flex; gap:5px; margin-top:10px; }
     .cpip { width:16px; height:16px; border-radius:50%; border:1px solid var(--line-strong); }
     .cpip.W{background:var(--W);} .cpip.U{background:var(--U);} .cpip.B{background:var(--K);} .cpip.R{background:var(--R);} .cpip.G{background:var(--G);} .cpip.C{background:var(--bg-deep);}
-    .stats { display:flex; gap:32px; margin-top:20px; flex-wrap:wrap; }
+    .stats { display:flex; gap:16px 28px; margin-top:20px; flex-wrap:wrap; }
     .stat .n { display:block; font-family:var(--font-display); font-weight:400; font-size:30px; letter-spacing:-0.01em; color:var(--ink); line-height:1; font-variant-numeric:tabular-nums; }
     .stat .n.accent { color:var(--match); }
     .stat .n .of { font-size:var(--fs-md); font-weight:400; color:var(--ink-3); letter-spacing:0; }
@@ -112,6 +135,77 @@
     .chip-x { border:0; background:none; color:var(--ink-3); cursor:pointer; font-size:var(--fs-md); line-height:1; padding:0 6px; border-radius:50%; }
     .chip-x:hover { color:var(--brand); background:var(--brand-wash); }
 
+    /* The reference: one decklist the lists are read against, a deck of the pool pinned from
+       the rail or "my list", kept outside the pool. A sheet under the hero: its name, then the
+       figures that decide in the serif, in its side's ink (orange) and the alarm for the gaps. */
+    .ref { background:var(--elev); border:1px solid var(--line); border-radius:var(--r-md); box-shadow:var(--lift-1); padding:16px 18px 14px; margin:-8px 0 24px; }
+    .ref-head { display:flex; align-items:baseline; gap:10px; min-width:0; }
+    .ref-kind { flex:none; font-size:var(--fs-micro); font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--a); }
+    .ref.previewing .ref-kind { color:var(--ink-3); }
+    .ref-name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:var(--font-display); font-size:var(--fs-lg); color:var(--ink); line-height:1.25; }
+    .ref-head .src-chip { align-self:center; }
+    .ref-warn { align-self:center; flex:none; font-size:var(--fs-micro); font-weight:600; padding:2px 8px; border-radius:var(--r-pill);
+      background:var(--brand-wash); color:var(--brand); white-space:nowrap; max-width:220px; overflow:hidden; text-overflow:ellipsis; }
+    /* unpinning removes nothing: a quiet text action, not the alarm's × */
+    .ref-x { margin-left:auto; align-self:center; flex:none; }
+    .ref-reload { margin-left:auto; align-self:center; flex:none; }
+    .ref-reload + .ref-x { margin-left:14px; }
+    /* A phone's width cannot hold the label, the name, the source and both actions on one line:
+       they wrap instead of scrolling the page sideways. */
+    @media (max-width:480px){ .ref-head { flex-wrap:wrap; row-gap:4px; } }
+    /* align-items:start: a stretched <button> would centre its figure lower than its neighbours' */
+    /* 96px and a 16px gap: the five figures hold one row from 1024px (they wrapped 4 + 1). */
+    .ref-figs { display:grid; grid-template-columns:repeat(auto-fit, minmax(96px, 1fr)); align-items:start; gap:14px 16px; margin-top:14px; }
+    .rf .n { display:block; font-family:var(--font-display); font-weight:400; font-size:30px; line-height:1; letter-spacing:-0.01em; color:var(--ink); font-variant-numeric:tabular-nums; }
+    .rf .n small { font-size:var(--fs-md); color:var(--ink-3); letter-spacing:0; }
+    .rf.a .n { color:var(--a); }
+    .rf .ctx { display:block; margin-top:4px; font-size:var(--fs-micro); color:var(--ink-3); }
+    .rf.alarm .n { color:var(--brand); }
+    .rf .l { display:block; margin-top:6px; font-size:var(--fs-micro); font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); line-height:1.35; }
+    /* the gaps and the rare cards: counts you can press, like the hero's copy stats */
+    .rf-btn { background:none; border:0; padding:0; text-align:left; font:inherit; color:inherit; cursor:pointer; }
+    .rf-btn:hover .l, .rf-btn:focus-visible .l { color:var(--ink); text-decoration:underline; text-underline-offset:3px; }
+    /* "missing" says nothing more under a title that already says it, but for a previewed deck */
+    body:not(.ref-preview) #gaps-missing .rtag { display:none; }
+    #mine-saved { width:100%; }
+    label.fld[hidden], #mine-saved[hidden] { display:none; }   /* display:block would beat the UA's [hidden] rule */
+    .ref-actions { display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; margin-top:16px; padding-top:12px; border-top:1px solid var(--line); }
+    .ref-actions .pill { padding:5px 12px; }
+    .lnk.ref-detail { color:var(--b); }   /* .lnk alone is Ink Mute: these are the next steps, in the action's teal */
+    .lnk.ref-detail:hover { color:var(--brand-btn-hi); }
+    .ref-legend { margin-left:auto; font-size:var(--fs-micro); color:var(--ink-3); }
+    .ref-legend i { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--a); margin-right:5px; vertical-align:1px; }
+
+    /* "Compare my list": the dashed add affordance, at the end of the view controls */
+    .mine-add { margin-left:auto; display:inline-flex; align-items:center; gap:6px; max-width:320px; padding:7px 14px 7px 11px;
+      border:1px dashed var(--line-strong); background:transparent; color:var(--ink-2); border-radius:var(--r-pill); cursor:pointer;
+      font-family:var(--font-ui); font-weight:600; font-size:var(--fs-xs); transition:color .14s, border-color .14s, background .14s; }
+    .mine-add span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .mine-add svg { width:14px; height:14px; flex:none; }
+    .mine-add:hover { border-color:var(--b); color:var(--b); background:var(--elev); }
+
+    /* The reference, marked in the lists: a dot where it plays the card, its own count when it
+       differs from the pool's, "missing" on a consensus card it lacks; the rest steps back. */
+    body.has-ref .prow .nm::before { content:""; display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:8px; vertical-align:2px; background:transparent; }
+    body.has-ref .prow.ref-has .nm::before { background:var(--a); }
+    .prow .rq { font-family:var(--font-mono); font-size:var(--fs-micro); font-weight:600; color:var(--a); margin-left:6px; }
+    .prow .rq:empty { display:none; }
+    #or-saved[hidden] { display:none; }
+    .rtag { flex:none; font-size:var(--fs-micro); font-weight:600; letter-spacing:.06em; text-transform:uppercase; padding:2px 8px; border-radius:var(--r-pill); background:var(--brand-wash); color:var(--brand); }
+    .rtag:empty { display:none; }
+    .prow.ref-off .nm, .prow.ref-off .pct, .prow.ref-off .frac { color:var(--ink-3); }
+    /* stepped back, still legible: Ink Mute needs a white ground (5.0:1), the well gives 4.1 */
+    .prow.ref-off + .pbadges .pbadge:not(.ref-badge) { color:var(--ink-3); background:var(--elev); box-shadow:inset 0 0 0 1px var(--line); }
+    .prow .nm, .prow .pct, .prow .frac { transition:color .12s; }
+    /* With a reference on, the lists are read for its marks: a row's own tools wait for the pointer
+       or the focus (opacity, so nothing moves), and stay put where there is no hover. */
+    @media (hover: hover) {
+      body.has-ref .prow .cp, body.has-ref .prow .fa { opacity:0; transition:opacity .12s; }
+      body.has-ref .prow:hover .cp, body.has-ref .prow:focus-within .cp,
+      body.has-ref .prow:hover .fa:not(:disabled), body.has-ref .prow:focus-within .fa:not(:disabled) { opacity:1; }
+      body.has-ref .prow:hover .fa:disabled, body.has-ref .prow:focus-within .fa:disabled { opacity:.3; }
+    }
+
     /* decks-in-pool panel (right rail): a white sheet with a pinned head */
     .deckpanel { background:var(--elev); border:1px solid var(--line); border-radius:var(--r-md); overflow:hidden; box-shadow:var(--lift-1);
       display:flex; flex-direction:column; flex:none; }
@@ -130,8 +224,27 @@
     .dp-item { display:flex; align-items:center; gap:6px; padding:8px 10px 8px 14px; border-bottom:1px solid var(--line); }
     .dp-item:last-child { border-bottom:0; }
     .dp-item:hover { background:var(--bg); }
-    .dp-link { flex:1; min-width:0; text-decoration:none; color:var(--ink); display:flex; align-items:baseline; gap:7px; }
-    a.dp-link:hover .dp-n { color:var(--b); }
+    /* A row is a button: hovering it previews that deck in the lists, a click pins it as the
+       reference. The deck's page opens from the arrow beside it. */
+    .dp-link { flex:1; min-width:0; text-decoration:none; color:var(--ink); display:flex; align-items:baseline; gap:7px;
+      border:0; background:none; padding:0; font:inherit; text-align:left; cursor:pointer; }
+    .dp-link:hover .dp-n { color:var(--b); }
+    .dp-item.pinned, .dp-item.pinned:hover { background:var(--a-wash); }
+    .dp-item.pinned .dp-hash { color:var(--a); font-weight:700; }
+    .dp-fig { display:none; margin-left:auto; flex-shrink:0; font-family:var(--font-mono); font-size:var(--fs-micro); font-weight:600; color:var(--a); font-variant-numeric:tabular-nums; }
+    .dp-item:hover .dp-fig, .dp-item:focus-within .dp-fig, .dp-item.pinned .dp-fig, .dp-mine .dp-fig { display:inline; }
+    .dp-item:hover .dp-fig ~ .dp-src, .dp-item:focus-within .dp-fig ~ .dp-src, .dp-item.pinned .dp-fig ~ .dp-src { display:none; }
+    .dp-open { flex-shrink:0; display:inline-flex; color:var(--ink-3); padding:2px; border-radius:var(--r-xs); opacity:0; }
+    .dp-open svg { width:13px; height:13px; }
+    .dp-item:hover .dp-open, .dp-open:focus-visible { opacity:1; }
+    .dp-open:hover { color:var(--b); }
+    /* my list: above the pool's rows and outside their scroll, labelled, never numbered */
+    .dp-mine { flex:none; border-bottom:1px solid var(--line); }
+    .dp-hint { flex:none; padding:9px 14px; border-top:1px solid var(--line); font-size:var(--fs-micro); color:var(--ink-3); line-height:1.45; }
+    /* orange belongs to the reference: my list's row takes it only while it is the one pinned */
+    .dp-mine .dp-hash { font-family:var(--font-ui); font-size:var(--fs-micro); font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); }
+    .dp-mine:not(.pinned) .dp-fig { color:var(--ink-3); }
+    .dp-mine.pinned .dp-hash { color:var(--a); }
     .dp-n { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:var(--fs-sm); }
     .dp-hash { color:var(--ink-3); font-family:var(--font-mono); font-size:var(--fs-micro); flex-shrink:0; }
     .dp-src { font-size:var(--fs-micro); text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-3); margin-left:auto; flex-shrink:0; }
@@ -139,7 +252,7 @@
     .dp-x:hover { color:var(--brand); background:var(--brand-wash); }
     /* set aside by a card filter: still in the pool, not on the table */
     .dp-item.off .dp-n { color:var(--ink-3); text-decoration:line-through; }
-    .dp-item.off .dp-hash, .dp-item.off .dp-src { opacity:.6; }
+    .dp-item.off .dp-hash, .dp-item.off .dp-src { color:var(--ink-3); }   /* no opacity: 2.4:1 failed AA; the strike-through says it */
     .dp-errs { flex:none; padding:10px 14px; border-top:1px solid var(--line); font-size:var(--fs-micro); color:var(--ink-2); background:var(--brand-wash); line-height:1.5; }
     .dp-errs b { display:block; color:var(--brand); margin-bottom:3px; font-weight:600; }
     .dp-err { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -176,18 +289,39 @@
     .prow .xq { font-size:var(--fs-micro); color:var(--ink-3); margin-left:5px; }
     .prow .cp, .prow .fa { background:none; border:0; color:var(--ink-3); cursor:pointer; flex-shrink:0; display:inline-flex; padding:0; }
     .prow .cp:hover { color:var(--ink); }
+    /* a copy done: a check mark in the action ink for a beat (pool.js copied) */
+    .did-copy { color:var(--brand-btn) !important; opacity:1 !important; }
+    .cp.did-copy svg { display:none; }
+    .cp.did-copy::after { content:"\2713"; font-size:13px; line-height:14px; width:14px; text-align:center; }
+    .lnk.did-copy::after { content:" \2713"; }
     .prow .cp svg, .prow .fa svg { width:14px; height:14px; }
     .prow .fa.keep:hover:not(:disabled) { color:var(--match); }
     .prow .fa.drop:hover:not(:disabled) { color:var(--brand); }
     .prow .fa:disabled { opacity:.3; cursor:default; }
     .prow .pct { font-family:var(--font-mono); font-size:var(--fs-sm); font-weight:600; color:var(--ink); width:46px; text-align:right; flex-shrink:0; font-variant-numeric:tabular-nums; }
     .prow .frac { font-family:var(--font-mono); font-size:var(--fs-micro); color:var(--ink-3); width:42px; text-align:right; flex-shrink:0; font-variant-numeric:tabular-nums; }
+    /* A phone: the row's tools, tag and figures left the name a letter ("É…"). The deck count
+       goes (the percentage says it), and the name may take two lines. */
+    @media (max-width:480px){
+      .prow .frac { display:none; }
+      .prow .nm { white-space:normal; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
+    }
     /* A row followed by its deck badges is one entry: the hairline moves under the badges. */
     .prow:has(+ .pbadges) { border-bottom:0; }
-    .pbadges { display:flex; flex-wrap:wrap; gap:4px; padding:0 16px 10px 40px; border-bottom:1px solid var(--line); }
+    .pbadges { display:flex; flex-wrap:wrap; gap:4px; padding:4px 16px 10px 40px; margin-top:-4px; border-bottom:1px solid var(--line); }
+    /* A 100-deck pool is some 1,300 rows and 9,600 badges: the rows off screen are skipped until
+       they come near it. Hovering down the deck list restyled every one of them (about 225 ms of
+       style work); now about 10. content-visibility clips to the padding box, hence the badges'
+       top padding (pulled back by the margin): room for a focused badge's ring. The sizes stand
+       for the content box of a one-line row (36px with its padding), until the row has been
+       drawn once and its own height is remembered. */
+    .prow, .pbadges { content-visibility:auto; }
+    .prow { contain-intrinsic-size:auto 20px; }
+    .pbadges { contain-intrinsic-size:auto 21px; }
     .pbadges:last-child { border-bottom:0; }
     .pbadge { font-family:var(--font-mono); font-size:var(--fs-micro); padding:2px 6px; border-radius:var(--r-xs); background:var(--bg-deep); color:var(--ink-2); text-decoration:none; }
     a.pbadge:hover { background:var(--b); color:#fff; }
+    .pbadge.ref-badge { background:var(--a-wash); color:var(--a); font-weight:600; }   /* the reference's own #n: its wash, not a fill */
     .bar { flex:1; height:6px; border-radius:3px; background:var(--bg-deep); overflow:hidden; max-width:120px; }
     .bar > i { display:block; height:100%; background:var(--a); border-radius:3px; }
     .type-divider { display:flex; align-items:center; gap:10px; padding:12px 16px 4px; }
@@ -214,9 +348,14 @@
       display:grid; place-items:center; overflow:hidden; }
     .preview-stage img { width:100%; height:100%; object-fit:contain; display:none; filter:drop-shadow(0 10px 24px rgba(36,28,24,0.28)); border-radius:4.7% / 3.4%; }
     .preview-stage.has img { display:block; }
-    .preview-hint { color:var(--ink-3); font-size:var(--fs-xs); text-align:center; padding:0 20px; }
+    .preview-hint { color:var(--ink-2); font-size:var(--fs-xs); text-align:center; padding:0 20px; }   /* Ink Mute on the well is 4.1:1 */
     .preview-stage.has .preview-hint { display:none; }
     .preview-name { font-family:var(--font-display); font-weight:400; font-size:17px; letter-spacing:0; color:var(--ink); margin-top:14px; min-height:22px; }
+    /* Nothing held yet: the sheet rests and its stage folds to the hint, as on the results page,
+       instead of a card-sized blank that pushed the mana curve out of the rail. */
+    .preview-card:not(:has(.preview-stage.has)) { box-shadow:var(--lift-1); }
+    .preview-stage:not(.has) { aspect-ratio:auto; padding:24px 0; }
+    .preview-name:empty { display:none; }
 
     /* selection bar — a pill floating above the sheet */
     .selbar { position:fixed; left:50%; bottom:18px; transform:translateX(-50%); z-index:50; display:none;
@@ -270,6 +409,9 @@
             <div class="tabpick-label" id="tabpick-label"></div>
             <div class="tabpick-list" id="tabpick-list"></div>
           </div>
+          <label class="fld" id="mine-saved-label" for="mine-saved" hidden></label>
+          <select class="mat-field" id="mine-saved" hidden></select>
+          <div class="or" id="or-saved" hidden></div>
           <label class="fld" id="links-label"></label>
           <textarea id="urls" rows="5" spellcheck="false" placeholder="https://www.moxfield.com/decks/...&#10;https://archidekt.com/decks/...&#10;https://www.mtgtop8.com/event?e=...&d=..."></textarea>
           <div class="or" id="or-paste-text"></div>
@@ -297,6 +439,8 @@
           </div>
         </section>
 
+        <section class="ref hide" id="ref"></section>
+
         <div class="filters hide" id="filters"></div>
 
         <div class="controls">
@@ -304,6 +448,7 @@
             <button class="seg-btn active" data-view="usage"><span id="view-usage-text"></span></button>
             <button class="seg-btn" data-view="average"><span id="view-average-text"></span></button>
           </div>
+          <button type="button" class="mine-add hide" id="mine-add"></button>
         </div>
 
         <div id="usage-view">

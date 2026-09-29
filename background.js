@@ -26,7 +26,7 @@ const IS_DEV = !('update_url' in MANIFEST) && !MANIFEST.browser_specific_setting
 async function markDevBuild() {
   chrome.action.setBadgeText({ text: 'DEV' });
   chrome.action.setBadgeBackgroundColor({ color: '#dc2626' });
-  chrome.action.setTitle({ title: `${chrome.i18n.getMessage('appName')} — DEV` });
+  chrome.action.setTitle({ title: `${chrome.i18n.getMessage('appName')} · DEV` });
   try {
     const imageData = {};
     for (const size of [16, 48, 128]) {
@@ -93,11 +93,16 @@ chrome.permissions.onAdded.addListener(syncOptionalScripts);
 chrome.permissions.onRemoved.addListener(syncOptionalScripts);
 syncOptionalScripts();   // also covers each service-worker restart
 
+// Endstep Tracker (same author) asks whether Deck Compare is installed, to stop advertising it. Nothing else is shared.
+chrome.runtime.onMessageExternal.addListener((msg, _sender, sendResponse) => {
+  if (msg && msg.ping === 'endstep-tracker') sendResponse({ installed: true });
+});
+
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === 'FETCH_DECK') {
     fetchDeckByUrl(msg.url)
       .then(deck => sendResponse({ deck }))
-      .catch(err => sendResponse({ error: err.message }));
+      .catch(err => sendResponse({ error: userMessage(err) }));
     return true;
   }
 
@@ -142,6 +147,16 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return true;
   }
 
+  // The in-page panel offers the other deck tabs, as the popup does (its window first, never
+  // across the private-browsing boundary); a content script cannot list tabs itself.
+  if (msg.type === 'LIST_DECK_TABS') {
+    const tab = _sender && _sender.tab;
+    Shared.getOpenDeckTabs(tab && tab.url, tab && { windowId: tab.windowId, incognito: tab.incognito })
+      .then(tabs => sendResponse({ tabs }))
+      .catch(() => sendResponse({ tabs: [] }));
+    return true;
+  }
+
   // The in-page button lives in a content script, which has no chrome.tabs access.
   if (msg.type === 'OPEN_COMPARE') {
     chrome.tabs.create({ url: chrome.runtime.getURL('compare.html') })
@@ -151,59 +166,81 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   }
 
   if (msg.type === 'FETCH_CARD_TYPES') {
-    fetchCardTypes(msg.names)
+    cardTypesOnce(msg.names || [])
       .then(types => sendResponse(types))
       .catch(() => sendResponse({ lands: [], creatures: [], images: {} }));
     return true;
   }
 });
 
+// Every request to a site or to Scryfall gives up after 15 s: one that hung froze the popup's
+// "Fetching…" for good, and held one of the four workers a pool fetch runs on.
+async function fetchT(url, opts = {}) {
+  try {
+    return await fetch(url, { ...opts, signal: AbortSignal.timeout(15000) });
+  } catch (e) {
+    if (e && e.name === 'TimeoutError') throw new Error(chrome.i18n.getMessage('errTimeout'));
+    throw e;
+  }
+}
+// The same limit can end while the body is read (res.json(), res.text()): said the same way.
+const userMessage = (e) => (e && e.name === 'TimeoutError') ? chrome.i18n.getMessage('errTimeout') : ((e && e.message) || String(e || ''));
+
 // --- Scryfall card type batch fetch (persistent cache + retry) ---
 
-const CARD_TYPE_TTL = 30 * 24 * 60 * 60 * 1000; // 30 days — card types are stable
+// Every request to Scryfall, first try or retry, takes the next start slot, 550 ms after the
+// previous one: parallel batches and their retries together never exceed the two requests a
+// second Scryfall allows. A 429 (which locks the client out for about 30 s) moves every
+// later slot past the lockout.
+let scryfallNext = 0;
+function scryfallSlot() {
+  const now = Date.now();
+  const at = Math.max(now, scryfallNext);
+  scryfallNext = at + 550;
+  return new Promise(r => setTimeout(r, at - now));
+}
 
-// POST one /cards/collection batch, retrying transient errors (429/5xx).
+// POST one /cards/collection batch, retrying transient errors (429/5xx, network, timeout).
 async function scryfallCollection(identifiers) {
   for (let attempt = 0; attempt < 3; attempt++) {
-    let res;
+    await scryfallSlot();
     try {
-      res = await fetch('https://api.scryfall.com/cards/collection', {
+      const res = await fetchT('https://api.scryfall.com/cards/collection', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifiers })
       });
-    } catch { await new Promise(r => setTimeout(r, 500 * (attempt + 1))); continue; }
-    if (res.ok) return res.json();
-    if (res.status === 429 || res.status >= 500) { await new Promise(r => setTimeout(r, 800 * (attempt + 1))); continue; }
-    return null; // other 4xx — don't retry
+      if (res.ok) return await res.json();   // inside the try: a body cut short retries too
+      if (res.status === 429) { scryfallNext = Math.max(scryfallNext, Date.now() + 30000); continue; }
+      if (res.status >= 500) continue;
+      return null; // other 4xx: don't retry
+    } catch { /* network error or timeout: the next slot retries */ }
   }
   return null;
 }
 
+// One lookup per set of names at a time: a Swap while the first is still running used to
+// start a second, identical one.
+const cardTypesInFlight = new Map();
+function cardTypesOnce(names) {
+  const key = names.slice().sort().join('\n');
+  if (!cardTypesInFlight.has(key)) {
+    cardTypesInFlight.set(key, fetchCardTypes(names).finally(() => cardTypesInFlight.delete(key)));
+  }
+  return cardTypesInFlight.get(key);
+}
+
 async function fetchCardTypes(names) {
   const BATCH = 75;
-  const landNames = new Set();
-  const creatureNames = new Set();
   // Card image URLs come free with this batch — /cards/collection returns the whole card.
   // Without them the results page asked api.scryfall.com for an image on every hover,
   // which is the API and not the CDN, and got rate-limited within one pass over a grid.
-  const images = {};
-
-  // Serve what we can from the persistent cache; only miss names hit Scryfall.
-  const cached = await Shared.cacheRead('cardTypeCache', CARD_TYPE_TTL);
-  const misses = [];
-  for (const name of names) {
-    const hit = cached[name.toLowerCase()];
-    // `i` is absent on entries written before images were cached; treat those as misses
-    // so the cache refills itself once. An empty string means "known to have no image".
-    if (hit && hit.i !== undefined) {
-      if (hit.l) landNames.add(name);
-      if (hit.c) creatureNames.add(name);
-      if (hit.i) images[name] = hit.i;
-    } else {
-      misses.push(name);
-    }
-  }
+  // Served from the persistent cache first; only the misses hit Scryfall.
+  const known = await Shared.cachedCardTypes(names);
+  const landNames = new Set(known.lands);
+  const creatureNames = new Set(known.creatures);
+  const images = known.images;
+  const misses = known.misses;
 
   // Everything is keyed by the REQUESTED name, never Scryfall's canonical one:
   // the caller looks entries up by the deck's own spelling, and diacritics don't
@@ -211,13 +248,20 @@ async function fetchCardTypes(names) {
   // Scryfall answers "Lórien Revealed"), so a canonical key would miss on every
   // load, forever. /cards/collection returns `data` in request order with the
   // unresolved identifiers in `not_found`, which recovers the mapping exactly.
-  const fresh = {}; // requested name -> { l, c, i }
-  for (let i = 0; i < misses.length; i += BATCH) {
-    const batch = misses.slice(i, i + BATCH);
-    const data = await scryfallCollection(batch.map(name => ({ name })));
-    if (!data) continue; // transient failure — cached hits still render, miss retries next time
-    const notFound = new Set((data.not_found || []).map(nf => (nf.name || '').toLowerCase()));
-    const found = batch.filter(name => !notFound.has(name.toLowerCase()));
+  const fresh = {}; // requested name -> { l, c, i } (and nf: Scryfall has no such card)
+  const batches = [];
+  for (let i = 0; i < misses.length; i += BATCH) batches.push(misses.slice(i, i + BATCH));
+  // Side by side, each batch in its own start slot (scryfallSlot): a batch takes a couple of
+  // seconds on Scryfall's side, so one after another they added up.
+  const answers = await Promise.all(batches.map(batch =>
+    scryfallCollection(batch.map(name => ({ name }))).catch(() => null)));
+  answers.forEach((data, k) => {
+    if (!data) return; // transient failure: cached hits still render, the misses retry next time
+    const batch = batches[k];
+    const missing = new Set((data.not_found || []).map(nf => (nf.name || '').toLowerCase()));
+    const found = batch.filter(name => !missing.has(name.toLowerCase()));
+    // Remembered for a day, so a pair holding such a name stops asking Scryfall on every open.
+    for (const name of batch) if (missing.has(name.toLowerCase())) fresh[name] = { l: false, c: false, i: '', nf: true };
     const cards = data.data || [];
     for (let j = 0; j < Math.min(found.length, cards.length); j++) {
       const reqName = found[j];
@@ -235,10 +279,10 @@ async function fetchCardTypes(names) {
       if (img) images[reqName] = img;
       fresh[reqName] = { l: isLand, c: isCreature, i: img };
     }
-    if (i + BATCH < misses.length) await new Promise(r => setTimeout(r, 100));
-  }
+  });
 
-  await Shared.cacheMerge('cardTypeCache', fresh, CARD_TYPE_TTL);
+  // Not awaited: the page is waiting for the answer, the cache is for next time.
+  Shared.cacheMerge('cardTypeCache', fresh, Shared.CARD_TYPE_TTL);
   return { lands: [...landNames], creatures: [...creatureNames], images };
 }
 
@@ -264,7 +308,7 @@ async function listMoxfieldDecks(username) {
       _t: Date.now()
     });
 
-    const res = await fetch(`https://api2.moxfield.com/v2/decks/search?${params}`, { headers, cache: 'no-store' });
+    const res = await fetchT(`https://api2.moxfield.com/v2/decks/search?${params}`, { headers, cache: 'no-store' });
 
     if (!res.ok) {
       if (res.status === 404) throw new Error(chrome.i18n.getMessage('errMoxfieldUserNotFound'));
@@ -306,7 +350,7 @@ async function listArchidektDecks(username) {
       page: String(page)
     });
 
-    const res = await fetch(`https://archidekt.com/api/decks/v3/?${params}`);
+    const res = await fetchT(`https://archidekt.com/api/decks/v3/?${params}`);
     if (!res.ok) throw new Error(`${chrome.i18n.getMessage('errArchidektStatus')} ${res.status}`);
 
     const data = await res.json();
@@ -335,7 +379,7 @@ async function listArchidektDecks(username) {
 async function listMagicVilleDecks(username) {
   // Magic-Ville now 403s cookie-less requests (same anti-bot pattern as MTGGoldfish/
   // mtgdecks) — credentials:'include' attaches the user's Magic-Ville session cookie.
-  const res = await fetch(`https://www.magic-ville.com/fr/decks/resultats?joueur=${encodeURIComponent(username)}`, { credentials: 'include' });
+  const res = await fetchT(`https://www.magic-ville.com/fr/decks/resultats?joueur=${encodeURIComponent(username)}`, { credentials: 'include' });
   if (!res.ok) {
     if (res.status === 403) throw blocked(chrome.i18n.getMessage('errMagicVilleBlocked'));
     throw new Error(`${chrome.i18n.getMessage('errMagicVilleStatus')} ${res.status}`);
@@ -369,6 +413,7 @@ async function listMagicVilleDecks(username) {
 
 const ALLOWED_DECK_HOSTS = [
   'www.moxfield.com', 'moxfield.com',
+  'manabox.app', 'www.manabox.app',
   'archidekt.com',
   'www.mtgtop8.com', 'mtgtop8.com',
   'www.mtggoldfish.com', 'mtggoldfish.com',
@@ -448,6 +493,19 @@ async function fetchDeckByUrl(url) {
     throw new Error(chrome.i18n.getMessage('errUnsupportedSource'));
   }
 
+  // ManaBox is read through a tab, never fetched: the deck page is what a person opens, and
+  // the content script already reads it there. That needs the optional access to the site,
+  // so fail at once without it rather than open a tab that nothing can read.
+  const host = new URL(url).hostname;
+  if (host === 'manabox.app' || host === 'www.manabox.app') {
+    let granted = false;
+    try { granted = await chrome.permissions.contains({ origins: [`https://${host}/*`] }); } catch { /* no permissions API */ }
+    if (!granted) throw new Error(chrome.i18n.getMessage('errManaboxAccess'));
+    const deck = await deckFromTab(url);
+    if (!deck) throw new Error(chrome.i18n.getMessage('errManaboxRead'));
+    return deck;
+  }
+
   try {
     return await fetchDeckOverHttp(url);
   } catch (err) {
@@ -492,7 +550,7 @@ async function fetchMoxfieldDeck(urlOrId) {
     if (match) deckId = match[1];
   }
 
-  const res = await fetch(`https://api2.moxfield.com/v3/decks/all/${deckId}`);
+  const res = await fetchT(`https://api2.moxfield.com/v3/decks/all/${deckId}`);
   if (!res.ok) {
     if (res.status === 404) throw new Error(chrome.i18n.getMessage('errMoxfieldDeckNotFound'));
     throw new Error(`${chrome.i18n.getMessage('errMoxfieldStatus')} ${res.status}`);
@@ -508,7 +566,7 @@ async function fetchArchidektDeck(url) {
   const match = url.match(/archidekt\.com\/decks\/(\d+)/);
   if (!match) throw new Error(chrome.i18n.getMessage('errArchidektInvalidUrl'));
 
-  const res = await fetch(`https://archidekt.com/api/decks/${match[1]}/`);
+  const res = await fetchT(`https://archidekt.com/api/decks/${match[1]}/`);
   if (!res.ok) {
     if (res.status === 404) throw new Error(chrome.i18n.getMessage('errArchidektDeckNotFound'));
     throw new Error(`${chrome.i18n.getMessage('errArchidektStatus')} ${res.status}`);
@@ -525,7 +583,7 @@ async function fetchMtgTop8Deck(url) {
   if (!match) throw new Error(chrome.i18n.getMessage('errMtgtop8InvalidUrl'));
 
   const deckId = match[1];
-  const res = await fetch(`https://www.mtgtop8.com/mtgo?d=${deckId}`);
+  const res = await fetchT(`https://www.mtgtop8.com/mtgo?d=${deckId}`);
   if (!res.ok) throw new Error(`${chrome.i18n.getMessage('errMtgtop8Status')} ${res.status}`);
 
   const text = await res.text();
@@ -540,7 +598,7 @@ async function fetchMagicVilleDeck(url) {
 
   // credentials:'include' attaches the user's Magic-Ville session/clearance cookie —
   // without it the site now 403s the service worker's cookie-less request.
-  const res = await fetch(`https://www.magic-ville.com/fr/decks/showdeck?ref=${match[1]}&decklanglocal=eng`, { credentials: 'include' });
+  const res = await fetchT(`https://www.magic-ville.com/fr/decks/showdeck?ref=${match[1]}&decklanglocal=eng`, { credentials: 'include' });
   if (!res.ok) {
     if (res.status === 403) throw blocked(chrome.i18n.getMessage('errMagicVilleBlocked'));
     throw new Error(`${chrome.i18n.getMessage('errMagicVilleStatus')} ${res.status}`);
@@ -565,7 +623,7 @@ async function fetchMtgDecksDeck(url) {
   // mtgdecks is Cloudflare-fronted like MTGGoldfish — send the user's clearance
   // cookie so a cookie-less server fetch isn't 403'd (applied by analogy; the
   // extension's host permission lets the SW read the cross-origin response).
-  const res = await fetch(`https://mtgdecks.net${parsed.pathname}`, { credentials: 'include' });
+  const res = await fetchT(`https://mtgdecks.net${parsed.pathname}`, { credentials: 'include' });
   if (!res.ok) {
     if (res.status === 403) throw blocked(chrome.i18n.getMessage('errMtgdecksBlocked'));
     throw new Error(`${chrome.i18n.getMessage('errMtgdecksStatus')} ${res.status}`);
@@ -583,7 +641,7 @@ async function fetchMtgGoldfishDeck(url) {
     // An archetype page shows one deck; read its numeric id off the page, then download
     // that deck like any other. Same Cloudflare rule as below: a 403 here hands over to
     // the tab, whose content script reads the archetype page's own decklist.
-    const page = await fetch(url, { credentials: 'include' });
+    const page = await fetchT(url, { credentials: 'include' });
     if (page.status === 403) throw blocked(chrome.i18n.getMessage('errMtggoldfishBlocked'));
     const id = page.ok ? Parsers.mtggoldfishDeckId(await page.text()) : null;
     if (id) match = [null, id];
@@ -595,7 +653,7 @@ async function fetchMtgGoldfishDeck(url) {
   // opened mtggoldfish in this browser); with our host permission the service worker
   // can send it cross-origin and read the response without CORS headers. Verified:
   // same request is 200 with the cookie, 403 without.
-  const res = await fetch(`https://www.mtggoldfish.com/deck/download/${match[1]}`, { credentials: 'include' });
+  const res = await fetchT(`https://www.mtggoldfish.com/deck/download/${match[1]}`, { credentials: 'include' });
   if (!res.ok) {
     // 403 despite credentials:'include' means no valid cf_clearance cookie (user
     // hasn't opened mtggoldfish in this browser lately) — give an actionable message.
@@ -613,7 +671,7 @@ async function fetchMeleeDeck(url) {
   const match = url.match(/\/Decklist\/View\/([0-9a-fA-F-]{36})/);
   if (!match) throw new Error(chrome.i18n.getMessage('errMeleeInvalidUrl'));
 
-  const res = await fetch(`https://melee.gg/Decklist/View/${match[1]}`);
+  const res = await fetchT(`https://melee.gg/Decklist/View/${match[1]}`);
   if (!res.ok) throw new Error(`${chrome.i18n.getMessage('errMeleeStatus')} ${res.status}`);
 
   const text = await res.text();
@@ -626,7 +684,7 @@ async function fetchGetpairdDeck(url) {
   const match = url.match(/getpaird\.io\/decklists\/([^/?#]+)/);
   if (!match) throw new Error(chrome.i18n.getMessage('errGetpairdInvalidUrl'));
 
-  const res = await fetch(`https://getpaird.io/decklists/${match[1]}`);
+  const res = await fetchT(`https://getpaird.io/decklists/${match[1]}`);
   if (!res.ok) {
     if (res.status === 404) throw new Error(chrome.i18n.getMessage('errGetpairdDeckNotFound'));
     throw new Error(`${chrome.i18n.getMessage('errGetpairdStatus')} ${res.status}`);
@@ -657,7 +715,7 @@ async function fetchDecks(urls) {
         Shared.fixCommanderHeuristic(deck);
         decks.push(deck);
       } catch (e) {
-        errors.push({ url, error: (e && e.message) || chrome.i18n.getMessage('fetchFailed') });
+        errors.push({ url, error: userMessage(e) || chrome.i18n.getMessage('fetchFailed') });
       }
     }
   };

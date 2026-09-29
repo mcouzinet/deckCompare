@@ -3,14 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Deck Compare — Results</title>
+  <title>Deck Compare</title>
   <meta name="color-scheme" content="light">
   <!-- Critical: theme.css is external, so the popup would paint white for one
        frame before it lands. One ground colour, kept in step with --bg. -->
   <style>html{background-color:#f8f5f2}</style>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Geist+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <!-- The card images' host: its connection is open before the first card asks. -->
+  <link rel="preconnect" href="https://cards.scryfall.io">
+  <!-- The fonts that paint first: the interface and the wordmark. -->
+  <link rel="preload" href="fonts/Archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/BricolageGrotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/GeistMono-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- Beleren sets the figures and names that land first; requested from the stylesheet, it
+       arrived after them and they drew in the fallback serif for a frame. -->
+  <link rel="preload" href="fonts/Beleren2016-Bold.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="theme.css">
   <style>
     /* --- the sheet ---------------------------------------------------------------- */
@@ -45,15 +51,19 @@
     /* --- the matchup: two names, and the figure between them ----------------------- */
     .matchup {
       display: grid; grid-template-columns: 1fr auto 1fr;
-      align-items: center; gap: var(--gutter);
+      /* Bottoms aligned: a long name grows upward, and the two sources and the figure's
+         caption stay on one line. */
+      align-items: end; gap: var(--gutter);
       padding: calc(var(--unit) * 7) 0 calc(var(--unit) * 4);
     }
     .side { min-width: 0; }
     .side.b { text-align: right; }
 
     /* The deck's own ink says which side it is; the short rule under it repeats that. */
+    /* Two lines at most: a tournament title ("House of Middle Earth @ MTGSpecs (Ep. 1): …")
+       ran to three and pushed the figure off centre. The full name is the link's title. */
     .deck-name {
-      display: block;
+      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
       font-family: var(--font-display); font-weight: 400;
       font-size: clamp(22px, 2.8vw, 36px);
       line-height: 1.1; letter-spacing: -0.01em;
@@ -61,6 +71,9 @@
     }
     .side.a .deck-name { color: var(--a); }
     .side.b .deck-name { color: var(--b); }
+    /* Right-aligned, the clamp's ellipsis (and a final letter's tail) fell outside the clipped
+       box, so a cut name read as whole: room for them, given back by the margin. */
+    .side.b .deck-name { padding-right: 1em; margin-right: -1em; }
     a.deck-name:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.12em; }
     .deck-edge { width: 40px; height: 2px; margin-top: calc(var(--unit) * 2); border-radius: 2px; }
     .side.a .deck-edge { background: var(--a); }
@@ -81,9 +94,11 @@
     }
     .counter-num span { font-size: 0.42em; color: var(--ink-3); letter-spacing: 0; margin-left: 2px; }
     .counter-label {
-      font-size: var(--fs-micro); font-weight: 600; letter-spacing: 0.16em;
+      font-size: var(--fs-micro); font-weight: 600; letter-spacing: 0.14em;
       text-transform: uppercase; color: var(--ink-3);
     }
+    /* What the figure counts: "22 cards in common out of 100". */
+    .counter-basis { font-size: var(--fs-xs); color: var(--ink-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
     /* --- the overlap bar ---------------------------------------------------------- */
     .seam { padding-bottom: calc(var(--unit) * 4); border-bottom: 1px solid var(--line); }
@@ -91,22 +106,38 @@
     /* The page's one authored moment: the bar draws in once, left to right, the instant the
        result is revealed — the gap between the decks is seen before a word is read. */
     .seam-seg { height: 100%; transform-origin: left center; animation: seam-draw .9s cubic-bezier(.22,1,.36,1) both; }
+    .seam-seg.ax { animation-delay: .06s; }
     .seam-seg.s { animation-delay: .12s; }
+    .seam-seg.bx { animation-delay: .18s; }
     .seam-seg.b { animation-delay: .24s; }
     @keyframes seam-draw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
     .seam-seg.a { background: var(--a); }
     .seam-seg.s { background: var(--match); }
     .seam-seg.b { background: var(--b); }
+    /* Surplus copies of shared cards (10 Forests against 6): the side's ink, lighter, next to
+       the shared ground. Without them one side's segments fell short of its deck. */
+    .seam-seg.ax { background: var(--a); opacity: .42; }
+    .seam-seg.bx { background: var(--b); opacity: .42; }
     .seam-legend {
-      display: flex; justify-content: space-between; flex-wrap: wrap;
-      gap: var(--unit); margin-top: calc(var(--unit) * 1.5); font-size: var(--fs-xs);
+      display: flex; justify-content: space-between;
+      gap: calc(var(--unit) * 3); margin-top: calc(var(--unit) * 1.5); font-size: var(--fs-xs);
     }
-    .lg { display: inline-flex; align-items: center; gap: var(--unit); color: var(--ink-3); }
+    .lg { display: inline-flex; align-items: center; gap: var(--unit); color: var(--ink-3); white-space: nowrap; text-decoration: none; }
+    /* Each entry jumps to its cards: the shared table sits under both grids, thousands of
+       pixels down with a hundred-card deck. */
+    .lg:hover .lg-label, .lg:focus-visible .lg-label { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+    .zone { scroll-margin-top: calc(var(--unit) * 2); }
+    /* A side's label is the one part that yields: "Only in <a long name>" ends in an ellipsis
+       (its title keeps the whole) and the counts after it always show. */
+    .lg.a, .lg.b { min-width: 0; }
+    .lg > * { flex: none; }
+    .lg > .lg-label { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
     .lg .sw { width: 9px; height: 9px; border-radius: 3px; flex: none; }
     .lg b { color: var(--ink); font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 600; }
     .lg.a .sw { background: var(--a); }
     .lg.s .sw { background: var(--match); }
     .lg.b .sw { background: var(--b); }
+    .lg.x .sw { opacity: .42; }   /* its colour is set per pair (compare.js): the side(s) with surplus */
 
     /* --- controls ----------------------------------------------------------------- */
     .controls {
@@ -122,7 +153,11 @@
     }
     .sides { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: var(--gutter); }
 
-    .card-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(var(--card-w,clamp(104px,9vw,148px)),1fr)); gap: calc(var(--unit) * 1.25); }
+    /* At least three cards a side, 96px when there is room (125px from 1280px up, four at
+       1024). The old viewport-based
+       minimum jumped with the window (125px cards at 1366, 192px from 1440, so the page doubled
+       in length when widening it); the held card is where a card is read. */
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(var(--card-w,min(96px,calc((100% - 20px) / 3))),1fr)); gap: calc(var(--unit) * 1.25); }
 
     /* Cards lie on the paper. Reaching for one lifts it; the shadow grows downward. */
     .card-slot {
@@ -159,13 +194,43 @@
       text-transform: uppercase; color: var(--ink-3);
     }
     .col-empty { padding: calc(var(--unit) * 3) 0; font-size: var(--fs-xs); color: var(--ink-3); }
+    /* A side's name holds one line whatever the deck is called, so the two zones start level. */
+    .sides .zone-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    /* A zone's count copies its cards as "qty name" lines, the import format of every deck
+       builder. The icon is a tool, so it stays in Ink Mute; "copied!" takes the action ink. */
+    .zone-copy {
+      margin-left: auto; margin-right: calc(var(--unit) * -0.75); flex: none;
+      display: inline-flex; align-items: center; gap: calc(var(--unit) * 0.75);
+      padding: 2px calc(var(--unit) * 0.75);
+      background: none; border: 0; border-radius: var(--r-xs); font: inherit; cursor: pointer; color: var(--ink-3);
+    }
+    .zone-copy .zone-count { margin-left: 0; }
+    .zone-copy svg { width: 13px; height: 13px; opacity: .6; transition: opacity .12s; }
+    .zone-copy:hover svg, .zone-copy:focus-visible svg { opacity: 1; }
+    .zone-copy:hover .zone-count, .zone-copy:focus-visible .zone-count { text-decoration: underline; text-underline-offset: 3px; }
+    .zone-copy .zc-done { display: none; font-size: var(--fs-xs); font-weight: 600; color: var(--brand-btn); }
+    .zone-copy.copied .zc-done { display: inline; }
+    .zone-copy.copied .zone-count, .zone-copy.copied svg { display: none; }
+    .zone-copy:disabled { cursor: default; }
+    .zone-copy:disabled svg { display: none; }
 
     /* --- the shared ground -------------------------------------------------------- */
     .shared { margin-top: calc(var(--unit) * 6); }
     .shared .zone-name, .shared .zone-count { color: var(--match); }
     .shared .zone-mark { border-bottom-color: var(--match-wash); }
-    .shared-note { font-size: var(--fs-xs); color: var(--ink-3); display: inline-flex; align-items: center; gap: calc(var(--unit) * 0.8); }
+    /* "N quantity mismatches" is a toggle: pressed, the table keeps only those rows (a Forest
+       at -5 hid among twenty-five "=" rows). */
+    .shared-note {
+      font: inherit; font-size: var(--fs-xs); color: var(--ink-3); cursor: pointer;
+      display: inline-flex; align-items: center; gap: calc(var(--unit) * 0.8);
+      padding: 2px calc(var(--unit) * 0.75); margin-left: calc(var(--unit) * -0.75);
+      background: none; border: 0; border-radius: var(--r-xs);
+    }
+    .shared-note:hover, .shared-note:focus-visible { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+    .shared-note[aria-pressed="true"] { color: var(--brand-btn); font-weight: 600; }   /* selected: the action ink */
+    .shared-note[aria-pressed="false"] .note-off { display: none; }   /* pressed, it says how to undo it */
     .shared-note .warn-dot { width: 7px; height: 7px; border-radius: 2px; background: var(--brand); }
+    body.diffs-only .srow:not(.diff) { display: none; }
 
     .srow-head, .srow {
       display: grid;
@@ -205,11 +270,16 @@
 
     /* --- the card you picked up ---------------------------------------------------- */
     .rail { position: sticky; top: calc(var(--unit) * 3); }
+    /* Nothing held: the sheet rests (lift-1) and its stage folds to the hint, instead of a
+       card-sized blank beside the grids. Picking a card up raises it. */
     .held {
       padding: calc(var(--unit) * 2);
       background: var(--elev); border: 1px solid var(--line);
-      border-radius: var(--r-lg); box-shadow: var(--lift-2);
+      border-radius: var(--r-lg); box-shadow: var(--lift-1);
+      transition: box-shadow .18s;
     }
+    .held:has(.preview-stage.has-img) { box-shadow: var(--lift-2); }
+    .preview-stage:not(.has-img) { aspect-ratio: auto; padding: calc(var(--unit) * 3) 0; }
     .preview-stage {
       aspect-ratio: 488/680; border-radius: var(--r-sm); overflow: hidden;
       display: grid; place-items: center; position: relative;
@@ -220,16 +290,17 @@
     .preview-hint {
       display: flex; flex-direction: column; align-items: center; gap: var(--unit);
       padding: 0 calc(var(--unit) * 2); text-align: center;
-      font-size: var(--fs-xs); color: var(--ink-3);
+      font-size: var(--fs-xs); color: var(--ink-2);   /* Ink Mute is 4.1:1 on the well: short of AA */
     }
     .preview-hint svg { width: 26px; height: 26px; opacity: .45; }
     .preview-stage.has-img .preview-hint { display: none; }
     .preview-name { margin-top: calc(var(--unit) * 1.75); font-family: var(--font-display); font-weight: 400; font-size: 17px; letter-spacing: 0; color: var(--ink); line-height: 1.25; }
     .preview-qty { margin-top: var(--unit); display: flex; flex-wrap: wrap; gap: var(--unit); font-size: var(--fs-xs); min-height: 22px; }
+    .preview-name:empty, .preview-qty:empty { display: none; }
     .pq { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: var(--r-pill); font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 600; }
     .pq.a { background: var(--a-wash); color: var(--a); }
     .pq.b { background: var(--b-wash); color: var(--b); }
-    .pq i { font-style: normal; opacity: .75; font-family: var(--font-ui); }
+    .pq i { font-style: normal; font-family: var(--font-ui); }
 
     /* --- compare another ----------------------------------------------------------- */
     .another-pop {
@@ -240,6 +311,30 @@
       border-radius: var(--r-md); box-shadow: var(--lift-3);
     }
     .another-pop[hidden] { display: none; }
+    /* What the pick replaces (deck 2; deck 1 stays), then the deck tabs already open, one
+       click each, as in the popup and the in-page panel. */
+    .pop-label {
+      font-size: var(--fs-xs); color: var(--ink-2); line-height: 1.35;
+      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+    }
+    .pop-tabs { display: flex; flex-direction: column; gap: 6px; max-height: 172px; overflow-y: auto; scrollbar-width: thin; }
+    .pop-tabs[hidden] { display: none; }
+    .pop-tab {
+      display: flex; align-items: center; gap: var(--unit); flex: none;
+      width: 100%; text-align: left; cursor: pointer;
+      padding: calc(var(--unit) * 1.1) calc(var(--unit) * 1.25);
+      font-family: var(--font-ui); font-size: var(--fs-xs); color: var(--ink);
+      background: var(--elev); border: 1px solid var(--line); border-radius: var(--r-sm);
+      transition: border-color .12s, box-shadow .12s;
+    }
+    .pop-tab:hover:not(:disabled) { border-color: var(--b); box-shadow: var(--lift-1); }
+    .pop-tab:disabled { opacity: .45; cursor: default; }
+    .pop-tab:focus-visible { outline-offset: -2px; }   /* the scrolling list clips a ring drawn outside */
+    .pop-tab .src {
+      flex: none; font-size: var(--fs-micro); font-weight: 600; letter-spacing: 0.06em;
+      padding: 2px 8px; border-radius: var(--r-pill); background: var(--bg-deep); color: var(--ink-2);
+    }
+    .pop-tab .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     select.mat-field[hidden] { display: none; }
     .tb-msg { font-size: var(--fs-xs); color: var(--ink-3); }
     .tb-msg:empty { display: none; }
@@ -279,20 +374,38 @@
     }
     .footnote a { color: var(--ink-3); }
 
+    /* Four legend entries do not fit a narrow window on one line: they wrap. */
+    @media (max-width: 1000px) {
+      .seam-legend { flex-wrap: wrap; row-gap: var(--unit); }
+      .lg { max-width: 100%; }
+    }
     @media (max-width: 1080px) {
       .table-grid { grid-template-columns: minmax(0,1fr); }
-      .rail { position: static; max-width: 320px; }
-      /* Below the rail breakpoint the held card sits at the page's end: fold the empty
-         stage to its hint so a page with no card picked does not end on a blank sheet. */
-      .preview-stage:not(.has-img) { aspect-ratio: auto; padding: calc(var(--unit) * 3) 0; }
+      /* No room for the rail: the held card floats in the viewport's corner while one is held
+         (it used to land under both grids, thousands of pixels from the card it showed), and
+         lets the pointer through to the cards beneath. */
+      .rail { position: fixed; right: 16px; bottom: 16px; top: auto; width: min(240px, 60vw); z-index: 50; pointer-events: none; }
+      /* On the other side from the card it shows, so it never covers the card in focus. */
+      .rail.left { left: 16px; right: auto; }
+      .rail.top { top: 16px; bottom: auto; }
+      .held { box-shadow: var(--lift-3); }
+      /* Hidden while nothing is held; a card without an image still floats, to say so. */
+      .held:has(.preview-name:empty) { display: none; }
+      /* One line per deck: long names wrapped the pills to three lines and the sheet to half
+         the screen. */
+      .pq { max-width: 100%; }
+      .pq i { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     }
     @media (max-width: 760px) {
       .matchup { grid-template-columns: 1fr; gap: calc(var(--unit) * 2.5); text-align: center; padding-top: calc(var(--unit) * 4); }
       .side.b { text-align: center; }
+      .side.b .deck-name { padding-right: 0; margin-right: 0; }
       .side.a .deck-edge, .side.b .deck-edge { margin-left: auto; margin-right: auto; }
       .counter { order: -1; }
       .sides { grid-template-columns: minmax(0,1fr); }
-      .seam-legend { flex-direction: column; }
+      .seam-legend { flex-direction: column; gap: var(--unit); }
+      /* The coffee pill keeps its cup and lets the two actions share the top row. */
+      .bmc #bmc-text-compare { display: none; }
     }
   </style>
 </head>
@@ -333,6 +446,8 @@
           <span id="another-text"></span>
         </button>
         <div class="another-pop" id="another-pop" hidden>
+          <div class="pop-label" id="another-label"></div>
+          <div class="pop-tabs" id="another-tabs" hidden></div>
           <select class="mat-field" id="another-saved" hidden></select>
           <input class="mat-field" id="another-url" type="text">
           <button class="mat-btn mat-btn--go" id="another-go"></button>
@@ -358,6 +473,7 @@
             <div class="counter-num" id="ring-num"></div>
           </div>
           <div class="counter-label" id="ring-label"></div>
+          <div class="counter-basis" id="ring-basis"></div>
         </div>
         <div class="side b">
           <a class="deck-name" id="deck-b-name" target="_blank" rel="noopener">—</a>
@@ -369,13 +485,16 @@
       <section class="seam">
         <div class="seam-bar" id="ring">
           <div class="seam-seg a" style="flex-basis:0%"></div>
+          <div class="seam-seg ax" style="flex-basis:0%"></div>
           <div class="seam-seg s" style="flex-basis:0%"></div>
+          <div class="seam-seg bx" style="flex-basis:0%"></div>
           <div class="seam-seg b" style="flex-basis:0%"></div>
         </div>
         <div class="seam-legend">
-          <span class="lg a"><span class="sw"></span><span id="lg-a-label"></span> · <span id="lg-a">0</span></span>
-          <span class="lg s"><span class="sw"></span><span id="lg-s-label"></span> · <span id="lg-s">0</span></span>
-          <span class="lg b"><span class="sw"></span><span id="lg-b-label"></span> · <span id="lg-b">0</span></span>
+          <a class="lg a" href="#zone-a"><span class="sw"></span><span class="lg-label" id="lg-a-label"></span><span>·</span><span id="lg-a">0</span></a>
+          <a class="lg s" href="#zone-s"><span class="sw"></span><span class="lg-label" id="lg-s-label"></span><span>·</span><span id="lg-s">0</span></a>
+          <a class="lg x hide" href="#zone-s" id="lg-x-link"><span class="sw" id="lg-x-sw"></span><span class="lg-label" id="lg-x-label"></span><span>·</span><span id="lg-x">0</span></a>
+          <a class="lg b" href="#zone-b"><span class="sw"></span><span class="lg-label" id="lg-b-label"></span><span>·</span><span id="lg-b">0</span></a>
         </div>
       </section>
 
@@ -404,35 +523,39 @@
         <div>
           <h2 class="sr-only" id="exclusive-heading"></h2>
           <div class="sides">
-            <div class="zone side-a">
+            <div class="zone side-a" id="zone-a">
               <div class="zone-mark">
                 <span class="zone-name" id="col-a-title"></span>
-                <span class="zone-count" id="col-a-count">0</span>
+                <button class="zone-copy" data-copy-zone="a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg><span class="zone-count" id="col-a-count">0</span><span class="zc-done"></span></button>
               </div>
               <div id="col-a-body"></div>
+              <div class="col-empty hide" id="col-a-empty"></div>
             </div>
-            <div class="zone side-b">
+            <div class="zone side-b" id="zone-b">
               <div class="zone-mark">
                 <span class="zone-name" id="col-b-title"></span>
-                <span class="zone-count" id="col-b-count">0</span>
+                <button class="zone-copy" data-copy-zone="b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg><span class="zone-count" id="col-b-count">0</span><span class="zc-done"></span></button>
               </div>
               <div id="col-b-body"></div>
+              <div class="col-empty hide" id="col-b-empty"></div>
             </div>
           </div>
 
-          <section class="shared zone">
+          <section class="shared zone" id="zone-s">
             <div class="zone-mark">
               <h2 class="zone-name" id="shared-title"></h2>
-              <span class="shared-note"><span class="warn-dot"></span><span id="qty-diff-note"></span></span>
-              <span class="zone-count" id="shared-count">0</span>
+              <button type="button" class="shared-note" aria-pressed="false"><span class="warn-dot"></span><span id="qty-diff-note"></span><span class="note-off" aria-hidden="true">· <span id="qty-diff-off"></span></span></button>
+              <button class="zone-copy" data-copy-zone="s"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg><span class="zone-count" id="shared-count">0</span><span class="zc-done"></span></button>
             </div>
-            <div class="srow-head">
+            <div class="srow-head" id="srow-head">
               <span class="ca" id="srow-head-a"></span>
               <span id="srow-head-card"></span>
               <span class="cc">&Delta;</span>
               <span class="cb" id="srow-head-b"></span>
             </div>
             <div id="shared-body"></div>
+            <div class="col-empty hide" id="shared-empty"></div>
+            <div class="sr-only" role="status" id="copy-status"></div>
           </section>
         </div>
 

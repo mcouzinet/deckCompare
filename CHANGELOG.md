@@ -10,6 +10,39 @@ testée (voir `AGENTS.md`).
 
 ### Ajouté
 
+- **Ma liste face aux decks** (comparaison croisée). « Comparer ma liste » (à côté des vues) prend
+  un lien, un deck de tes decks enregistrés ou une liste collée : elle reste à part, aucun chiffre
+  de la comparaison ne la compte, et un lien vers un deck déjà présent épingle celui-ci au lieu de
+  le dupliquer. Un bandeau sous le commandant la mesure à l'ensemble : similarité à la decklist
+  moyenne (la formule de la page de résultats), part de ses cartes dans le consensus (« 58/99 »,
+  avec celle du deck médian), cartes en commun jouées, manques du consensus et cartes peu jouées
+  ailleurs (et signale une liste menée par un autre commandant) ; ces deux derniers chiffres
+  ouvrent la vue « Écarts seulement », qui liste aussi les
+  cartes du consensus jouées en un autre nombre d'exemplaires. Dans les listes, un point orange
+  marque les cartes qu'elle joue, « toi ×2 » son nombre d'exemplaires quand il diffère de la
+  moyenne, « manque » une carte du consensus absente ; le reste passe en retrait, et les outils de
+  chaque ligne (copier, garder, écarter) attendent le survol ou le focus. Des liens
+  l'ouvrent sur la page de résultats (même pourcentage que le bandeau) : « Face à la decklist
+  moyenne », « Face au plus proche » (le deck du lot qui lui ressemble le plus) et, pour un deck
+  épinglé, « Face à ma liste ». Ma liste est gardée en local, à part du pool ; venue d'un lien,
+  « Relire la liste » la relit sur sa page après une modification. Depuis le popup, sur
+  une page de deck qui n'y est pas encore et avec une comparaison croisée enregistrée, « Ce deck
+  face aux N decks » (suivi de leur commandant) l'y envoie directement comme ma liste.
+- **Un deck du pool mis en avant** : survoler une ligne du rail (ou y mettre le focus) montre ce
+  deck de la même façon, bandeau compris, et son nombre de cartes du consensus ; un clic
+  l'épingle comme référence. Il est alors mesuré aux autres decks, pas à un pool qui le
+  contient. Au clavier, les flèches haut et bas parcourent les decks de la même façon. La page du
+  deck s'ouvre désormais par la flèche de la ligne. Sous 1000 px de large, la liste des decks
+  reste affichée, compacte, au-dessus des résultats (elle disparaissait avec le rail).
+- **ManaBox** (manabox.app), neuvième site : le bouton « Comparer » dans la barre d'actions du
+  deck, après « Download », la détection de l'onglet actif et le collage d'URL. Le deck est
+  toujours lu depuis sa page, l'onglet déjà ouvert ou un onglet d'arrière-plan ouvert puis
+  refermé, jamais par une requête de l'extension. L'accès au site est **optionnel** (aucune
+  permission requise ajoutée) : le popup lit sans lui le deck de l'onglet ManaBox ouvert, et un
+  lien ManaBox (deck 2, page de résultats, comparaison croisée) le demande au clic qui le lit,
+  une fois pour toutes. « Autoriser le bouton sur ce site » dans le popup d'un onglet ManaBox, ou
+  « Autoriser le bouton sur Moxfield et ManaBox » dans les réglages, le donnent aussi. Refusé, un
+  lien ManaBox reste illisible, avec un message qui dit comment l'autoriser.
 - **Paquet Safari** (`npm run build safari`), pour le packager d'extensions Safari d'Apple (App
   Store Connect ou Xcode). Il porte `browser_specific_settings.safari`, sans quoi chaque install
   Safari aurait affiché le badge DEV (aucune n'a d'`update_url`), et une icône 1024 px tirée de
@@ -17,11 +50,168 @@ testée (voir `AGENTS.md`).
   Safari 16.4 minimum. L'app macOS qui l'embarque est le projet Xcode de `safari/`, qui référence
   `dist/safari/` au lieu d'en copier le code : identifiant `io.github.mcouzinet.deckcompare`,
   macOS 12 minimum, catégorie Divertissement, chiffrement exempté déclaré.
+- **Copier une liste depuis la page de résultats** : le compteur de chaque zone (« Unique à … »
+  des deux côtés, « Cartes en commun ») copie ses cartes visibles, une par ligne au format
+  « 1 Nom », celui qu'importent les éditeurs de decks ; le filtre de board décide de ce qui part.
+- **Le panneau « Comparer » des sites propose les onglets de deck ouverts** (toutes les fenêtres,
+  la sienne d'abord) : un clic lance la comparaison, sans copier d'adresse. Le popup les cherche
+  aussi dans toutes les fenêtres, pour deux decks ouverts côte à côte, et le menu « Comparer un
+  autre » de la page de résultats les propose à son tour (hors les deux decks affichés), sous un
+  intitulé qui dit quel deck il remplace (« Remplacer « … » par »).
+- **README** : lien d'installation Firefox (la fiche addons.mozilla.org est publique depuis le
+  27 septembre) et copie des listes.
 - **Licence MIT** (`LICENSE`). La police Beleren et les extraits de pages des fixtures de test
   n'en relèvent pas ; le README le précise, avec la mention Fan Content de Wizards.
 
 ### Modifié
 
+- **Comparaison croisée accessible** : chaque case à cocher des listes porte le nom de sa carte
+  pour les lecteurs d'écran, et l'indice « Survole une carte » passe au contraste AA. Un audit axe
+  (WCAG A et AA) ne relève plus aucune violation, liste épinglée, écarts ou popin ouverte.
+- **Page de résultats** : un nom de deck long tient en deux lignes (le nom entier au survol) et
+  les deux côtés s'alignent par le bas ; les en-têtes « Unique à … » et la légende de la barre
+  tiennent sur une ligne ; chaque entrée de la légende mène à ses cartes (la table commune est à
+  plus de 11 000 px sous deux grilles de 100 cartes). Le pourcentage dit ce qu'il compte (« 25
+  cartes en commun sur 100 »). Un côté ou la table commune vidé par la paire ou par un filtre
+  l'écrit (« Aucune carte exclusive », « Aucune carte en commun ») au lieu de rester blanc, « 0
+  écart de quantité » ne porte plus le point rouge pour rien, et sans comparaison « Inverser » et
+  « Comparer un autre » disparaissent. Tant qu'aucune carte n'est tenue, la feuille de droite se
+  replie sur son indice (« Survole une carte pour la voir en grand ») au lieu d'un grand cadre
+  vide. L'onglet porte le nom des deux decks (« A contre B · Deck Compare ») au lieu du même
+  titre anglais pour chaque comparaison ouverte.
+- **Page de résultats, suite** : sous 1080 px de large (fenêtres côte à côte), la carte survolée
+  flotte dans le coin de l'écran au lieu de s'afficher sous les deux grilles, des milliers de
+  pixels plus bas ; elle se range quand le pointeur ou le focus quitte les cartes, sur Échap ou
+  sur un clic ailleurs. « Cartes » compte partout les exemplaires, comme la ligne sous le
+  pourcentage : la légende lit « 29 cartes · 21 distinctes », ou « 25 cartes » quand les deux
+  comptes sont égaux (decks singleton), au lieu de « 29 exemplaires · 21 cartes » juste sous « 29
+  cartes en commun ». Un filtre de board le dit sous le pourcentage (« similaire ·
+  Commandants ») : « 100 % » sur le seul commandant se lisait comme deux decks identiques. « N
+  écarts de quantité » devient un bouton qui ne garde que ces lignes dans la table commune.
+  Pluriels corrigés partout (« 0 carte », « 1 carte en commun » sur la comparaison croisée). Le
+  nom du deck 2, aligné à droite, garde ses points de suspension quand il est coupé. Sous 760 px,
+  le bouton café ne garde que sa tasse et les deux actions tiennent sur la ligne du haut.
+- **Page de résultats, grille et barre** : la grille par défaut montre au moins trois cartes par
+  côté à toute largeur (125 px à partir de 1280 px), au lieu de deux de 192 px à partir de 1440
+  (et trois à 1366 : la taille sautait avec la fenêtre) ; la table commune remonte de 11 500 à 5
+  450 px avec deux decks de 100 cartes, et la carte survolée reste là pour lire le texte. La vue
+  compacte en montre toujours une de plus par côté (quatre à 1440). La barre de recouvrement
+  compte enfin les exemplaires en surnombre (10 Forest contre 6) : un segment plus clair du côté
+  concerné et une entrée « En surnombre » dans la légende, qui mène aux seuls écarts de la table
+  commune ; chaque côté tombe juste (68 + 7 + 25 = 100 au lieu de 93). Sous 1000 px, la légende
+  passe à la ligne au lieu de couper les noms. La carte flottante (sous 1080 px) se place dans le
+  coin opposé à la carte ou à la ligne montrée, pour ne jamais la cacher, et ses pastilles de deck
+  tiennent sur une ligne. Une carte survolée avant la réponse de Scryfall s'affiche à l'arrivée
+  des images ; une carte sans image chez Scryfall le dit (« Pas d'image pour cette carte ») au
+  lieu de relancer l'API pour un 404 certain ; un filtre de board range la carte tenue qu'il
+  masque, nom compris. Le filtre des écarts dit comment l'enlever (« 3 écarts de quantité · tout
+  afficher »), prend l'encre d'action quand il est actif et se relâche quand « Comparer un autre »
+  change de paire. L'onglet met le deck 2 en premier (« B contre A »), celui qui change d'un
+  onglet à l'autre ; sans comparaison, il s'appelle simplement Deck Compare.
+- **Popup** : le nom du deck détecté tient en deux lignes et perd le badge « Détecté » une fois lu
+  (en attendant, le titre de l'onglet remplace le mot « Détecté » répété deux fois). La liste des
+  decks enregistrés ne s'ouvre plus d'elle-même à l'ouverture (un clic, la frappe ou ↓ l'ouvrent)
+  et prend toute la largeur du popup. Les messages (lecture, erreur) s'affichent sous le champ,
+  plus sous les entrées de comparaison croisée, que voici réunies en un seul bloc. Les onglets de deck
+  ouverts s'affichent par le nom du deck, sans ce que le site ajoute autour (« • (Altruism Commander
+  deck) • Archidekt », « Deck for Magic: the Gathering »), sur deux lignes et sans la puce du site
+  quand tous viennent du même ; la liste, comptée (« Tes onglets de deck ouverts (4) »), s'arrête à
+  deux lignes et demie, et l'invitation à configurer son compte devient une ligne de texte (qui
+  ouvre les réglages) qu'un message d'état remplace, pour tenir sous le plafond de 600 px de
+  Chrome. Un message des réglages ne reste plus sous le champ une fois ceux-ci fermés, et le
+  compte chargé lit « 1 deck ».
+- **Panneau « Comparer » des sites** : titré « Deck 2 · Comparer avec », il nomme le site qu'il lit
+  (« Lecture du deck depuis Archidekt… »). Sa racine shadow est désormais **fermée** : les scripts
+  du site hôte ne peuvent plus lire ce qu'il affiche (tes decks enregistrés, tes autres onglets de
+  deck). La politique de confidentialité et la justification des hôtes (`store-listing.md`)
+  mentionnent la lecture des onglets ouverts sur les sites de decks, que le popup fait depuis la
+  1.0.13. Ouvert au clavier, il place le focus sur le premier onglet proposé (à la souris, le
+  curseur reste dans le champ : ouvrir, coller, Entrée) ; il se ferme quand le focus le quitte et
+  une fois la comparaison ouverte. Les noms d'onglets gardent le nom d'un site quand il fait
+  partie du nom du deck (« Isshin - Melee Attack Triggers »).
+- **Noms en Beleren** : les lettres ornées de fin de mot (« Aragorŋ the Uniter ») sont coupées sur
+  les trois pages ; elles vont à un titre de carte, pas au nom d'un deck.
+- **Textes** : « Erreur : » avec l'espace française, « Échec du chargement » au lieu de « Échec du
+  fetch », « Récupération du deck… » au lieu de « Récupération via API… ». Un lien d'un site non
+  pris en charge le dit, et renvoie à la liste des réglages, au lieu de « Source non supportée. ». Les cartes
+  de la page de résultats annoncent leur nombre aux lecteurs d'écran (« 4 Lightning Bolt »,
+  « Forest : 10 contre 8 »). La légende de la courbe de mana ne mélange plus anglais et
+  symboles (« Le consensus : les non-terrains joués par au moins la moitié des decks. »), et les
+  messages ne portent plus de tiret cadratin (« Sélectionne un deck… », « …puis réessaie, ou colle
+  le texte du deck. », les decks d'un archétype mtgtop8 nommés « Joueur · Tournoi »). Les
+  pourcentages de la comparaison croisée s'écrivent à la française (« 85,7 % »), comme le reste de
+  la page.
+- **Plus rapide, page de résultats** : les images des cartes déjà connues partent dès l'ouverture,
+  sans attendre la recherche Scryfall (cache chaud : premières images en 67 ms, une seule mise en
+  page au lieu de deux) ; une comparaison détaillée ouverte depuis la comparaison croisée puise
+  dans le cache de celle-ci et s'affiche complète en 134 ms, sans appel à Scryfall. Une image ne
+  se charge que quand sa carte approche de l'écran : 12 requêtes à l'ouverture au lieu d'une
+  cinquantaine, et les cartes visibles ne font plus la queue derrière les autres. Quand la
+  recherche échoue ou tarde, les cartes affichent leur nom au lieu de lancer une rafale de
+  requêtes vers l'API de Scryfall, qui bloquait l'extension 30 s ; un nom que Scryfall ne connaît
+  pas est retenu un jour au lieu d'être redemandé à chaque ouverture. La vue enregistrée
+  (compacte, liste) s'applique dès le premier affichage, sans flash de la grille.
+- **Plus rapide, comparaison croisée** : les lots de cartes partent vers Scryfall côte à côte au
+  lieu de s'attendre, chaque requête (nouveaux essais compris) prenant sa place dans une file
+  espacée de 550 ms, la limite de Scryfall étant de deux requêtes par seconde : 10 decks à froid
+  en 5,4 s, un pool de 100 decks en une douzaine de secondes au lieu d'une quarantaine, les decks
+  affichés dès 130 ms au premier chargement (types, images et courbe complétés à l'arrivée), avec
+  l'avancée à l'écran (« Recherche des cartes sur Scryfall… 150 / 558 », « Récupération de 12
+  decks… »). Un nom que Scryfall ne connaît pas n'est plus redemandé carte par carte, ni à chaque
+  clic de filtre, ni à chaque ouverture (retenu un jour, comme sur la page de résultats), et un
+  filtre n'enregistre plus que les filtres. Les lignes hors écran ne sont plus rendues : survoler
+  la liste des decks d'un pool de 100 decks coûte 9 ms de recalcul de style au lieu de 225, sans
+  tâche longue.
+- **Polices embarquées** : Archivo, Bricolage Grotesque et Geist Mono sont livrées avec
+  l'extension (168 Ko, licence OFL jointe) au lieu d'être chargées depuis Google Fonts. Le premier
+  affichage des trois pages ne dépend plus du réseau, et l'extension ne contacte plus Google : la
+  politique de confidentialité perd sa ligne Google Fonts, le CSP ses hôtes Google.
+- **Réseau** : toute requête vers un site de decks ou Scryfall abandonne après 15 s avec un
+  message clair (« Le site ne répond pas »), au lieu de laisser le popup sur « Récupération… » et
+  la comparaison croisée sans fin. Une recherche de cartes déjà en cours n'est plus relancée par
+  un « Inverser » pendant qu'elle tourne. Les listes d'onglets ne mélangent plus navigation privée
+  et fenêtres ordinaires. « Comparer tous les decks » (archétype mtgtop8) ne reste plus bloqué sur
+  « Collecte des decks… » quand une page de l'archétype ne répond pas. Le bouton injecté cherche la barre du site une fois par salve
+  de modifications de la page, plus à chacune.
+- **Ma liste face au pool, chiffres du consensus** : dans un pool Commander, les terrains de base
+  ne comptent plus dans la part du consensus, ni dans les manques ou les autres nombres
+  d'exemplaires. Chaque deck en aligne des dizaines : ils faisaient 11 des « 21/99 » de ma liste
+  (10/88 désormais), désignaient comme le plus typique le deck qui en jouait 28 (39/99, 11/71
+  maintenant), et remplissaient seuls « Autre nombre d'exemplaires ». Un pool de 60 cartes les
+  garde : quatre Mountain contre trois y est un choix.
+- **Comparaison croisée, lisibilité** : dans la liste des decks, chaque nom commence là où les
+  decks diffèrent (« Spellslinger Deck Bracket 2/3 », « (budget) ») au lieu d'être coupé juste
+  après le nom du commandant qu'ils partagent tous ; le nom entier reste au survol, et la source
+  n'apparaît que si les decks viennent de plusieurs sites. Sous 1000 px, cette liste ne reste plus
+  collée par-dessus le contenu (un tiers d'une fenêtre partagée) : une règle plus loin dans la
+  feuille de style l'emportait. La popin « Ajouter des decks » a un titre et se comporte en vraie
+  boîte de dialogue : le clavier ne s'échappe plus vers la page derrière. La decklist moyenne
+  prend la taille médiane des decks : un seul deck de 107 cartes la portait à 101, illégale en
+  Commander. L'onglet porte le nom du commandant, la puce du bandeau le nom du site
+  (« Archidekt », pas « archidekt »), l'onglet de ma liste n'est plus proposé comme deck du pool,
+  et les decks écartés par un filtre gardent un contraste AA dans la liste. Chaque copie le
+  confirme, comme sur la page de résultats (une coche dans l'encre d'action, « copié ! » pour les
+  lecteurs d'écran) : les icônes des lignes, « Copier » des sections et de la sélection restaient
+  muets. Sous 1000 px, la carte survolée flotte dans un coin de la fenêtre, comme sur la page de
+  résultats, au lieu de ne pas s'afficher du tout. À 1024 px, les cinq chiffres du bandeau tiennent
+  sur une ligne (ils passaient à 4 + 1) ; sur un téléphone, une ligne de carte garde son nom (sur
+  deux lignes au besoin) au lieu de le réduire à une lettre. Mesurée à moins de trois decks, une liste n'affiche plus
+  ses manques du consensus en rouge : le bandeau dit qu'un consensus se lit à partir de 3 decks
+  (avec deux, « joué par au moins la moitié » veut dire joué par l'un des deux). Retirer un deck
+  laisse le clavier dans la liste, sur le deck qui prend sa place, et l'annonce aux lecteurs
+  d'écran ; le focus tombait sur la page. Dans le popup, « Ce deck face aux N decks » dit
+  au survol qu'il remplace ma liste.
+- **Comparaison croisée, colonne de droite** : tant qu'aucune carte n'est survolée, la carte tenue
+  se replie sur son indice (« Survole une carte pour la voir en grand ») : la courbe de mana
+  apparaît sans défiler, sous la liste des decks.
+- **Comparaison croisée, haut de page** : replié, le panneau d'ajout ne laisse plus de bande vide
+  (ni de filet) au-dessus du commandant.
+- **Endstep Tracker cesse de promouvoir Deck Compare quand il est déjà installé** : Deck Compare
+  répond « installé » à son message (`runtime.onMessageExternal`), sans rien partager d'autre et
+  sans nouvelle permission.
+- **Le bouton « Comparer » tient sur les pages qui s'hydratent** : sur une page Astro (ManaBox),
+  il attend la fin de l'hydratation avant de se poser, et se remet en place si le site le retire
+  en ré-rendant sa barre. Avant, React le jetait à l'hydratation.
 - **Description courte française raccourcie** : « Comparez deux decklists Magic: The Gathering côte
   à côte, avec un diff visuel et un score de similarité. » L'ancienne faisait 125 caractères et
   l'App Store refuse le paquet Safari au-delà de 112, langue par langue.

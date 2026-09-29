@@ -1,9 +1,8 @@
 // Deck Compare — results page (redesign)
 (function () {
   const BOARD_LABEL = { commanders: "CMD", mainboard: "MAIN", sideboard: "SIDE" };
-  // Fallback only. This is api.scryfall.com — the rate-limited API, which 302s to the
-  // CDN — so it is used just for cards the /cards/collection batch could not resolve
-  // (or, deferred, when the batch itself fails — see promoteFallbackImages).
+  // Fallback only. This is api.scryfall.com, the rate-limited API, which 302s to the CDN: the
+  // preview's second try when a CDN image fails to load, never the grid's.
   const imgUrl = (name, version) =>
     `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(name)}&format=image&version=${version}`;
   // Escapes quotes too — esc() output is used inside HTML attributes (data-name, alt)
@@ -29,13 +28,17 @@
   // Last resolved type lookup, keyed by the sorted name union. Swap keeps the same
   // names, so it must not pay a background round trip and a second repaint.
   let LAST_TYPES = null;
-  // False while a type batch is in flight: slots without a CDN url then defer
-  // their api.scryfall.com fallback instead of firing requests the repaint
-  // discards seconds later (see promoteFallbackImages / render).
+  // False while a type batch is in flight: slots without a CDN url then wait (grey) for
+  // it, instead of settling as their name (see settleWaitingSlots / render).
   let TYPES_READY = false;
   // Set by initPreview; render() calls it so the preview's dedup memo cannot
   // survive into a different comparison.
   let resetPreview = () => {};
+  // Set by initPreview: puts the held card away (applyFilter, when a filter hides its board).
+  let dropHeld = () => {};
+  // Set by initPreview: shows the card hovered while the lookup was still out (render's apply).
+  let repreview = () => {};
+  let heldBoard = null;
   // Bumped at each render() so in-flight lookups can tell they were superseded.
   // Deck identity is not enough: Swap twice restores the exact same objects, and
   // an old late apply must still lose to the newer render's result.
@@ -46,9 +49,14 @@
     document.getElementById("loading").textContent = chrome.i18n.getMessage("loading");
     translateStaticUI();
 
-    const { compareData } = await chrome.storage.local.get("compareData");
+    const { compareData, compareView } = await chrome.storage.local.get(["compareData", "compareView"]);
+    // The saved view is set before the first paint: applied after it, grid view flashed first.
+    setView(compareView || "grid", false);
     if (!compareData) {
       document.getElementById("loading").textContent = chrome.i18n.getMessage("noData");
+      // Swap and Compare another act on a pair: with none, they would be dead buttons.
+      document.querySelector(".edge-actions").classList.add("hide");
+      document.title = "Deck Compare";
       return;
     }
 
@@ -82,6 +90,23 @@
       return;
     }
 
+    // The lookup's own cache, read here: the images of every card already known start
+    // loading with the first paint, where they used to wait on the whole lookup (one new
+    // name held them all behind a Scryfall round trip). All known: one paint, with types.
+    const known = await Shared.cachedCardTypes(allNames).catch(() => null);
+    if (gen !== RENDER_GEN) return;
+    if (known) {
+      CARD_IMAGES = new Map(Object.entries(known.images));
+      if (!known.misses.length) {
+        const lands = new Set(known.lands), creatures = new Set(known.creatures);
+        LAST_TYPES = { key: namesKey, lands, creatures };
+        TYPES_READY = true;
+        paint(deckA, deckB, cmp, lands, creatures);
+        revealContent();
+        return;
+      }
+    }
+
     // Paint before the network. The diff and the similarity score are computed locally,
     // so there is nothing to wait for; the type lookup only adds the Creatures/Spells/
     // Lands dividers, and both render paths already handle its absence. Waiting on it
@@ -94,7 +119,9 @@
     const apply = (types) => {
       // A newer render may have replaced this one while the lookup was in flight.
       if (gen !== RENDER_GEN) return;
-      CARD_IMAGES = types.images;
+      // Merged, not replaced: a failed lookup answers empty, and must not take back the
+      // images the cache already gave the first paint.
+      CARD_IMAGES = new Map([...CARD_IMAGES, ...types.images]);
       // Memoize only a lookup that resolved something: all-empty is the
       // background's failure shape (its catch answers empty arrays), and
       // memoizing it would stop the next render from retrying.
@@ -103,17 +130,17 @@
       }
       TYPES_READY = true;
       paint(deckA, deckB, cmp, types.lands, types.creatures);
+      repreview();
     };
 
     const lookup = fetchCardTypes(allNames);
     const types = await Promise.race([lookup, new Promise(r => setTimeout(() => r(null), 8000))]);
     if (types) { apply(types); return; }
-    if (gen !== RENDER_GEN) return;   // superseded while waiting — nothing here to promote
-    // Deadline hit. Scryfall's own retry backoff can legitimately take longer, so
-    // the batch is slow, not dead: show the API fallbacks now, and still apply the
-    // result when it lands — discarding a completed lookup left the whole session
-    // on the rate-limited endpoint.
-    promoteFallbackImages();
+    if (gen !== RENDER_GEN) return;   // superseded while waiting: nothing here to settle
+    // Deadline hit. Scryfall's own retry backoff can legitimately take longer, so the
+    // batch is slow, not dead: the waiting cards show their names now, and the result
+    // still applies when it lands.
+    settleWaitingSlots();
     lookup.then(late => { if (late) apply(late); });
   }
 
@@ -150,12 +177,18 @@
     renderColumn("col-a-body", cmp.uniqueA, "aQty", landSet, creatureSet);
     renderColumn("col-b-body", cmp.uniqueB, "bQty", landSet, creatureSet);
     renderShared(cmp.shared, landSet, creatureSet);
-    document.getElementById("col-a-title").textContent = `${chrome.i18n.getMessage("onlyIn")} ${deckA.name}`;
-    document.getElementById("col-b-title").textContent = `${chrome.i18n.getMessage("onlyIn")} ${deckB.name}`;
-    document.getElementById("srow-head-a").textContent = deckA.name;
-    document.getElementById("srow-head-b").textContent = deckB.name;
-    document.getElementById("lg-a-label").textContent = `${chrome.i18n.getMessage("onlyIn")} ${deckA.name}`;
-    document.getElementById("lg-b-label").textContent = `${chrome.i18n.getMessage("onlyIn")} ${deckB.name}`;
+    // The tab says which pair it holds: several comparisons open side by side used to share
+    // one fixed English title. Deck 2 first: it is the one that changes from tab to tab (deck 1
+    // is usually the user's), and the tab strip cuts titles short.
+    document.title = chrome.i18n.getMessage("resultsTabTitle", [deckA.name, deckB.name]);
+    // These labels end in an ellipsis when a name is long: each keeps the whole as its title.
+    const label = (id, text) => { const el = document.getElementById(id); el.textContent = el.title = text; };
+    label("col-a-title", `${chrome.i18n.getMessage("onlyIn")} ${deckA.name}`);
+    label("col-b-title", `${chrome.i18n.getMessage("onlyIn")} ${deckB.name}`);
+    label("srow-head-a", deckA.name);
+    label("srow-head-b", deckB.name);
+    label("lg-a-label", `${chrome.i18n.getMessage("onlyIn")} ${deckA.name}`);
+    label("lg-b-label", `${chrome.i18n.getMessage("onlyIn")} ${deckB.name}`);
     initLazy();
     hideEmptyBoardFilters();
     // A retained filter whose board (and button) vanished with the new pair would
@@ -183,8 +216,10 @@
     const texts = [
       ["ring-label", "similar"], ["shared-title", "sharedCards"], ["srow-head-card", "card"],
       ["hover-hint", "clickToPreview"], ["footnote", "cardImages"],
-      ["lg-s-label", "sharedCardsLabel"], ["results-heading", "resultsHeading"],
+      ["lg-s-label", "sharedCardsLabel"], ["lg-x-label", "surplusLabel"], ["results-heading", "resultsHeading"],
       ["exclusive-heading", "exclusiveHeading"], ["bmc-text-compare", "buyMeCoffee"],
+      ["col-a-empty", "noExclusive"], ["col-b-empty", "noExclusive"], ["shared-empty", "noShared"],
+      ["qty-diff-off", "showAllRows"],
       ["filter-all", "filterAll"], ["filter-commanders", "filterCommanders"],
       ["filter-mainboard", "filterMainboard"], ["filter-sideboard", "filterSideboard"],
       ["swap-text", "swapDecks"], ["another-text", "compareAnother"], ["another-go", "compare"]
@@ -195,8 +230,13 @@
       el.textContent = msg("rateExtension");
       el.href = `https://chromewebstore.google.com/detail/${chrome.runtime.id}`;
     });
-    set("bmc-link", el => { el.title = msg("buyMeCoffee"); });
+    set("bmc-link", el => { el.title = msg("buyMeCoffee"); el.setAttribute("aria-label", msg("buyMeCoffee")); });
     set("another-url", el => { el.placeholder = msg("pasteADeckUrl"); });
+    set("another-saved", el => { el.setAttribute("aria-label", msg("selectDeck")); });
+    for (const el of document.querySelectorAll(".zone-copy")) {
+      el.title = msg("copyZoneList");
+      el.querySelector(".zc-done").textContent = msg("poolCopiedLabel");
+    }
     for (const [id, key] of [["view-compact", "viewCompact"], ["view-grid", "viewGrid"], ["view-list", "viewList"]]) {
       set(id, el => { el.title = msg(key); el.setAttribute("aria-label", msg(key)); });
     }
@@ -250,6 +290,9 @@
   function computeMetrics(uniqueA, uniqueB, shared) {
     const distinctShared = shared.length;
     const qtyDiffs = shared.filter(e => e.aQty !== e.bQty).length;
+    // Surplus copies of shared cards, per side: with them each side's segments add up to its deck.
+    const extraA = shared.reduce((s, e) => s + Math.max(0, e.aQty - e.bQty), 0);
+    const extraB = shared.reduce((s, e) => s + Math.max(0, e.bQty - e.aQty), 0);
 
     // Count total cards (by quantity, not distinct names)
     const uniqueAQty = uniqueA.reduce((s, e) => s + e.aQty, 0);
@@ -260,16 +303,16 @@
     const deckSize = Math.max(totalA, totalB, 1);
     const similarity = Math.round((sharedQty / deckSize) * 100);
 
-    return { similarity, distinctShared, distinctA: uniqueA.length, distinctB: uniqueB.length,
-      uniqueACount: uniqueAQty, uniqueBCount: uniqueBQty, sharedQty, qtyDiffs };
+    return { similarity, deckSize, distinctShared, distinctA: uniqueA.length, distinctB: uniqueB.length,
+      uniqueACount: uniqueAQty, uniqueBCount: uniqueBQty, sharedQty, qtyDiffs, extraA, extraB };
   }
 
   // ===== matchup header =====
   function renderMatchup(deckA, deckB, M) {
     const nameA = document.getElementById("deck-a-name");
     const nameB = document.getElementById("deck-b-name");
-    nameA.textContent = deckA.name;
-    nameB.textContent = deckB.name;
+    nameA.textContent = nameA.title = deckA.name;   // the title is the whole of a name cut at two lines
+    nameB.textContent = nameB.title = deckB.name;
     if (deckA.url) nameA.href = deckA.url;
     else nameA.removeAttribute("href");
     if (deckB.url) nameB.href = deckB.url;
@@ -280,19 +323,36 @@
     // The figure is debossed into the felt, so there is no ring to draw — the well is
     // the mat's own marking and the number sits in it.
     document.getElementById("ring-num").innerHTML = `${M.similarity}<span>%</span>`;
+    // The noun agrees with the first number in French ("1 carte en commun sur 100"), with the
+    // total in English ("1 of 100 cards in common").
+    const agree = /^fr/i.test(chrome.i18n.getUILanguage()) ? M.sharedQty : M.deckSize;
+    document.getElementById("ring-basis").textContent =
+      chrome.i18n.getMessage(Shared.plural(agree) ? "similarityBasis" : "similarityBasisOne", [String(M.sharedQty), String(M.deckSize)]);
 
-    // the seam across the mat (total card quantities, not distinct names)
-    const total = M.uniqueACount + M.sharedQty + M.uniqueBCount || 1;
-    document.querySelector(".seam-seg.a").style.flexBasis = (M.uniqueACount / total) * 100 + "%";
-    document.querySelector(".seam-seg.s").style.flexBasis = (M.sharedQty / total) * 100 + "%";
-    document.querySelector(".seam-seg.b").style.flexBasis = (M.uniqueBCount / total) * 100 + "%";
-    // Two measures per segment: copies drive the bar and the score, names are what the
-    // cross-compare page counts — the same two decks used to read "42" here and "27" there.
-    const legend = (copies, names) =>
-      `<b>${copies}</b> ${chrome.i18n.getMessage(copies === 1 ? "copySingular" : "copyPlural")} · <b>${names}</b> ${chrome.i18n.getMessage(names === 1 ? "poolCardSingular" : "poolCardPlural")}`;
+    // the seam across the mat: every copy of either deck, once (total card quantities)
+    const total = M.uniqueACount + M.extraA + M.sharedQty + M.extraB + M.uniqueBCount || 1;
+    for (const [seg, n] of [["a", M.uniqueACount], ["ax", M.extraA], ["s", M.sharedQty], ["bx", M.extraB], ["b", M.uniqueBCount]]) {
+      const el = document.querySelector(`.seam-seg.${seg}`);
+      el.style.flexBasis = (n / total) * 100 + "%";
+      el.style.display = n ? "" : "none";   // an empty segment would still take its 2px gap
+    }
+    // Two measures per segment: cards counted as players count a deck (copies included) drive
+    // the bar and the score, the distinct names are what the cross-compare page counts (the
+    // same two decks used to read "42" here and "27" there). "Cards" means copies everywhere
+    // on this page, as in the line under the figure; equal counts (singletons) show once.
+    const M_ = (k) => chrome.i18n.getMessage(k);
+    const legend = (copies, names) => {
+      const cards = `<b>${copies}</b> ${M_(Shared.plural(copies) ? "poolCardPlural" : "poolCardSingular")}`;
+      return copies === names ? cards : `${cards} · <b>${names}</b> ${M_(Shared.plural(names) ? "distinctPlural" : "distinctSingular")}`;
+    };
     document.getElementById("lg-a").innerHTML = legend(M.uniqueACount, M.distinctA);
     document.getElementById("lg-s").innerHTML = legend(M.sharedQty, M.distinctShared);
     document.getElementById("lg-b").innerHTML = legend(M.uniqueBCount, M.distinctB);
+    const extra = M.extraA + M.extraB;
+    document.getElementById("lg-x-link").classList.toggle("hide", !extra);
+    document.getElementById("lg-x").innerHTML = `<b>${extra}</b> ${M_(Shared.plural(extra) ? "poolCardPlural" : "poolCardSingular")}`;
+    document.getElementById("lg-x-sw").style.background = M.extraA && M.extraB
+      ? "linear-gradient(90deg, var(--a) 50%, var(--b) 50%)" : `var(--${M.extraA ? "a" : "b"})`;
   }
 
   // ===== card grids =====
@@ -309,37 +369,33 @@
     const qty = e[qtyKey];
     const badge = qty > 1 ? `<span class="qty-badge">${qty}</span>` : "";
     const board = e.board !== "mainboard" ? `<span class="board-tag">${BOARD_LABEL[e.board]}</span>` : "";
-    // While the type batch is in flight, a cache miss defers its rate-limited API
-    // fallback (data-fallback-src) instead of firing a request the repaint would
-    // discard; render() promotes the fallbacks only if the batch fails.
-    const cdn = imageFor(e.name);
-    const src = cdn || (TYPES_READY ? imgUrl(e.name, "normal") : null);
-    const imgAttr = src ? `data-src="${src}"` : `data-fallback-src="${imgUrl(e.name, "normal")}"`;
-    return `<div class="card-slot is-loading board-${e.board}" tabindex="0" role="button"
-        aria-label="${esc(e.name)}"
+    // No url: the lookup has not answered yet (the slot waits, grey) or could not resolve the
+    // card (it shows its name). The grid never asks the API: when the batch failed, one request
+    // per card fired some fifty at once and got the client rate-limited; and a name the batch
+    // did not know (it resolves front faces, split halves, accent-free spellings) is unknown.
+    const src = imageFor(e.name);
+    const imgAttr = src ? `data-src="${src}"` : "";
+    const state = src || !TYPES_READY ? "is-loading" : "is-proxy";
+    // The label carries the count the badge shows ("4 Lightning Bolt"): a screen reader got
+    // the name alone.
+    return `<div class="card-slot ${state} board-${e.board}" tabindex="0" role="button"
+        aria-label="${qty} ${esc(e.name)}"
         data-name="${esc(e.name)}" data-a="${e.aQty}" data-b="${e.bQty}" data-board="${e.board}" data-qty="${qty}">
         ${badge}${board}
         <span class="proxy-name">${esc(e.name)}</span>
-        <img alt="${esc(e.name)}" ${imgAttr}>
+        <img alt="" ${imgAttr}>
       </div>`;
   }
 
-  // The type batch failed or is very late: give the deferred slots their API
-  // fallback so the grid still shows cards.
-  function promoteFallbackImages() {
-    for (const img of document.querySelectorAll("img[data-fallback-src]")) {
-      img.dataset.src = img.dataset.fallbackSrc;
-      delete img.dataset.fallbackSrc;
-    }
-    initLazy();
+  // The type batch failed or is very late: the cards still waiting show their names.
+  function settleWaitingSlots() {
+    for (const img of document.querySelectorAll(".card-slot.is-loading img:not([src]):not([data-src])")) settleSlot(img, false);
   }
 
   function renderColumn(elId, entries, qtyKey, landSet, creatureSet) {
     const el = document.getElementById(elId);
-    if (!entries.length) {
-      el.innerHTML = `<div class="col-empty">${chrome.i18n.getMessage("noExclusive")}</div>`;
-      return;
-    }
+    // Nothing to show is applyFilter's to say (a filter can empty a side too).
+    if (!entries.length) { el.innerHTML = ""; return; }
 
     const hasTypes = landSet.size || creatureSet.size;
     if (!hasTypes) {
@@ -371,7 +427,7 @@
       const delta = e.diff > 0 ? `+${e.diff}` : e.diff < 0 ? `${e.diff}` : "=";
       const bt = e.board !== "mainboard" ? `<span class="bt">${BOARD_LABEL[e.board]}</span>` : "";
       return `<div class="srow ${diff ? "diff" : ""} board-${e.board}" tabindex="0" role="button"
-          aria-label="${esc(e.name)}"
+          aria-label="${esc(chrome.i18n.getMessage("sharedRowLabel", [e.name, String(e.aQty), String(e.bQty)]))}"
           data-name="${esc(e.name)}" data-a="${e.aQty}" data-b="${e.bQty}" data-board="${e.board}">
           <span class="qa">${e.aQty}×</span>
           <span class="nm">${esc(e.name)}${bt}</span>
@@ -417,17 +473,29 @@
     if (!ok) slot.classList.add("is-proxy");
   }
 
+  // An image starts when its card comes within 300px of the viewport. Native loading="lazy"
+  // reaches much further ahead: it requested 48 of 80 cards (3.7 MB) with 8 on screen, and
+  // the visible ones queued behind the rest. A hidden card (filter, list view) never starts.
+  let lazyIO = null;
   function initLazy() {
-    for (const img of document.querySelectorAll("img[data-src]")) {
-      const url = img.dataset.src;
-      delete img.dataset.src;
-      if (!url) { settleSlot(img, false); continue; }
-      img.loading = "lazy";
-      img.decoding = "async";
-      img.addEventListener("load", () => settleSlot(img, true), { once: true });
-      img.addEventListener("error", () => settleSlot(img, false), { once: true });
-      img.src = url;
-    }
+    if (lazyIO) lazyIO.disconnect();   // a repaint replaced every image: observe the new ones
+    lazyIO = new IntersectionObserver((entries) => {
+      for (const en of entries) {
+        if (!en.isIntersecting) continue;
+        lazyIO.unobserve(en.target);
+        startImage(en.target);
+      }
+    }, { rootMargin: "300px 0px" });
+    for (const img of document.querySelectorAll("img[data-src]")) lazyIO.observe(img);
+  }
+  function startImage(img) {
+    const url = img.dataset.src;
+    delete img.dataset.src;
+    if (!url) { settleSlot(img, false); return; }
+    img.decoding = "async";
+    img.addEventListener("load", () => settleSlot(img, true), { once: true });
+    img.addEventListener("error", () => settleSlot(img, false), { once: true });
+    img.src = url;
   }
 
   // ===== hover preview (always loads "normal" version) =====
@@ -444,9 +512,22 @@
     // name in the NEXT comparison carries different quantities and deck names.
     resetPreview = () => { current = null; };
 
+    const rail = document.querySelector(".rail");
+    let pendingName = null;   // hovered before the lookup gave it an image
     function show(el) {
       const name = el.dataset.name;
+      // Floating (below 1080px), the held card takes the corner away from the element it
+      // shows: the other side for a card, the other half height too for a full-width row.
+      const r = el.getBoundingClientRect();
+      rail.classList.toggle("left", r.left + r.width / 2 > innerWidth / 2);
+      rail.classList.toggle("top", r.top + r.height / 2 > innerHeight / 2);
+      heldBoard = el.dataset.board;
       if (name === current) return;
+      const cdn = imageFor(name);
+      // Still waiting on the lookup: not "no image" yet. The card held so far stays, and this
+      // one shows once the lookup answers (repreview, from render's apply).
+      if (!cdn && !TYPES_READY) { pendingName = name; return; }
+      pendingName = null;
       current = name;
       const a = +el.dataset.a, b = +el.dataset.b;
       nameEl.textContent = name;
@@ -455,12 +536,13 @@
       if (b > 0) parts.push(`<span class="pq b">${b}× <i>${esc(CURRENT?.deckB.name ?? "")}</i></span>`);
       qtyEl.innerHTML = parts.join("");
 
-      // Prefer the CDN url resolved by the /cards/collection batch. The api.scryfall.com
-      // endpoint is the fallback only: it is the rate-limited API, not the image host,
-      // and one request per hover is what exhausted it partway across a grid.
-      const cdn = imageFor(name);
-      load(cdn || imgUrl(name, "normal"), name, !cdn);
+      // The CDN url resolved by the /cards/collection batch. Without one the card is unknown to
+      // Scryfall (or the lookup failed): asking the rate-limited API could only 404, so the
+      // stage says there is no image instead of inviting a hover that already happened.
+      if (cdn) { hintEl.textContent = chrome.i18n.getMessage("clickToPreview"); load(cdn, name, false); }
+      else { stage.classList.remove("has-img"); hintEl.textContent = chrome.i18n.getMessage("noCardImage"); }
     }
+    const hintEl = document.getElementById("hover-hint");
 
     // The card already on screen stays until the next one has loaded, so crossing the
     // grid no longer flashes the empty state — and a failed load leaves the previous
@@ -480,13 +562,36 @@
     // Debounced: sweeping the pointer across a column used to queue one image per card
     // it passed over. A deliberate click or keypress skips the wait.
     let hoverTimer = null;
-    const hover = (el) => { clearTimeout(hoverTimer); hoverTimer = setTimeout(() => show(el), 90); };
-    const now = (el) => { clearTimeout(hoverTimer); show(el); };
+    const hover = (el) => { clearTimeout(hoverTimer); clearTimeout(dropTimer); hoverTimer = setTimeout(() => show(el), 90); };
+    const now = (el) => { clearTimeout(hoverTimer); clearTimeout(dropTimer); show(el); };
 
-    document.addEventListener("mouseover", e => { const el = from(e); if (el) hover(el); });
-    document.addEventListener("focusin", e => { const el = from(e); if (el) hover(el); });
-    document.addEventListener("click", e => { const el = from(e); if (el) now(el); });
+    // Below 1080px the held card floats over the page's corner (compare.html): it is put away
+    // when the pointer or the focus leaves the cards, on Escape, or on a click elsewhere.
+    const floating = window.matchMedia("(max-width: 1080px)");
+    let dropTimer = null;
+    const drop = () => {
+      clearTimeout(hoverTimer);
+      current = null;
+      pendingName = null;
+      stage.classList.remove("has-img");
+      hintEl.textContent = chrome.i18n.getMessage("clickToPreview");
+      nameEl.textContent = "";   // no name left under the hint as if an image had failed
+      qtyEl.innerHTML = "";
+    };
+    const dropSoon = () => { if (floating.matches && current) { clearTimeout(dropTimer); dropTimer = setTimeout(drop, 400); } };
+    dropHeld = drop;
+    repreview = () => {
+      if (!pendingName) return;
+      const el = [...document.querySelectorAll(".card-slot, .srow")].find(x => x.dataset.name === pendingName);
+      pendingName = null;
+      if (el) show(el);
+    };
+
+    document.addEventListener("mouseover", e => { const el = from(e); if (el) hover(el); else dropSoon(); });
+    document.addEventListener("focusin", e => { const el = from(e); if (el) hover(el); else if (floating.matches) drop(); });
+    document.addEventListener("click", e => { const el = from(e); if (el) now(el); else if (floating.matches) drop(); });
     document.addEventListener("keydown", e => {
+      if (e.key === "Escape" && floating.matches) { drop(); return; }
       if (e.key !== "Enter" && e.key !== " ") return;
       const el = from(e);
       if (el) { e.preventDefault(); now(el); }
@@ -520,16 +625,48 @@
 
     const keep = (e) => f === "all" || e.board === f;
     const { deckA, deckB, cmp } = CURRENT;
+    // The held card follows the filter: one from a board now hidden is put away.
+    if (f !== "all" && heldBoard && heldBoard !== f) { dropHeld(); heldBoard = null; }
     const M = computeMetrics(cmp.uniqueA.filter(keep), cmp.uniqueB.filter(keep), cmp.shared.filter(keep));
 
     renderMatchup(deckA, deckB, M);
+    // A filter changes the figure: "100 % similar" on the commanders alone read as identical
+    // decks. The caption names the board it is measured on.
+    const board = { commanders: "filterCommanders", mainboard: "filterMainboard", sideboard: "filterSideboard" }[f];
+    document.getElementById("ring-label").textContent =
+      chrome.i18n.getMessage("similar") + (board ? ` · ${chrome.i18n.getMessage(board)}` : "");
     document.getElementById("col-a-count").textContent = M.uniqueACount;
     document.getElementById("col-b-count").textContent = M.uniqueBCount;
     document.getElementById("shared-count").textContent = M.sharedQty;
     document.getElementById("qty-diff-note").textContent =
       `${M.qtyDiffs} ${M.qtyDiffs === 1 ? chrome.i18n.getMessage("qtyMismatch") : chrome.i18n.getMessage("qtyMismatches")}`;
+    // No mismatch, no alarm: "0 quantity mismatches" wore the red dot for nothing (and the
+    // "mismatches only" view, left on, would show an empty table).
+    document.querySelector(".shared-note").classList.toggle("hide", !M.qtyDiffs);
+    if (!M.qtyDiffs) setDiffsOnly(false);
+    // An empty zone says so, whether the pair or the board filter emptied it.
+    document.getElementById("col-a-empty").classList.toggle("hide", M.distinctA > 0);
+    document.getElementById("col-b-empty").classList.toggle("hide", M.distinctB > 0);
+    document.getElementById("shared-empty").classList.toggle("hide", M.distinctShared > 0);
+    document.getElementById("srow-head").classList.toggle("hide", !M.distinctShared);
+    for (const [zone, n] of [["a", M.uniqueACount], ["b", M.uniqueBCount], ["s", M.sharedQty]]) {
+      const btn = document.querySelector(`[data-copy-zone="${zone}"]`);
+      btn.disabled = !n;
+      btn.setAttribute("aria-label", `${chrome.i18n.getMessage("copyZoneList")} (${n})`);
+    }
 
     hideEmptyDividers();
+  }
+
+  // A zone's visible cards as "qty name" lines (the shared zone at the copies both decks
+  // play), the sideboard after a blank line: what every deck builder imports.
+  function zoneText(zone) {
+    const { cmp } = CURRENT;
+    const list = zone === "a" ? cmp.uniqueA : zone === "b" ? cmp.uniqueB : cmp.shared;
+    const qty = (e) => zone === "a" ? e.aQty : zone === "b" ? e.bQty : Math.min(e.aQty, e.bQty);
+    const shown = list.filter(e => currentFilter === "all" || e.board === currentFilter);
+    const lines = (side) => shown.filter(e => (e.board === "sideboard") === side).map(e => `${qty(e)} ${e.name}`).join("\n");
+    return [lines(false), lines(true)].filter(Boolean).join("\n\n");
   }
 
   // A type divider whose whole section is filtered out would otherwise label nothing.
@@ -537,7 +674,7 @@
   function hideEmptyDividers() {
     for (const [containerSel, itemSel, dividerClass] of [
       [".card-grid", ".card-slot", "type-divider"],
-      [".srow-group", ".srow", "srow-type-divider"]
+      [".srow-group", document.body.classList.contains("diffs-only") ? ".srow.diff" : ".srow", "srow-type-divider"]
     ]) {
       for (const container of document.querySelectorAll(containerSel)) {
         const empty = !container.querySelector(`${itemSel}:not(.hide)`);
@@ -548,32 +685,55 @@
     }
   }
 
+  function setDiffsOnly(on) {
+    document.body.classList.toggle("diffs-only", on);
+    document.querySelector(".shared-note").setAttribute("aria-pressed", String(on));
+    hideEmptyDividers();
+  }
+
   function initControls() {
     document.querySelectorAll("[data-board-filter]").forEach(btn => {
       btn.addEventListener("click", () => applyFilter(btn.dataset.boardFilter));
     });
+    document.querySelector(".shared-note").addEventListener("click", () =>
+      setDiffsOnly(!document.body.classList.contains("diffs-only")));
+    // The surplus entry of the legend jumps to the shared table showing just those rows.
+    document.getElementById("lg-x-link").addEventListener("click", () => setDiffsOnly(true));
 
-    document.querySelectorAll("[data-view]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll("[data-view]").forEach(b => {
-          b.classList.remove("active");
-          b.setAttribute("aria-pressed", "false");
-        });
-        btn.classList.add("active");
-        btn.setAttribute("aria-pressed", "true");
-        const v = btn.dataset.view;
-        document.body.classList.toggle("view-list", v === "list");
-        // Compact pins a fixed card width; grid and list fall back to the responsive default.
-        if (v === "compact") document.documentElement.style.setProperty("--card-w", "96px");
-        else document.documentElement.style.removeProperty("--card-w");
-        chrome.storage.local.set({ compareView: v });
+    const flash = {};   // zone -> the timer ending its "copied!" (a re-click re-arms it)
+    document.querySelectorAll("[data-copy-zone]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const zone = btn.dataset.copyZone;
+        const ok = await navigator.clipboard.writeText(zoneText(zone)).then(() => true, () => false);
+        if (!ok) return;   // nothing reached the clipboard: don't say it did
+        btn.classList.add("copied");
+        const status = document.getElementById("copy-status");
+        status.textContent = "";
+        setTimeout(() => { status.textContent = chrome.i18n.getMessage("poolCopiedLabel"); }, 50);
+        clearTimeout(flash[zone]);
+        flash[zone] = setTimeout(() => btn.classList.remove("copied"), 1200);
       });
     });
 
-    // The choice survived nothing before: every result reopened in grid view.
-    chrome.storage.local.get("compareView").then(({ compareView }) => {
-      if (compareView && compareView !== "grid") document.getElementById(`view-${compareView}`)?.click();
+    document.querySelectorAll("[data-view]").forEach(btn => {
+      btn.addEventListener("click", () => setView(btn.dataset.view, true));
     });
+  }
+
+  // The view is remembered: every result used to reopen in grid view.
+  function setView(v, save) {
+    if (!document.getElementById(`view-${v}`)) v = "grid";
+    document.querySelectorAll("[data-view]").forEach(b => {
+      const on = b.dataset.view === v;
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-pressed", String(on));
+    });
+    document.body.classList.toggle("view-list", v === "list");
+    // Compact: at least four cards a side, 72px when there is room (one more a side than the
+    // grid at every width); grid and list fall back to the default of at least three.
+    if (v === "compact") document.documentElement.style.setProperty("--card-w", "min(72px, calc((100% - 30px) / 4))");
+    else document.documentElement.style.removeProperty("--card-w");
+    if (save) chrome.storage.local.set({ compareView: v });
   }
 
   // ===== topbar: swap and compare-another ==============================================
@@ -598,8 +758,32 @@
     const openPop = (open) => {
       pop.hidden = !open;
       anotherBtn.setAttribute("aria-expanded", String(open));
-      if (open) { fillSaved(); input.focus(); }
+      if (open) {
+        const label = document.getElementById("another-label");
+        label.textContent = label.title = chrome.i18n.getMessage("anotherReplaces", [CURRENT?.deckB.name ?? ""]);
+        fillSaved(); fillTabs(); input.focus();
+      }
     };
+
+    // The deck tabs already open, minus the two on screen: one click compares deck 1 to it.
+    const tabsBox = document.getElementById("another-tabs");
+    async function fillTabs() {
+      let tabs = [];
+      try { tabs = await Shared.getOpenDeckTabs(location.href); } catch (_) { /* none */ }
+      const shown = [CURRENT?.deckA.url, CURRENT?.deckB.url].filter(Boolean);
+      tabs = tabs.filter(t => !shown.some(u => Shared.sameDeckPage(u, t.url)));
+      const oneSite = new Set(tabs.map(t => t.label)).size === 1;   // then the chip tells nothing apart
+      tabsBox.innerHTML = tabs.map(t =>
+        `<button type="button" class="pop-tab" data-url="${esc(t.url)}" title="${esc(t.title)}">` +
+        (oneSite ? "" : `<span class="src">${esc(t.label)}</span>`) + `<span class="nm">${esc(t.title)}</span></button>`).join("");
+      tabsBox.hidden = !tabs.length;
+    }
+    tabsBox.addEventListener("click", e => {
+      const b = e.target.closest(".pop-tab");
+      if (!b || go.disabled) return;
+      input.value = b.dataset.url;
+      go.click();
+    });
     anotherBtn.addEventListener("click", () => openPop(pop.hidden));
     document.addEventListener("keydown", e => { if (e.key === "Escape" && !pop.hidden) openPop(false); });
     document.addEventListener("click", e => {
@@ -621,11 +805,13 @@
       const url = input.value.trim();
       if (!url) { setMsg(chrome.i18n.getMessage("pasteOrSelect"), true); return; }
       go.disabled = true;
+      tabsBox.querySelectorAll(".pop-tab").forEach(b => { b.disabled = true; });
       setMsg(chrome.i18n.getMessage("fetchingSecond"));
       try {
+        await Shared.requestManaBoxAccess([url]);   // from this click, before any other await (shared.js)
         const resp = await sendToBackground({ type: "FETCH_DECK", url });
         if (!resp || resp.error) {
-          setMsg(`${chrome.i18n.getMessage("error")}: ${resp?.error || chrome.i18n.getMessage("fetchFailed")}`, true);
+          setMsg(`${chrome.i18n.getMessage("error")} ${resp?.error || chrome.i18n.getMessage("fetchFailed")}`, true);
         } else {
           resp.deck.url = url;
           setMsg("");
@@ -637,12 +823,14 @@
           const deckA = CURRENT.deckA;
           await chrome.storage.local.set({ compareData: { deckA, deckB: resp.deck } });
           go.disabled = false;
+          setDiffsOnly(false);   // a new pair starts on all its shared cards
           await render(deckA, resp.deck);
         }
       } catch (err) {
-        setMsg(`${chrome.i18n.getMessage("error")}: ${err.message}`, true);
+        setMsg(`${chrome.i18n.getMessage("error")} ${err.message}`, true);
       }
       go.disabled = false;
+      tabsBox.querySelectorAll(".pop-tab").forEach(b => { b.disabled = false; });
     });
   }
 

@@ -29,7 +29,7 @@
 <body>
   <div class="container">
     <h1>Deck Compare — Privacy Policy</h1>
-    <p class="subtitle">Last updated: September 24, 2026</p>
+    <p class="subtitle">Last updated: September 29, 2026</p>
 
     <h2>Overview</h2>
     <p>Deck Compare is a browser extension for Chrome, Edge and Firefox that compares Magic: The Gathering decklists. It runs entirely in your browser: there is no account, no server of ours, and nothing about you is collected.</p>
@@ -39,8 +39,9 @@
 
     <h2>What the extension reads</h2>
     <ul>
-      <li><strong>Decklists</strong> (card names, quantities and the deck's name) from the deck pages you open or the deck links you give it, on the supported sites: Moxfield, Archidekt, MTGGoldfish, mtgtop8, Magic-Ville, mtgdecks, Melee and getpaird; and from decklists you paste yourself.</li>
+      <li><strong>Decklists</strong> (card names, quantities and the deck's name) from the deck pages you open or the deck links you give it, on the supported sites: Moxfield, Archidekt, MTGGoldfish, mtgtop8, Magic-Ville, mtgdecks, Melee, getpaird and ManaBox; and from decklists you paste yourself.</li>
       <li><strong>The address of the tab you are on</strong>, when you click the extension's icon, to recognise a supported deck page.</li>
+      <li><strong>Your open tabs on the supported deck sites</strong> (their address and title, in every window), when you open the extension's popup, the Compare panel on a deck page or the results page's "Compare another" menu, to offer them as the second deck. The Compare panel shows them inside the page in a closed area that the site's own scripts cannot read. Tabs on other sites are never read.</li>
       <li><strong>Your public decks</strong>, if you enter your username for Moxfield, Archidekt or Magic-Ville: the list of that user's public decks on that site.</li>
     </ul>
     <p>The extension only reads decks. It never posts, edits or changes anything on these sites.</p>
@@ -48,18 +49,18 @@
     <h2>Network requests</h2>
     <p>The extension contacts only the following:</p>
     <ul>
-      <li><strong>The supported deck sites</strong>, to fetch the decks you chose to compare. Requests to MTGGoldfish, mtgdecks and Magic-Ville carry the cookies your browser already holds for those sites, so that their bot protection lets them through; the extension never reads or stores those cookies. When one of these sites blocks a direct request, the extension opens the deck page in a background tab, reads it and closes it.</li>
+      <li><strong>The supported deck sites</strong>, to fetch the decks you chose to compare. Requests to MTGGoldfish, mtgdecks and Magic-Ville carry the cookies your browser already holds for those sites, so that their bot protection lets them through; the extension never reads or stores those cookies. When one of these sites blocks a direct request, the extension opens the deck page in a background tab, reads it and closes it. ManaBox decks are always read that way, from the deck page (the tab you already have open, or a background tab opened for it), never through a request of the extension's own.</li>
       <li><strong>Scryfall</strong> (<code>api.scryfall.com</code>, <code>cards.scryfall.io</code>), to get card types and images: the names of the cards on screen are sent to Scryfall for that purpose. See <a href="https://scryfall.com/docs/api">Scryfall's API terms</a>.</li>
-      <li><strong>Google Fonts</strong> (<code>fonts.googleapis.com</code>, <code>fonts.gstatic.com</code>), to load the typefaces of the extension's own pages. See <a href="https://policies.google.com/privacy">Google's privacy policy</a>.</li>
     </ul>
+    <p>The typefaces of the extension's own pages ship inside it: no font is downloaded.</p>
 
     <h2>Stored on your device</h2>
     <p>The extension keeps the following in the browser's extension storage (<code>storage.local</code>), on your device only:</p>
     <ul>
       <li>the two decks of the comparison in progress, so the results page can show them;</li>
-      <li>the decks you add to a cross-comparison, and the card filters you set on it;</li>
+      <li>the decks you add to a cross-comparison, the card filters you set on it, and your own list if you compare it to them;</li>
       <li>your settings: whether the Compare button shows on deck sites, the usernames you entered and the public deck lists fetched for them, and the results page's display density;</li>
-      <li>a cache of card data from Scryfall (card types and image addresses), kept for 30 days so pages load faster.</li>
+      <li>a cache of card data from Scryfall (card types and image addresses), kept for 30 days so pages load faster (a card name Scryfall does not know is remembered as such for a day).</li>
     </ul>
     <p>Nothing is synced across devices or sent anywhere. Uninstalling the extension deletes all of it.</p>
 
@@ -67,9 +68,9 @@
     <ul>
       <li><strong>activeTab</strong>: read the address and the decklist of the tab you are on, when you click the extension's icon.</li>
       <li><strong>storage</strong>: keep the data listed above on your device.</li>
-      <li><strong>scripting</strong>: show the Compare button on the optional sites you allow.</li>
+      <li><strong>scripting</strong>: show the Compare button on the optional sites you allow, and read the deck there, or on the tab you are on when you click the extension's icon.</li>
       <li><strong>Access to the supported deck sites and Scryfall</strong>: read decklists and card data, and show the Compare button on deck pages. On Firefox, you grant this access from the extension's popup the first time.</li>
-      <li><strong>Optional access</strong> to Moxfield's pages and to the www / non-www variants of the supported sites: requested only when you turn on the Compare button, and removed when you turn it off.</li>
+      <li><strong>Optional access</strong> to Moxfield's pages, to ManaBox and to the www / non-www variants of the supported sites: requested only from a click: in the extension's popup (the Compare button setting, or "Allow the button" on one of these sites) and, for ManaBox, when you ask the extension to read a ManaBox deck link. It is removed when you turn the button off. Apart from the ManaBox deck open in the tab where you click the extension's icon, ManaBox decks can only be read with this access.</li>
     </ul>
 
     <h2>Analytics and tracking</h2>

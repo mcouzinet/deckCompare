@@ -73,11 +73,14 @@ deckUrlInput.placeholder = chrome.i18n.getMessage('deck2Placeholder');
   detectedSite = SUPPORTED_SITES.find(s => tab?.url?.includes(s.pattern));
   if (detectedSite) {
     detectedEl.classList.remove('none');
-    detectedName.textContent = chrome.i18n.getMessage('detected');
+    // The tab's title stands in until the page answers with the deck's own name: the slot
+    // used to read "Detected" beside a badge reading "Detected".
+    detectedName.textContent = detectedName.title = tab.title || chrome.i18n.getMessage('detected');
     detectedSub.innerHTML = `<span class="src-chip">${detectedSite.label}</span>`;
     detectedLive.style.display = '';
     nameDetectedDeck(tab);
     listOpenDeckTabs(tab);
+    placeStatus(false);   // under the field: reading and comparing report there
   } else {
     detectedName.textContent = chrome.i18n.getMessage('noDetected');
     detectedSub.textContent = '';
@@ -87,10 +90,13 @@ deckUrlInput.placeholder = chrome.i18n.getMessage('deck2Placeholder');
 
   await loadSavedDecks();
   refreshSiteAccess();
+  offerPoolMine();
 
   // Land the caret where the work happens: with a URL already copied, the popup is
   // open-paste-Enter instead of open-click-paste-click.
-  if (detectedSite) deckUrlInput.focus();
+  if (detectedSite) {
+    deckUrlInput.focus();
+  }
 })();
 
 // The badge already says "Detected"; the slot below it is styled as the deck's title, so
@@ -98,8 +104,11 @@ deckUrlInput.placeholder = chrome.i18n.getMessage('deck2Placeholder');
 // and a miss just leaves the generic label in place.
 async function nameDetectedDeck(tab) {
   try {
-    const resp = await sendToTab(tab.id, { type: 'GET_DECKLIST' });
-    if (resp?.deck?.name) detectedName.textContent = resp.deck.name;
+    const resp = await askTab(tab.id, { type: 'GET_DECKLIST' });
+    if (resp?.deck?.name) {
+      detectedName.textContent = detectedName.title = resp.deck.name;
+      detectedLive.style.display = 'none';   // the name says it was found; it gets the room
+    }
   } catch (_) { /* no content script on this page — keep the generic label */ }
 }
 
@@ -108,28 +117,24 @@ async function nameDetectedDeck(tab) {
 // page the extension already holds host access to, so this costs no new permission and
 // turns "leave, find the tab, copy the address bar, come back, paste" into one click.
 async function listOpenDeckTabs(activeTab) {
-  let tabs = [];
-  try { tabs = await chrome.tabs.query({ currentWindow: true }); } catch (_) { return; }
-
-  const seen = new Set([activeTab?.url]);
-  const candidates = [];
-  for (const t of tabs) {
-    if (!t.url || t.id === activeTab?.id || seen.has(t.url)) continue;
-    // deckRe, not the loose pattern: a homepage or event listing offered here is
-    // a one-click shortcut that can only ever fail.
-    const site = SUPPORTED_SITES.find(x => x.deckRe.test(t.url));
-    if (!site) continue;
-    seen.add(t.url);
-    candidates.push({ url: t.url, label: site.label, title: t.title || t.url });
-  }
+  // Shared with the in-page panel and the cross-compare page: deck pages only (deckRe, not the
+  // loose pattern: a homepage offered here is a one-click shortcut that can only fail), every
+  // window, this one first.
+  const candidates = await Shared.getOpenDeckTabs(activeTab?.url);
   if (!candidates.length) return;
 
+  // The site chip only tells tabs apart when they come from several sites: otherwise the
+  // name gets its room.
+  const oneSite = new Set(candidates.map(c => c.label)).size === 1;
   tabpickList.innerHTML = candidates.map(c =>
-    `<button type="button" class="tabpick-item" data-url="${esc(c.url)}">` +
-    `<span class="src-chip">${esc(c.label)}</span>` +
+    `<button type="button" class="tabpick-item" data-url="${esc(c.url)}" title="${esc(c.title)}">` +
+    (oneSite ? '' : `<span class="src-chip">${esc(c.label)}</span>`) +
     `<span class="nm">${esc(c.title)}</span></button>`
   ).join('');
   tabpick.hidden = false;
+  // The count says how many there are: the list scrolls past two rows and a half.
+  document.getElementById('tabpick-label').textContent = `${chrome.i18n.getMessage('openTabsLabel')} (${candidates.length})`;
+  if (moxHint.classList.contains('hint-configure')) moxHint.className = 'hint hint-quiet';
 }
 
 tabpickList.addEventListener('click', e => {
@@ -244,7 +249,10 @@ function suggest() {
 }
 
 deckUrlInput.addEventListener('input', () => { pickedUrl = ''; suggest(); });
-deckUrlInput.addEventListener('focus', suggest);
+// Focus alone never opens the list: the popup focuses the field at open to land the caret
+// (paste then Enter), and that focus can arrive late, when the window itself gains focus, so
+// no flag around focus() can tell it from the user's. A click, typing or ↓ opens it.
+deckUrlInput.addEventListener('click', () => { if (!deckDropdown.classList.contains('open')) suggest(); });
 
 deckDropdown.addEventListener('click', e => {
   const opt = e.target.closest('.deck-option');
@@ -286,8 +294,9 @@ compareBtn.addEventListener('click', () => runComparison(targetUrl()));
 // Settings replaces the main view rather than stacking on top of it: shown together they
 // made the popup far taller than it needs to be. The header stays so the panel still
 // reads as part of the extension and the gear remains reachable.
-// #status deliberately stays visible: it is where deck loading reports progress and
-// errors, which happen while the settings panel is the only thing on screen.
+// #status must stay visible: it is where deck loading reports progress and errors, which
+// happen while the settings panel is the only thing on screen. It lives in the main view
+// (placeStatus), so settings take it along under their own panel.
 const mainViews = ['.p-body']
   .map(sel => document.querySelector(sel))
   .filter(Boolean);
@@ -295,6 +304,17 @@ const mainViews = ['.p-body']
 function showSettings(show) {
   settingsPanel.style.display = show ? 'block' : 'none';
   for (const el of mainViews) el.style.display = show ? 'none' : '';
+  setStatus('');   // a message belongs to the view it came from
+  placeStatus(show);
+}
+
+// Where the status line reads: under the settings while they are open; under the deck 2
+// field when a deck is detected (reading, comparing, their errors); else above the
+// cross-compare entries, where site access reports.
+function placeStatus(inSettings) {
+  if (inSettings) settingsPanel.after(statusEl);
+  else if (detectedSite) document.querySelector('.input-row').after(statusEl);
+  else document.querySelector('.pool-group').before(statusEl);
 }
 
 document.getElementById('settings-toggle').addEventListener('click', () => {
@@ -305,7 +325,7 @@ document.getElementById('settings-close').addEventListener('click', () => showSe
 // The "configure your account" notice names the fix and is styled like a button, so it
 // performs it rather than sitting there inert.
 moxHint.addEventListener('click', () => {
-  if (moxHint.classList.contains('hint-configure')) showSettings(true);
+  showSettings(true);   // the invitation, its one-line form and the configured summary alike
 });
 
 // In-page button toggle — the content script watches this key and mounts/unmounts live.
@@ -411,6 +431,48 @@ document.getElementById('pool-btn').addEventListener('click', () => {
   window.close();
 });
 
+// On a deck page, with a saved cross-comparison, this deck can go straight in as "my list": the
+// cross-compare page opens with it pinned against the saved decks, counted in none of their figures.
+const poolMineBtn = document.getElementById('pool-mine-btn');
+async function offerPoolMine() {
+  if (!detectedSite || !detectedSite.deckRe.test(currentTab?.url || '')) return;
+  let pool = [];
+  let mine = null;
+  try {
+    const got = await chrome.storage.local.get([Shared.POOL_DECKS_KEY, Shared.POOL_MINE_KEY]);
+    pool = got[Shared.POOL_DECKS_KEY] || [];
+    mine = got[Shared.POOL_MINE_KEY] || null;
+  } catch (_) { /* no pool */ }
+  // A deck of the pool is already there: as "my list" it would be measured against itself.
+  if (!pool.length || pool.some((d) => d.url && Shared.sameDeckPage(d.url, currentTab.url))) return;
+  // Say which decks it will be measured against: their most common commander, as the pool's hero.
+  const count = new Map();
+  for (const d of pool) {
+    const sig = Object.keys(d.commanders || {}).sort().join(' + ');
+    if (sig) count.set(sig, (count.get(sig) || 0) + 1);
+  }
+  const top = [...count.entries()].sort((a, b) => b[1] - a[1])[0];
+  document.getElementById('pool-mine-text').textContent = chrome.i18n.getMessage('poolMineFromPopup', [String(pool.length)]);
+  document.getElementById('pool-mine-sub').textContent = top ? `· ${top[0]}` : '';
+  // It takes my list's place: said in the title when there is one to replace (a different deck).
+  const replaces = mine && mine.name && !(mine.url && Shared.sameDeckPage(mine.url, currentTab.url))
+    ? ` · ${chrome.i18n.getMessage('poolMineReplaces', [mine.name])}` : '';
+  poolMineBtn.title = (top ? `${chrome.i18n.getMessage('poolMineFromPopup', [String(pool.length)])} · ${top[0]}` : '') + replaces;
+  poolMineBtn.hidden = false;
+}
+poolMineBtn.addEventListener('click', async () => {
+  poolMineBtn.disabled = true;
+  setStatus(`${chrome.i18n.getMessage('readingDeck')} ${detectedSite.label}…`);
+  const read = await readActiveDeck();
+  if (read.error) { setStatus(read.error, true); poolMineBtn.disabled = false; return; }
+  const deck = read.deck;
+  deck.url = currentTab.url;
+  delete deck._needsApiFetch;
+  await chrome.storage.local.set({ [Shared.POOL_MINE_KEY]: deck });
+  chrome.tabs.create({ url: chrome.runtime.getURL('pool.html') });
+  window.close();
+});
+
 // --- Loading your decks -------------------------------------------------------------
 // One button per source instead of a select plus a Save button: picking the service and
 // confirming were two gestures for one intent.
@@ -438,7 +500,7 @@ async function loadUserDecks(source) {
   try {
     const msgType = DECK_SOURCES.find(s => s.id === source).msg;
     const resp = await sendToRuntime({ type: msgType, username });
-    if (resp.error) { setStatus(`${chrome.i18n.getMessage('error')}: ${resp.error}`, true); return; }
+    if (resp.error) { setStatus(`${chrome.i18n.getMessage('error')} ${resp.error}`, true); return; }
     if (!resp.decks?.length) { setStatus(chrome.i18n.getMessage('noPublicDecks'), true); return; }
 
     await chrome.storage.local.set({
@@ -453,7 +515,7 @@ async function loadUserDecks(source) {
     showSettings(false);
     deckUrlInput.focus();
   } catch (err) {
-    setStatus(`${chrome.i18n.getMessage('error')}: ${err.message}`, true);
+    setStatus(`${chrome.i18n.getMessage('error')} ${err.message}`, true);
   } finally {
     buttons.forEach(b => { b.disabled = false; });
   }
@@ -463,9 +525,11 @@ function updateMoxHint(configured) {
   if (configured.length) {
     moxHint.className = 'hint';
     moxHint.innerHTML = configured.map(c => `<b>${c.id}</b> · ${esc(c.user)}`).join(' · ') +
-      ` · <b>${allDecks.length}</b> decks`;
+      ` · <b>${allDecks.length}</b> ${allDecks.length === 1 ? 'deck' : 'decks'}`;
   } else {
-    moxHint.className = 'hint-configure';
+    // With open deck tabs on offer, the invitation to load one's own decks steps back to a line
+    // of text: the dashed box pushed the popup past Chrome's 600px ceiling.
+    moxHint.className = tabpick.hidden ? 'hint-configure' : 'hint hint-quiet';
     moxHint.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>${chrome.i18n.getMessage('settingsNotConfigured')}`;
   }
 }
@@ -479,6 +543,7 @@ async function runComparison(url) {
 
   try {
     setStatus(`${chrome.i18n.getMessage('readingDeck')} ${detectedSite.label}…`);
+    await Shared.requestManaBoxAccess([url]);   // from this click, before any other await (shared.js)
 
     // Deck B never depends on deck A, so start it now instead of after A resolves —
     // this is the only real wait in the product and it was being paid twice, in series.
@@ -486,30 +551,13 @@ async function runComparison(url) {
     const targetPromise = sendToRuntime({ type: 'FETCH_DECK', url });
     targetPromise.catch(() => {});
 
-    let sourceDeck;
-    try {
-      const resp = await sendToTab(currentTab.id, { type: 'GET_DECKLIST' });
-      sourceDeck = resp?.deck;
-    } catch (_) { sourceDeck = null; }
-
-    const deckIsEmpty = !sourceDeck
-      || sourceDeck._needsApiFetch
-      || (!Object.keys(sourceDeck.mainboard || {}).length && !Object.keys(sourceDeck.commanders || {}).length);
-
-    if (deckIsEmpty) {
-      setStatus(chrome.i18n.getMessage('fetchingApi'));
-      const apiResp = await sendToRuntime({ type: 'FETCH_DECK', url: currentTab.url });
-      if (apiResp.error) { setStatus(`${chrome.i18n.getMessage('error')}: ${apiResp.error}`, true); resetButtons(); return; }
-      sourceDeck = apiResp.deck;
-    }
-
-    if (!sourceDeck || (!Object.keys(sourceDeck.mainboard || {}).length && !Object.keys(sourceDeck.commanders || {}).length)) {
-      setStatus(chrome.i18n.getMessage('unableToRead'), true); resetButtons(); return;
-    }
+    const read = await readActiveDeck();
+    if (read.error) { setStatus(read.error, true); resetButtons(); return; }
+    const sourceDeck = read.deck;
 
     setStatus(chrome.i18n.getMessage('fetchingSecond'));
     const targetResp = await targetPromise;
-    if (targetResp.error) { setStatus(`${chrome.i18n.getMessage('error')}: ${targetResp.error}`, true); resetButtons(); return; }
+    if (targetResp.error) { setStatus(`${chrome.i18n.getMessage('error')} ${targetResp.error}`, true); resetButtons(); return; }
 
     setStatus(chrome.i18n.getMessage('openingResults'));
     sourceDeck.url = currentTab.url;
@@ -518,7 +566,7 @@ async function runComparison(url) {
     chrome.tabs.create({ url: chrome.runtime.getURL('compare.html') });
     window.close();
   } catch (err) {
-    setStatus(`${chrome.i18n.getMessage('error')}: ${err.message}`, true);
+    setStatus(`${chrome.i18n.getMessage('error')} ${err.message}`, true);
     resetButtons();
   }
 }
@@ -526,6 +574,23 @@ async function runComparison(url) {
 function resetButtons() {
   compareBtn.disabled = false;
   tabpickList.querySelectorAll('.tabpick-item').forEach(b => { b.disabled = false; });
+}
+
+// The active tab's deck: what its content script reads, else the background's fetch (the page's
+// view may hold no list, as mtgtop8's visual one). Resolves to { deck } or { error }, a line for
+// the status; a deck with no card at all is an error, never a comparison.
+async function readActiveDeck() {
+  const empty = (d) => !d || (!Object.keys(d.mainboard || {}).length && !Object.keys(d.commanders || {}).length);
+  let deck = null;
+  try { deck = (await askTab(currentTab.id, { type: 'GET_DECKLIST' }))?.deck; } catch (_) { /* nothing can read this tab */ }
+  if (empty(deck) || deck._needsApiFetch) {
+    setStatus(chrome.i18n.getMessage('fetchingApi'));
+    let resp = null;
+    try { resp = await sendToRuntime({ type: 'FETCH_DECK', url: currentTab.url }); } catch (_) { /* reported below */ }
+    if (!resp || resp.error) return { error: `${chrome.i18n.getMessage('error')} ${resp?.error || ''}` };
+    deck = resp.deck;
+  }
+  return empty(deck) ? { error: chrome.i18n.getMessage('unableToRead') } : { deck };
 }
 
 function setStatus(msg, isError = false) {
@@ -540,6 +605,15 @@ function sendToTab(tabId, msg) {
       else resolve(resp);
     });
   });
+}
+
+// Our content script on that tab, injected first when the page has none: an optional host not
+// granted (without its access, nothing else can read a ManaBox deck) or a tab opened before the
+// extension loaded. Opening the popup granted activeTab on the active tab: all the injection needs.
+async function askTab(tabId, msg) {
+  try { return await sendToTab(tabId, msg); } catch (_) { /* no content script there yet */ }
+  await chrome.scripting.executeScript({ target: { tabId }, files: ['shared.js', 'dom-parsers.js', 'content.js'] });
+  return sendToTab(tabId, msg);
 }
 
 function sendToRuntime(msg) {

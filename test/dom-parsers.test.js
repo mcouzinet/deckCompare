@@ -155,6 +155,7 @@ test("anchors: resolve against real fixtures", () => {
     ["dom-archidekt.html", "https://archidekt.com/decks/x",          "DIV"],
     ["moxfield.html",     "https://moxfield.com/decks/x",            "DIV"],
     ["moxfield.html",     "https://www.moxfield.com/decks/x",        "DIV"],  // www twin
+    ["manabox.html",      "https://manabox.app/decks/x",             "BUTTON"], // after Download
   ];
   for (const [fixture, url, tag] of cases) {
     const enc = fixture === "magicville-dc.html" ? "latin1" : "utf8";
@@ -205,4 +206,32 @@ test("mtgtop8 archetype title: the blue bar's '<name> decks', trimmed to the nam
   assert.equal(D.parseArchetypeTitle(page(real)), "Slivers");
   // an unknown archetype id prints a bare " decks": no name, not "decks"
   assert.equal(D.parseArchetypeTitle(page('<div class=w_title><div class=c_tl></div> decks</div>')), "");
+});
+
+test("ManaBox (DOM): the deck island's props give the list, by ManaBox's own board enum", () => {
+  const d = D.parseManaBox(doc("manabox.html"));
+  assert.equal(d.source, "manabox");
+  assert.equal(d.name, "Draw your Deck (Midrange Build)");
+  assert.equal(sum(d.mainboard), 60);                     // "60 / 10 cards" on the page
+  assert.equal(sum(d.sideboard), 10);
+  assert.equal(Object.keys(d.commanders).length, 0);
+  assert.equal(d.mainboard["Thrill of Possibility"], 4);
+  assert.equal(d.sideboard["Lightning Bolt"], 4);
+  assert.equal(D.parseDeckFromCurrentSite(doc("manabox.html"), "https://manabox.app/decks/qWOeE_BgTEyv7VV2-kzpXg").source, "manabox");
+});
+
+test("ManaBox (DOM): command zone, maybeboard left out, foil and normal copies summed", () => {
+  const enc = (o) => JSON.stringify({ deck: [0, { name: [0, "Sisay pile"], cards: [1, o.map((c) => [0, {
+    name: [0, c[0]], quantity: [0, c[1]], boardCategory: [0, c[2]], variant: [0, c[3] || "Normal"], cardhoarderId: [0] }])] }] });
+  const cards = [
+    ["Sisay, Weatherlight Captain", 1, 0], ["Oathbreaker Pick", 1, 1], ["Signature Bolt", 1, 2],
+    ["Sol Ring", 1, 3, "Normal"], ["Sol Ring", 1, 3, "Foil"], ["Duress", 2, 4], ["Maybe Card", 1, 5], ["Zero Copies", 0, 3],
+  ];
+  const html = `<html><body><astro-island props='{"slot":[0,"right-side"]}'></astro-island><astro-island props='${enc(cards).replace(/'/g, "&#39;")}'></astro-island></body></html>`;
+  const d = D.parseManaBox(new JSDOM(html).window.document);
+  assert.equal(d.name, "Sisay pile");
+  assert.deepEqual(d.commanders, { "Sisay, Weatherlight Captain": 1, "Oathbreaker Pick": 1, "Signature Bolt": 1 });
+  assert.deepEqual(d.mainboard, { "Sol Ring": 2 });
+  assert.deepEqual(d.sideboard, { Duress: 2 });
+  assert.equal(D.parseManaBox(new JSDOM("<html><body><astro-island props='{\"slot\":[0,\"x\"]}'></astro-island></body></html>").window.document), null);
 });

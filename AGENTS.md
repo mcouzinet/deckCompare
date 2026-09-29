@@ -92,6 +92,24 @@ changements de permissions le font.)
 - **Deux sources partagées, pas plus** : `theme.css` porte le monde visuel des trois pages
   (popup, compare, pool) et `shared.js` la logique commune (normalisation, sites supportés, scan
   d'onglets…). Chaque page garde son propre `esc()`.
+- **La référence de la comparaison croisée** (1.2.2) : une decklist lue face au pool, « Ma liste »
+  (`mine`, clé `poolMine`, gardée à part : aucun chiffre du pool ne la compte, elle survit à tous
+  les pools, mode archétype compris) ou un deck du pool épinglé depuis le rail (`pinned` = index
+  dans `pooledDecks`, à décaler quand on en retire un). Les chiffres viennent de
+  `PoolAnalyze.compareToPool`. Un deck de la table se mesure **aux autres** (`statsFor` :
+  `analyzePool` sans lui, `deckMap` pour les badges ; `consensusShare(d, a, true)` pour le rail),
+  jamais à un pool qui le contient : sinon « N/N en commun » et aucune carte « ailleurs ». Dans
+  un pool à zone de commandement, les terrains de base (`BASICS`, par nom) sortent de la part du
+  consensus, des manques et des autres nombres d'exemplaires (`skipsBasics`) ; un pool de 60
+  cartes les garde. La decklist moyenne prend la taille **médiane** du main. Sa
+  similarité (`deckSimilarity`) reprend la formule de `compare.js:computeMetrics` sur les trois
+  boards, et `averageDeck` (celui des autres pour un deck de la table, `st.base`) inclut
+  `averageSideboard` : les liens « Face à… » doivent ouvrir compare.html sur le pourcentage du
+  bandeau. Les lignes portent `data-card` / `data-board` / `data-pct` / `data-avg` : `applyRef`
+  les marque en une passe de classes, sans reconstruire de liste (le survol du rail repasse à
+  chaque ligne). Toute nouvelle ligne de carte doit porter ces attributs, sinon elle échappe aux
+  marques. `test/pool-page.test.js` charge pool.html dans jsdom avec un `chrome` simulé,
+  `test/popup-pool-entry.test.js` le popup (l'entrée « Ce deck face aux N decks »).
 - **`deckDisplayName` (pool.js) reçoit deux formes de deck** : les decks du pool portent `name`,
   les références d'analyse portent `label` (posé par `pool-analyze.js` : `label: d.name || "Deck N"`).
   Il lit `label || name` ; n'en lire qu'un seul casse l'affichage de l'autre moitié des appels.
@@ -102,14 +120,21 @@ changements de permissions le font.)
   **panneau** qu'ouvre « Comparer » n'est pas « sur le site » : depuis 1.1.1 c'est une feuille du
   monde clair « Le mémo » (tokens de `theme.css` recopiés en dur dans le `<style>` du shadow root
   de `inject-button.js` — à garder synchrones ; pilule teal, rouge réservé à l'erreur).
+  Sa racine shadow est **fermée** (`mode: 'closed'`, gardée dans `shadow`) : le panneau montre
+  les decks enregistrés et les autres onglets de deck de l'utilisateur, que les scripts du site ne
+  doivent pas lire ; `host.shadowRoot` vaut null, pour nous aussi. Un test puppeteer l'atteint par
+  CDP (`DOM.getDocument` avec `pierce: true`, puis `DOM.resolveNode` et `Runtime.callFunctionOn`).
   Ancrage : `mountWhenReady` attend la barre du site 8 s puis monte flottant ; depuis 1.1.8
   `watchForAnchor` continue d'observer 90 s après ce repli et **déplace le même host** dans la
   barre quand elle apparaît (Moxfield « Loading… » dépasse souvent les 8 s), sauf panneau ouvert.
+  Depuis 1.2.1, `mountWhenReady` attend d'abord que les îlots Astro soient hydratés (plus aucun
+  `astro-island[ssr]`, 10 s au plus) : React jette ce qu'on insère avant. Et `keepAttached` remet
+  le host à sa place (20 fois au plus) quand le site le retire en ré-rendant sa barre.
 - **Bouton injecté activé par défaut depuis 1.1** : clé `injectButton` absente = actif, seul
   `false` l'éteint (`Shared.injectEnabled` / `Shared.INJECT_KEY` — ne pas redéfinir ce défaut
-  ailleurs). Moxfield et les jumeaux www/sans-www restent des `optional_host_permissions`
-  demandées sur un clic (la case, ou « Autoriser le bouton sur Moxfield ») ; un refus ne
-  décoche plus la case, il ne coûte que ces hôtes.
+  ailleurs). Moxfield, ManaBox et les jumeaux www/sans-www restent des `optional_host_permissions`
+  demandées sur un clic (la case, ou « Autoriser le bouton sur Moxfield et ManaBox ») ; un refus
+  ne décoche plus la case, il ne coûte que ces hôtes (et sur ManaBox, la lecture des decks).
 - **Sites derrière Cloudflare** (MTGGoldfish, mtgdecks, Magic-Ville) : le fetch du service
   worker part de `chrome-extension://…` (cross-site, sans Referer ni cookie de challenge) et
   se fait 403 « Just a moment… » quand Cloudflare durcit. Depuis 1.1.5, un **403 seul** est
@@ -121,6 +146,21 @@ changements de permissions le font.)
   entrée SUPPORTED_SITES dédiée (deckRe `/archetype/[^/?#]+`), et `fetchMtgGoldfishDeck` résout
   l'id numérique via le premier lien `/deck/<id>` de la page (`Parsers.mtggoldfishDeckId`, lien
   « Deck Page ») avant de télécharger ; 403 → repli onglet comme les pages `/deck/`.
+- **ManaBox** (`manabox.app/decks/<id>`, depuis 1.2.1) : hôte **optionnel dès le départ**
+  (`manabox` et `manabox-www` dans `OPTIONAL_SCRIPTS`). **Lu par un onglet, jamais fetché** :
+  `fetchDeckByUrl` vérifie la permission (sinon `errManaboxAccess`) puis passe directement par
+  `deckFromTab`. Le background ne peut pas demander cet accès (aucun geste utilisateur) : les pages
+  de l'extension le demandent au clic qui veut un deck ManaBox (`Shared.requestManaBoxAccess`,
+  appelé avant tout autre `await` du gestionnaire, seul endroit où Firefox honore la demande), et
+  le popup lit l'onglet actif sans lui, en y injectant `content.js` grâce à `activeTab`
+  (`askTab`). Le panneau du bouton injecté (content-script, sans API `permissions`) ne peut
+  qu'afficher `errManaboxAccess`. Le deck est dans l'attribut `props` d'un `<astro-island>`, sérialisé à la façon
+  d'Astro (chaque valeur est `[type, valeur]`, type 1 = tableau, `[type]` seul = undefined) :
+  `parseManaBox` le décode avec `astroValue`. `boardCategory` : 0 commandant, 1 oathbreaker,
+  2 signature spell (les trois dans `commanders`), 3 main, 4 side, 5 maybeboard (ignoré) ; les
+  lignes Normal/Foil/Etched d'une même carte s'additionnent. Ancre : le dernier `<button>` de la
+  barre `div.ml-auto.flex.items-center.gap-2` (Download), en `:last-of-type` : notre host se pose
+  après lui, un `:last-child` ne le retrouverait plus.
 - **mtgtop8** : la vue « visuelle » (cookie collant `mtgtop8_deck_display=visual`) n'a pas de
   `deck_line`/`L14` → `parseMtgTop8` renvoie vide → on pose `_needsApiFetch` (via la bascule
   « Switch to Text ») pour lire le deck via le fetch `/mtgo?d=` indépendant de la vue.
@@ -140,6 +180,29 @@ changements de permissions le font.)
   déjà décodé — d'où le risque de divergence entre les deux chemins d'un même site. Depuis 1.1.4, **`Shared.normalizeDeck`** ré-indexe
   chaque deck à son entrée (background `fetchDeckByUrl`, `content.js`, `inject-button.js`, pool.js
   texte collé + restauration) : ne pas re-normaliser en aval, ne pas indexer des noms bruts.
+- **Scryfall : deux requêtes par seconde** sur `/cards/collection` et `/cards/named` (un 429 bloque
+  environ 30 s). **Toute** requête, premier essai, nouvel essai ou repli carte par carte, prend
+  la place suivante d'une file espacée de 550 ms (`scryfallSlot` dans `background.js`, `slot`
+  dans `enrich.js`, une file par contexte) ; un 429 repousse la file de 30 s. Les lots partent
+  donc côte à côte sans jamais faire de rafale, et le background ne lance qu'une recherche par
+  ensemble de noms (`cardTypesOnce`). Un nom que le lot déclare introuvable l'est (le lot résout
+  faces avant, moitiés de cartes scindées et noms sans accents) : pas de repli `/cards/named`
+  pour lui, seulement pour les lots en échec. La grille de la page de résultats ne demande
+  jamais une image à l'API (URL du CDN ou nom de la carte) ; l'aperçu seul l'appelle, après
+  500 ms sur la carte. Le cache `cardTypeCache` (30 jours, 1 jour pour un nom introuvable, `nf`)
+  et, à défaut, `poolEnrichCache` se lisent par `Shared.cachedCardTypes`, côté page (images dès
+  le premier affichage) comme côté background.
+- **Aucune police chargée du réseau** : Archivo (latin et latin étendu), Bricolage Grotesque et
+  Geist Mono (latin) sont les sous-ensembles variables de Google Fonts, embarqués dans `fonts/`
+  avec leur licence OFL (`OFL-*.txt`, qui doivent partir avec eux : `scripts/build.js` les liste),
+  déclarés dans `theme.css` ; le CSP n'autorise plus aucun hôte Google. Une nouvelle graisse ou un
+  nouveau sous-ensemble se télécharge de la même façon, pas par un `<link>`.
+- **Toute requête réseau du background passe par `fetchT`** (abandon après 15 s, message
+  `errTimeout`) ; `enrich.js` borne aussi ses requêtes à 15 s.
+- **Comparaison croisée : lignes en `content-visibility: auto`** (`.prow`, `.pbadges`). Leur
+  `contain-intrinsic-size` est la hauteur du **contenu** d'une ligne sur une ligne de texte, sans
+  le padding : à retoucher si le padding change, sinon les sauts vers « Absentes » ou « Peu
+  jouées » tombent à côté (le saut se repose aussi une seconde fois, deux frames plus tard).
 
 ## Où trouver quoi
 

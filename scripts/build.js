@@ -37,6 +37,9 @@ const FILES = [
   "icons/icon16.png", "icons/icon48.png", "icons/icon128.png",
   "_locales/en/messages.json", "_locales/fr/messages.json",
   "fonts/Beleren2016-Bold.woff2",
+  "fonts/Archivo-latin.woff2", "fonts/Archivo-latin-ext.woff2",
+  "fonts/BricolageGrotesque-latin.woff2", "fonts/GeistMono-latin.woff2",
+  "fonts/OFL-Archivo.txt", "fonts/OFL-BricolageGrotesque.txt", "fonts/OFL-GeistMono.txt",
 ];
 
 const TARGETS = {

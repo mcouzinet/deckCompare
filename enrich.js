@@ -50,66 +50,88 @@
   // POST one batch, retrying transient errors (429 / 5xx) a few times.
   async function postBatch(identifiers) {
     for (let attempt = 0; attempt < 3; attempt++) {
+      await slot();
       try {
-        const res = await fetch(SCRYFALL, { method: "POST", headers: HEADERS, body: JSON.stringify({ identifiers }) });
+        // 15 s at most: a hung request kept the page on "Enriching…" for good.
+        const res = await fetch(SCRYFALL, { method: "POST", headers: HEADERS, body: JSON.stringify({ identifiers }), signal: AbortSignal.timeout(15000) });
         if (res.ok) return await res.json();
-        if (res.status === 429 || res.status >= 500) {
-          await sleep(800 * (attempt + 1));
-          continue;
-        }
-        return null; // other 4xx — don't retry
-      } catch (e) {
-        await sleep(500 * (attempt + 1));
-      }
+        if (res.status === 429) { nextSlot = Math.max(nextSlot, Date.now() + 30000); continue; }
+        if (res.status >= 500) continue;
+        return null; // other 4xx: don't retry
+      } catch (e) { /* network error or timeout: the next slot retries */ }
     }
     return null;
   }
 
-  // Per-card fallback (when /cards/collection is down or didn't resolve a name).
+  // Per-card fallback (when /cards/collection is down or didn't resolve a name). null: Scryfall
+  // has no such card; undefined: it could not answer (retry another time).
   async function getNamed(name) {
     for (let attempt = 0; attempt < 2; attempt++) {
+      await slot();
       try {
-        const res = await fetch(`https://api.scryfall.com/cards/named?exact=${encodeURIComponent(name)}`, { headers: HEADERS });
+        const res = await fetch(`https://api.scryfall.com/cards/named?exact=${encodeURIComponent(name)}`, { headers: HEADERS, signal: AbortSignal.timeout(15000) });
         if (res.ok) return await res.json();
-        if (res.status === 429 || res.status >= 500) {
-          await sleep(600 * (attempt + 1));
-          continue;
-        }
+        if (res.status === 429) { nextSlot = Math.max(nextSlot, Date.now() + 30000); continue; }
+        if (res.status >= 500) continue;
         return null; // 404 = no exact match
-      } catch (e) {
-        await sleep(400);
-      }
+      } catch (e) { /* network error or timeout: the next slot retries */ }
     }
-    return null;
+    return undefined;
   }
 
-  // names[] -> Map keyed by nameKeys (lowercased; full + DFC front face).
-  async function enrichCards(names) {
-    const unique = [...new Set(names.map((n) => String(n).trim()).filter(Boolean))];
-    const map = new Map();
-    const batches = chunk(unique, 75);
-    for (let i = 0; i < batches.length; i++) {
-      const data = await postBatch(batches[i].map((name) => ({ name })));
-      if (data) {
-        for (const c of data.data || []) {
-          const enriched = toEnriched(c);
-          for (const k of nameKeys(c.name)) if (!map.has(k)) map.set(k, enriched);
-        }
-      }
-      if (i < batches.length - 1) await sleep(120);
-    }
+  // Scryfall allows /cards/collection and /cards/named two requests a second (a 429 locks the
+  // client out for about 30 s). Every request, first try, retry or per-card fallback, takes the
+  // next start slot, this far after the previous one; a 429 moves every later slot past the
+  // lockout.
+  const SPACING = 550;
+  let nextSlot = 0;
+  function slot() {
+    const now = Date.now();
+    const at = Math.max(now, nextSlot);
+    nextSlot = at + SPACING;
+    return sleep(at - now);
+  }
+  // Names nothing resolved this session (a typo, a custom card): not asked again on every
+  // re-analysis, which a filter click triggers.
+  const unresolved = new Set();
 
-    // Fallback: resolve names the batch endpoint missed (e.g. /cards/collection
-    // outage) one-by-one via /cards/named. No-op when collection succeeded.
-    const missing = unique.filter((n) => !enrichmentFor(map, n)).slice(0, 250);
-    for (const name of missing) {
+  // names[] -> Map keyed by nameKeys (lowercased; full + DFC front face). onProgress(done, total)
+  // counts the names looked up as each batch answers, for a wait that can last seconds.
+  async function enrichCards(names, onProgress) {
+    const unique = [...new Set(names.map((n) => String(n).trim()).filter(Boolean))].filter((n) => !unresolved.has(n));
+    const map = new Map();
+    // The batches run side by side, each starting SPACING after the previous one: a batch
+    // takes about two seconds on Scryfall's side, so one after another a 100-deck pool
+    // waited some 40 s where this takes about 12.
+    let done = 0;
+    const batches = chunk(unique, 75);
+    const results = await Promise.all(batches.map((batch) =>
+      postBatch(batch.map((name) => ({ name }))).then((data) => {
+        done += batch.length;
+        if (onProgress) onProgress(done, unique.length);
+        return data;
+      })));
+    const failed = [];
+    results.forEach((data, i) => {
+      if (!data) { failed.push(...batches[i]); return; }
+      for (const c of data.data || []) {
+        const enriched = toEnriched(c);
+        for (const k of nameKeys(c.name)) if (!map.has(k)) map.set(k, enriched);
+      }
+      // A name the batch reports unknown is unknown: it resolves front faces, split halves
+      // and accent-free spellings, so asking /cards/named one by one only added seconds.
+      for (const nf of data.not_found || []) if (nf && nf.name) unresolved.add(nf.name);
+    });
+
+    // Fallback: the names of batches that failed (a /cards/collection outage), one by one
+    // through /cards/named, each in its own slot.
+    for (const name of failed.filter((n) => !enrichmentFor(map, n)).slice(0, 250)) {
       const c = await getNamed(name);
       if (c) {
         const enriched = toEnriched(c);
         for (const k of nameKeys(c.name)) if (!map.has(k)) map.set(k, enriched);
         for (const k of nameKeys(name)) if (!map.has(k)) map.set(k, enriched);
-      }
-      await sleep(90);
+      } else if (c === null) unresolved.add(name);
     }
     return map;
   }
@@ -122,7 +144,10 @@
     return null;
   }
 
-  const api = { enrichCards, enrichmentFor, nameKeys };
+  // Whether Scryfall's batch declared this name unknown this session (the page caches it as such).
+  const isUnknown = (name) => unresolved.has(String(name).trim());
+
+  const api = { enrichCards, enrichmentFor, nameKeys, isUnknown };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else global.Enrich = api;
 })(typeof window !== "undefined" ? window : globalThis);

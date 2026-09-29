@@ -28,7 +28,8 @@ side, cards in common, quantity deltas, and a similarity figure — without the 
 to copy, paste, or re-type anything.
 
 A second surface analyses a pool of N decklists together (card usage across the pool, mana
-curve, average decklist).
+curve, average decklist), and reads one decklist against it: the user's own list, kept out of
+the pool's figures, or one of the pool's decks against the others.
 
 Success is that the user gets the answer from the page they were already on, in one or two
 clicks, and can act on it.
@@ -37,7 +38,7 @@ clicks, and can act on it.
 
 It is a browser extension, not a website. That is the mechanism, and it is what a
 competing web tool cannot truthfully copy: the extension reads the deck from the page the
-user is already looking at, holds host permissions for eight deck sites, and therefore
+user is already looking at, holds host permissions for nine deck sites, and therefore
 needs no copy-paste, no export step, and no CORS proxy. Cross-site comparison follows from
 the same property — a Moxfield list against an mtgtop8 top-8 list is one flow, not two
 exports.
@@ -45,7 +46,7 @@ exports.
 ## Operating Context
 
 - Used inside the browser, alongside the deck sites themselves: Moxfield, MTGGoldfish,
-  Archidekt, mtgtop8, Magic-Ville, mtgdecks.net, Melee, getpaird.
+  Archidekt, mtgtop8, Magic-Ville, mtgdecks.net, Melee, getpaird, ManaBox.
 - Three surfaces: a 400px-wide toolbar popup, a full-tab comparison page, a full-tab pool
   analysis page. Plus a Compare button injected into each site's own toolbar, on by default.
 - The popup is subject to Chrome's 800×600 ceiling and dies on focus loss.
@@ -90,7 +91,7 @@ Name: Deck Compare — MTG. Published on the Chrome Web Store.
 
 - Live product on the Chrome Web Store since 2026-09-05, also packaged for Edge and Firefox; versions and release history in `CHANGELOG.md`.
 - Real card data and imagery via the Scryfall API (`image_uris`, type lines).
-- Unit tests over the eight site parsers with fixtures in `test/fixtures/`.
+- Unit tests over the nine site parsers with fixtures in `test/fixtures/`.
 - A design critique snapshot at `.impeccable/critique/` scoring the pre-v1 UI 20/40.
 - Store assets in `store/`: screenshots, `promo-marquee-1400x560.png`, `promo-small-440x280.png`.
 - No user research, no analytics, no install numbers, no testimonials — none exist, and

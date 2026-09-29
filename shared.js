@@ -93,7 +93,8 @@
     { pattern: "magic-ville.com/fr/decks/showdeck", deckRe: /magic-ville\.com\/fr\/decks\/showdeck\?[^#]*\bref=\d+/,                                              label: "Magic-Ville" },
     { pattern: "mtgdecks.net/",                   deckRe: /mtgdecks\.net\/[^/?#]+\/[^/?#]/,                                                                        label: "mtgdecks" },
     { pattern: "melee.gg/Decklist/View",          deckRe: /melee\.gg\/Decklist\/View\/[0-9a-fA-F-]{36}/,                                                          label: "Melee" },
-    { pattern: "getpaird.io/decklists/",          deckRe: /getpaird\.io\/decklists\/[^/?#]+/,                                                                     label: "getpaird" }
+    { pattern: "getpaird.io/decklists/",          deckRe: /getpaird\.io\/decklists\/[^/?#]+/,                                                                     label: "getpaird" },
+    { pattern: "manabox.app/decks/",              deckRe: /manabox\.app\/decks\/[A-Za-z0-9_-]{16,}/,                                                         label: "ManaBox" }
   ];
 
   // Same deck page, seen from two places: the hash (mtggoldfish's #paper/#online) and a
@@ -109,13 +110,35 @@
     return key(a) === key(b);
   }
 
+  // A deck tab's title without what the site wraps around the deck's name, so two decks of the
+  // same commander can be told apart in a list: "X • (Altruism Commander deck) • Archidekt",
+  // "X | Moxfield", "X Deck for Magic: the Gathering" (MTGGoldfish), "X \u2014 mtgdecks.net".
+  // The site's name only as the title's last word (a deck called "Isshin - Melee Attack Triggers"
+  // keeps its "Melee").
+  const SITE_SUFFIX = /\s*[\u2022|\u00b7@\u2014\u2013-]\s*(Archidekt|Moxfield|MTGGoldfish|mtgtop8|Magic-Ville|mtgdecks|Melee|getpaird|ManaBox)(\.\w+)?\s*$/i;
+  function deckTabTitle(title) {
+    const t = String(title || "")
+      .replace(/\s+Deck for Magic: the Gathering\s*$/i, "")
+      .replace(SITE_SUFFIX, "")
+      .replace(/\s*\u2022\s*\([^)]*\bdeck\)\s*$/i, "")
+      .trim();
+    return t || String(title || "");
+  }
+
   // Open browser tabs that are deck-detail pages, deduped by URL and minus `excludeUrl`
   // (the calling page itself). Extension surfaces only — chrome.tabs is absent in content
   // scripts; returns [] wherever it (or the query) is unavailable.
-  async function getOpenDeckTabs(excludeUrl) {
+  // Every window, the caller's first (`caller` = { windowId, incognito } of the tab whose panel
+  // asks, for the background; else the current window): the second deck is often in a window
+  // side by side. Never across the private-browsing boundary, in either direction.
+  async function getOpenDeckTabs(excludeUrl, caller) {
     if (typeof chrome === "undefined" || !chrome.tabs || !chrome.tabs.query) return [];
     let tabs;
-    try { tabs = await chrome.tabs.query({ currentWindow: true }); } catch { return []; }
+    try {
+      const here = caller || (await chrome.tabs.query({ currentWindow: true }))[0] || {};
+      tabs = (await chrome.tabs.query({})).filter((t) => !!t.incognito === !!here.incognito);
+      tabs.sort((a, b) => (b.windowId === here.windowId) - (a.windowId === here.windowId));   // stable: tab order kept within a window
+    } catch { return []; }
     const seen = new Set(excludeUrl ? [excludeUrl] : []);
     const out = [];
     for (const t of tabs || []) {
@@ -123,7 +146,7 @@
       const site = SUPPORTED_SITES.find((x) => x.deckRe.test(t.url));
       if (!site) continue;
       seen.add(t.url);
-      out.push({ url: t.url, label: site.label, title: t.title || t.url });
+      out.push({ url: t.url, label: site.label, title: deckTabTitle(t.title) || t.url });
     }
     return out;
   }
@@ -135,6 +158,10 @@
     if (typeof chrome === "undefined" || !chrome.i18n || typeof document === "undefined") return;
     document.documentElement.lang = chrome.i18n.getUILanguage().split("-")[0];
   }
+
+  // ---- cross-compare storage (pool.js owns it; the popup reads the pool and writes my list) ----
+  const POOL_DECKS_KEY = "poolDecks";
+  const POOL_MINE_KEY = "poolMine";
 
   // ---- in-page button default (single source of truth) ----
   // The button is on unless the user switched it off: an absent key reads as on (1.1 —
@@ -163,7 +190,11 @@
     { id: "mtgtop8-bare",     origin: "https://mtgtop8.com/*",       matches: ["https://mtgtop8.com/event*"] },
     { id: "mtggoldfish-bare", origin: "https://mtggoldfish.com/*",   matches: ["https://mtggoldfish.com/deck/*", "https://mtggoldfish.com/archetype/*"] },
     { id: "magicville-bare",  origin: "https://magic-ville.com/*",   matches: ["https://magic-ville.com/fr/decks/showdeck*"] },
-    { id: "mtgdecks-www",     origin: "https://www.mtgdecks.net/*",  matches: ["https://www.mtgdecks.net/*"] }
+    { id: "mtgdecks-www",     origin: "https://www.mtgdecks.net/*",  matches: ["https://www.mtgdecks.net/*"] },
+    // ManaBox: a site the extension never had access to, so optional from the start (a new
+    // required host would disable the extension until every user re-accepts it).
+    { id: "manabox",          origin: "https://manabox.app/*",       matches: ["https://manabox.app/decks/*"] },
+    { id: "manabox-www",      origin: "https://www.manabox.app/*",   matches: ["https://www.manabox.app/decks/*"] }
   ];
 
   // True when `hostname` is covered by a match-pattern origin such as
@@ -188,6 +219,17 @@
     let host;
     try { host = new URL(url).hostname; } catch (_) { return false; }
     return origins.some((o) => originMatchesHost(o, host));
+  }
+
+  // A ManaBox deck is read in a tab (background.js), which needs the site's optional access. The
+  // background cannot ask for it (no user gesture), so the extension pages do, from the click that
+  // wants such a deck: no prompt once granted, and a decline ends in errManaboxAccess. Call it
+  // before any other await of the handler: Firefox honours a request only there.
+  const MANABOX_ORIGINS = OPTIONAL_SCRIPTS.filter((s) => s.id.startsWith("manabox")).map((s) => s.origin);
+  async function requestManaBoxAccess(urls) {
+    const origins = MANABOX_ORIGINS.filter((o) => urls.some((u) => isOptionalHost(u, [o])));
+    if (!origins.length) return false;
+    try { return await chrome.permissions.request({ origins }); } catch (_) { return false; }
   }
 
   // ---- saved decks (written by the popup's Settings panel) ----
@@ -249,11 +291,50 @@
     try { await chrome.storage.local.set({ [key]: blob }); } catch { /* quota — ignore */ }
   }
 
+  // Card types and images from Scryfall, cached by the background's lookup (FETCH_CARD_TYPES).
+  // The results page reads the cache itself too, so the images of known cards start loading
+  // before the lookup answers. A name Scryfall did not know is cached as such (`nf`, no image:
+  // the card shows its name) for a day.
+  // The cross-compare page's own cache (poolEnrichCache, whole cards) answers what this one
+  // lacks: a detailed comparison opened from a pool then asks Scryfall for nothing.
+  const CARD_TYPE_TTL = 30 * 24 * 60 * 60 * 1000;   // card types are stable
+  const CARD_MISS_TTL = 24 * 60 * 60 * 1000;
+  async function cachedCardTypes(names) {
+    const [cached, pooled] = await Promise.all([
+      cacheRead("cardTypeCache", CARD_TYPE_TTL), cacheRead("poolEnrichCache", CARD_TYPE_TTL)]);
+    const now = Date.now();
+    const out = { lands: [], creatures: [], images: {}, misses: [] };
+    for (const name of names) {
+      const hit = cached[name.toLowerCase()] || fromPool(pooled[name.toLowerCase()]);
+      // `i` is absent on entries written before images were cached: a miss, so the cache
+      // refills itself once. An empty string means "known to have no image".
+      if (!hit || hit.i === undefined || (hit.nf && now - hit.ts >= CARD_MISS_TTL)) { out.misses.push(name); continue; }
+      if (hit.l) out.lands.push(name);
+      if (hit.c) out.creatures.push(name);
+      if (hit.i) out.images[name] = hit.i;
+    }
+    return out;
+  }
+  // A poolEnrichCache entry in cardTypeCache's shape, judged on the front face as the lookup
+  // does: a modal land on its back is not a land.
+  function fromPool(e) {
+    if (!e || !e.type_line) return null;
+    const front = String(e.type_line).split(" // ")[0];
+    return { l: front.includes("Land"), c: front.includes("Creature"), i: e.image_uri || "" };
+  }
+
+  // Whether a count takes its noun's plural in the interface language: French keeps 0 and 1
+  // singular ("0 carte", "1 carte"), English 1 alone ("0 cards", "1 card").
+  function plural(n) {
+    const lang = typeof chrome !== "undefined" && chrome.i18n && chrome.i18n.getUILanguage ? chrome.i18n.getUILanguage() : "en";
+    return /^fr/i.test(lang) ? n > 1 : n !== 1;
+  }
+
   const api = {
-    fixCommanderHeuristic, sumBoard, normalizeName, normalizeDeck, cacheRead, cacheMerge,
-    setDocumentLang, OPTIONAL_SCRIPTS, originMatchesHost, isOptionalHost, INJECT_KEY, injectEnabled, injectResetOnUpdate,
-    SUPPORTED_SITES, getOpenDeckTabs, sameDeckPage,
-    DECK_SOURCE_IDS, getSavedDecks, populateSavedDeckSelect
+    fixCommanderHeuristic, sumBoard, normalizeName, normalizeDeck, cacheRead, cacheMerge, CARD_TYPE_TTL, cachedCardTypes, plural,
+    setDocumentLang, OPTIONAL_SCRIPTS, originMatchesHost, isOptionalHost, requestManaBoxAccess, INJECT_KEY, injectEnabled, injectResetOnUpdate,
+    SUPPORTED_SITES, getOpenDeckTabs, deckTabTitle, sameDeckPage,
+    DECK_SOURCE_IDS, getSavedDecks, populateSavedDeckSelect, POOL_DECKS_KEY, POOL_MINE_KEY
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else global.Shared = api;

@@ -8,6 +8,7 @@ const siteMatch = (url) => (SUPPORTED_SITES.find((s) => s.deckRe.test(url)) || {
 test("SUPPORTED_SITES matches deck-detail URLs (popup + pool tab pickers)", () => {
   assert.equal(siteMatch("https://www.moxfield.com/decks/AbC123_-x"), "Moxfield");
   assert.equal(siteMatch("https://www.mtgtop8.com/event?e=90366&d=885960&f=EDH"), "mtgtop8");
+  assert.equal(siteMatch("https://manabox.app/decks/qWOeE_BgTEyv7VV2-kzpXg"), "ManaBox");
   assert.equal(siteMatch("https://www.mtggoldfish.com/archetype/modern-izzet-prowess#paper"), "MTGGoldfish");  // archetype page = one full deck
   assert.equal(siteMatch("https://archidekt.com/decks/12345/krenko"), "Archidekt");
   assert.equal(siteMatch("https://getpaird.io/decklists/abc-def"), "getpaird");
@@ -19,6 +20,7 @@ test("SUPPORTED_SITES rejects homepages and listings (no false one-click shortcu
   assert.equal(siteMatch("https://www.mtgtop8.com/event?e=90366&f=EDH"), undefined); // no d=
   assert.equal(siteMatch("https://archidekt.com/decks/"), undefined);
   assert.equal(siteMatch("https://www.moxfield.com/"), undefined);
+  assert.equal(siteMatch("https://manabox.app/decks"), undefined);                     // no deck id
   assert.equal(siteMatch("https://www.mtggoldfish.com/archetype/"), undefined);   // the archetype index, no deck
 });
 
@@ -212,4 +214,103 @@ test("every locale's appDescription fits Safari's 112-character limit (Chrome al
     assert.equal(typeof d, "string", `${loc}: appDescription missing`);
     assert.ok(d.length <= 112, `${loc}: appDescription is ${d.length} characters`);
   }
+});
+
+test("OPTIONAL_SCRIPTS and the manifest's optional_host_permissions list the same origins", () => {
+  const { OPTIONAL_SCRIPTS } = require("../shared.js");
+  const manifest = require("../manifest.json");
+  assert.deepEqual([...OPTIONAL_SCRIPTS.map((e) => e.origin)].sort(), [...manifest.optional_host_permissions].sort());
+});
+
+test("every locale declares the same message keys", () => {
+  const fs = require("fs"); const path = require("path");
+  const dir = path.join(__dirname, "..", "_locales");
+  const keys = (loc) => Object.keys(JSON.parse(fs.readFileSync(path.join(dir, loc, "messages.json"), "utf8"))).sort();
+  const [first, ...rest] = fs.readdirSync(dir);
+  for (const loc of rest) assert.deepEqual(keys(loc), keys(first), `${loc} and ${first} differ`);
+});
+
+test("requestManaBoxAccess asks for the ManaBox hosts it is given, and nothing else", async () => {
+  const { requestManaBoxAccess } = require("../shared.js");
+  const prev = global.chrome;
+  const asked = [];
+  global.chrome = { permissions: { request: async ({ origins }) => { asked.push(origins); return true; } } };
+  try {
+    assert.equal(await requestManaBoxAccess(["https://archidekt.com/decks/1", "not a url"]), false);
+    assert.equal(await requestManaBoxAccess(["https://manabox.app/decks/aaaaaaaaaaaaaaaa", "https://manabox.app/decks/bbbbbbbbbbbbbbbb"]), true);
+    assert.deepEqual(asked, [["https://manabox.app/*"]]);
+    global.chrome = {};   // no permissions API (a content script): no request, no throw
+    assert.equal(await requestManaBoxAccess(["https://www.manabox.app/decks/aaaaaaaaaaaaaaaa"]), false);
+  } finally { global.chrome = prev; }
+});
+
+test("cachedCardTypes serves known cards and retries a name Scryfall lacked after a day", async () => {
+  const { cachedCardTypes } = require("../shared.js");
+  const prev = global.chrome;
+  const now = Date.now();
+  const cardTypeCache = {
+    "forest": { l: true, c: false, i: "https://cards.scryfall.io/forest.jpg", ts: now },
+    "llanowar elves": { l: false, c: true, i: "https://cards.scryfall.io/elves.jpg", ts: now },
+    "old entry": { l: false, c: false, ts: now },                                   // no `i`: before images were cached
+    "typo today": { l: false, c: false, i: "", nf: true, ts: now - 60 * 1000 },
+    "typo last week": { l: false, c: false, i: "", nf: true, ts: now - 7 * 24 * 3600 * 1000 },
+  };
+  global.chrome = { storage: { local: { get: async () => ({ cardTypeCache }) } } };
+  try {
+    const r = await cachedCardTypes(["Forest", "Llanowar Elves", "Old Entry", "Typo Today", "Typo Last Week", "Unknown"]);
+    assert.deepEqual(r.lands, ["Forest"]);
+    assert.deepEqual(r.creatures, ["Llanowar Elves"]);
+    assert.deepEqual(r.images, { Forest: "https://cards.scryfall.io/forest.jpg", "Llanowar Elves": "https://cards.scryfall.io/elves.jpg" });
+    assert.deepEqual(r.misses, ["Old Entry", "Typo Last Week", "Unknown"]);
+  } finally { global.chrome = prev; }
+});
+
+test("cachedCardTypes falls back on the cross-compare page's cache, front face first", async () => {
+  const { cachedCardTypes } = require("../shared.js");
+  const prev = global.chrome;
+  const now = Date.now();
+  const poolEnrichCache = {
+    "sol ring": { name: "Sol Ring", type_line: "Artifact", image_uri: "https://cards.scryfall.io/sol.jpg", ts: now },
+    "bala ged recovery": { name: "Bala Ged Recovery // Bala Ged Sanctuary", type_line: "Sorcery // Land", image_uri: "https://cards.scryfall.io/bala.jpg", ts: now },
+  };
+  global.chrome = { storage: { local: { get: async (k) => (k === "poolEnrichCache" ? { poolEnrichCache } : {}) } } };
+  try {
+    const r = await cachedCardTypes(["Sol Ring", "Bala Ged Recovery", "Unknown"]);
+    assert.deepEqual(r.lands, []);   // the land is the back face
+    assert.deepEqual(r.images, { "Sol Ring": "https://cards.scryfall.io/sol.jpg", "Bala Ged Recovery": "https://cards.scryfall.io/bala.jpg" });
+    assert.deepEqual(r.misses, ["Unknown"]);
+  } finally { global.chrome = prev; }
+});
+
+test("deckTabTitle keeps the deck's name and drops what each site wraps around it", () => {
+  const { deckTabTitle } = require("../shared.js");
+  assert.equal(deckTabTitle("Aragorn, the Uniter (budget) • (Altruism Commander deck) • Archidekt"), "Aragorn, the Uniter (budget)");
+  assert.equal(deckTabTitle("Eldrazi Deck for Magic: the Gathering"), "Eldrazi");
+  assert.equal(deckTabTitle("Terra Rea - Duel Commander | Moxfield"), "Terra Rea - Duel Commander");   // a dash inside the name stays
+  assert.equal(deckTabTitle("Aragorn Duel Commander \u2014 mtgdecks.net"), "Aragorn Duel Commander");
+  assert.equal(deckTabTitle("Krenko Test Deck // Back Face | Melee"), "Krenko Test Deck // Back Face");
+  assert.equal(deckTabTitle("Draw your Deck (Midrange Build)"), "Draw your Deck (Midrange Build)");   // nothing to drop
+  assert.equal(deckTabTitle("Archidekt"), "Archidekt");   // never emptied
+  // a site's name inside the deck's own name stays
+  assert.equal(deckTabTitle("Isshin - Melee Attack Triggers • (Isshin Commander deck) • Archidekt"), "Isshin - Melee Attack Triggers");
+  assert.equal(deckTabTitle("Krenko - Moxfield Primer Port | Moxfield"), "Krenko - Moxfield Primer Port");
+});
+
+test("getOpenDeckTabs lists the caller's window first and never crosses the private-browsing line", async () => {
+  const { getOpenDeckTabs } = require("../shared.js");
+  const prev = global.chrome;
+  const all = [
+    { url: "https://archidekt.com/decks/1", title: "Other window • (Commander deck) • Archidekt", windowId: 2, incognito: false },
+    { url: "https://archidekt.com/decks/2", title: "Private deck", windowId: 3, incognito: true },
+    { url: "https://archidekt.com/decks/3", title: "Same window", windowId: 1, incognito: false },
+  ];
+  global.chrome = { tabs: { query: async (q) => (q && q.currentWindow ? [all[2]] : all) } };
+  try {
+    // an extension page in window 1: the private tab is not offered, window 1 comes first
+    const mine = await getOpenDeckTabs("chrome-extension://x/compare.html");
+    assert.deepEqual(mine.map((t) => t.title), ["Same window", "Other window"]);   // titles cleaned too
+    // the background answering a panel in the private window: only the private tab
+    const priv = await getOpenDeckTabs("https://archidekt.com/decks/9", { windowId: 3, incognito: true });
+    assert.deepEqual(priv.map((t) => t.url), ["https://archidekt.com/decks/2"]);
+  } finally { global.chrome = prev; }
 });

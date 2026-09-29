@@ -98,7 +98,7 @@
   // 24× "mtgtop8" (the MTGO export the pool fetches carries no name of its own).
   function deckName(d) {
     const parts = [d.player, d.event].map((s) => (s || '').trim()).filter(Boolean);
-    return parts.join(' — ');   // '' when neither exists → pool keeps its source fallback
+    return parts.join(' · ');   // '' when neither exists → pool keeps its source fallback
   }
 
   // POST current_page=N to the archetype's own nav form, page by page, collecting decks
@@ -127,6 +127,7 @@
           method: 'POST', credentials: 'include',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: `current_page=${page}`,
+          signal: AbortSignal.timeout(15000),   // a page that hangs ends the collection, not the button
         });
         html = res.ok ? await res.text() : null;
       } catch (_) { break; }

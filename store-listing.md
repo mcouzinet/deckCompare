@@ -36,10 +36,33 @@ console and is not otherwise versioned anywhere.
 > `dist/deckcompare-1.2-chrome.zip` to the Chrome Web Store and to Edge Add-ons,
 > `dist/deckcompare-1.2-firefox.zip` to addons.mozilla.org (first Firefox listing — see
 > *Firefox and Edge listings* below for the fields those two consoles ask for).
-> Edge Add-ons: 1.2 submitted on 2026-09-24 (first Edge listing, logo + EN/FR descriptions).
+> Edge Add-ons: 1.2 submitted on 2026-09-24 (first Edge listing, logo + EN/FR descriptions), live on 2026-09-25:
+> https://microsoftedge.microsoft.com/addons/detail/deck-compare-%E2%80%93-mtg/akklkakfdidemfbbnjmhiofkhkcnhfbc
 > addons.mozilla.org: 1.2 submitted on 2026-09-24 (first Firefox listing).
 > Mac App Store: macOS app 1.2, build 2, submitted on 2026-09-25 (first Safari listing).
-> Chrome Web Store: 1.2 submitted on 2026-09-25.
+> Chrome Web Store: 1.2 submitted on 2026-09-25, **live and public** the same day.
+
+> **1.3 to do (ManaBox, in dev since 1.2.1)**: both detailed descriptions still say eight sites
+> (« Huit sites »), right for 1.2, which is still under review on AMO and the Mac App Store: make
+> it nine at the 1.3 upload, not before. The first screenshot is the eight-site montage
+> (`1-le-bouton-sur-huit-sites.png`): add a ManaBox tile, or keep it. The scripting and host
+> permission justifications below already name manabox.app.
+>
+> Draft patch notes for 1.3 (move them under *Patch notes* at the release, adjusted to what ships):
+>
+> **v1.3** (FR) ManaBox rejoint les sites pris en charge : le bouton « Comparer » s'y ajoute sur
+> autorisation, en un clic, et le deck se lit depuis sa page. Comparaison croisée : « Comparer ma
+> liste » mesure ta propre liste à l'ensemble sans la compter (similarité à la decklist moyenne,
+> cartes du consensus, manques, cartes peu jouées ailleurs, deck le plus proche), et chaque deck
+> du lot se met en avant d'un survol ou d'un clic. Depuis le popup, « Ce deck face aux N decks »
+> y envoie le deck ouvert. Aucune permission requise en plus : ManaBox reste facultatif.
+>
+> **v1.3** (EN) ManaBox joins the supported sites: the Compare button appears there once allowed,
+> in one click, and the deck is read from its own page. Cross-compare: "Compare my list" measures
+> your own list against the set without counting it (similarity to the average decklist, share of
+> the consensus, missing cards, cards seldom played elsewhere, closest deck), and any deck of the
+> set can be put forward with a hover or a click. From the popup, "This deck against the N decks"
+> sends the open deck there. No new required permission: ManaBox stays optional.
 
 ## Short description (132 characters max)
 
@@ -165,15 +188,20 @@ asks the same thing (Edge, Opera, an AMO reviewer).
 
 > Stores data locally in the browser only (chrome.storage.local): the user's settings (the in-page
 > button switch, the deck-site usernames they enter to list their own public decks, the results
-> page's display density), the decks they add to a cross-comparison and its card filters, the
+> page's display density), the decks they add to a cross-comparison, its card filters and the
+> user's own list compared to it, the
 > comparison handed from the popup to the results page, and a cache of card data (types and image
 > URLs) from Scryfall so pages do not refetch it. Nothing is synced or sent anywhere.
 
 **scripting justification**
 
-> Used only to register the extension's own packaged content script — the in-page Compare button —
-> on the optional hosts (Moxfield deck pages and the www / non-www variants of supported sites),
-> after the user grants those hosts from the settings, and to unregister it when they are revoked.
+> Used for two things, both with the extension's own packaged files. It registers the extension's
+> content script (the in-page Compare button) on the optional hosts (Moxfield and ManaBox deck
+> pages, and the www / non-www variants of supported sites) once the user grants those hosts, and
+> unregisters it when they are revoked. And when the user clicks the toolbar icon on a supported
+> deck page that has no content script (ManaBox before its access is granted), it injects the
+> packaged deck reader into that tab only, under activeTab, so the popup can read the deck.
+> On ManaBox that script is also how a deck is read: the extension never requests ManaBox itself.
 > No code is injected from strings and nothing is fetched to be executed.
 
 **Host permission justification**
@@ -183,8 +211,11 @@ asks the same thing (Edge, Opera, an AMO reviewer).
 > www.magic-ville.com, mtgdecks.net, melee.gg and getpaird.io (deck pages the extension reads and
 > adds its Compare button to); api.scryfall.com and cards.scryfall.io (card types and images).
 > Requests are made only to fetch a deck the user chose to compare and the cards on screen. The
-> optional hosts (moxfield.com pages, www / non-www twins) are requested at runtime, only when the
-> user turns on the in-page button.
+> optional hosts (moxfield.com pages, manabox.app, www / non-www twins) are requested at runtime,
+> only from a click: in the popup, for the in-page button, and for manabox.app also from the click
+> that reads a ManaBox deck link; ManaBox decks are read from the deck page in a tab, never fetched
+> by the extension. The popup, the in-page panel and the results page list the open tabs on these
+> sites (address and title) to offer them as the second deck.
 
 **Are you using remote code?** No.
 
@@ -292,7 +323,8 @@ The wrapper app lives in `safari/Deck Compare/Deck Compare.xcodeproj`; it refere
   https://archidekt.com/decks/4868475 and click « Compare » in the site's toolbar.*
 
 **Known limits on Safari**: Apple documents neither `optional_host_permissions` nor its
-behaviour: the in-page button on Moxfield and on the www / non-www variants may not appear.
+behaviour: the in-page button on Moxfield, on ManaBox and on the www / non-www variants may not
+appear, and ManaBox decks may not be readable at all.
 Guideline 4.4 wants the containing app to offer "some functionality, such as help screens"; the
 packager's app shows only how to enable the extension, which reviewers may question.
 
@@ -323,6 +355,15 @@ Promo images, English (one set serves every locale), redrawn on cream paper with
 icon: `store/promo-small-440x280.png`, `store/promo-marquee-1400x560.png` (the marquee embeds a crop of
 screenshot 2). Two site names at most appear in a row, as in the descriptions.
 
+Promo video (2026-09-28), English, 15 s, 1920×1080, 60 fps: `store/reel/`, the dark reel of the
+Endstep Tracker and Whozic videos, same method (`reel.html` is a pure function of time captured
+frame by frame, `sfx.js` synthesizes the sound on the same timeline). Story: the winner's list on
+mtgtop8, the black button, your own deck picked in the panel (nothing pasted), the cards sorted,
+95 % similar, 4 cards apart; the cube (no copy-paste, 8 deck sites, whole archetypes); the
+signature. Real Scryfall images, made-up decks held to the product's formula (71 of 75).
+`node store/reel/render.js` writes `store/reel/out/deckcompare-15s.mp4` (git-ignored); the render
+loads Google Fonts and Scryfall, so it needs the network. The stores take it as a YouTube link.
+
 Pipeline: `scratchpad/shots/*.js` (puppeteer-core + Chrome for Testing, `--load-extension`;
 the branded Chrome ≥ 137 refuses that flag), 2× capture then Lanczos resize to exact size.
 Montage tiles: six sites cropped in a headful Chrome for Testing (Moxfield through a test copy of
@@ -330,3 +371,76 @@ the package that declares its content script statically — the shipped build as
 at runtime); MTGGoldfish, Magic-Ville and mtgdecks sit behind Cloudflare challenges that block
 automated Chrome, so their tiles come from the user's own Chrome (page zoomed 2×, frame exported
 as GIF, cropped). Composition: `scratchpad/montage/montage.html` rendered at 2×.
+
+---
+
+## YouTube (promo video, 2026-09-28)
+
+Upload `store/reel/out/deckcompare-15s.mp4` (render it first, see *Media*) with the thumbnail
+`store/youtube-thumbnail-1280x720.jpg` (source `store/reel/thumbnail.html`,
+`node store/reel/render.js thumbnail`; a custom thumbnail needs a phone-verified channel). Then paste
+the video link in the Chrome Web Store console, in the listing's promo video field.
+
+Settings: video language English; category Gaming (game: Magic: The Gathering); not made for kids;
+altered or synthetic content: no (motion design, nothing realistic); no paid promotion.
+To do when they are live: add the Firefox and Mac App Store links under the two below. At the 1.3
+upload (ManaBox), "Eight deck sites" becomes nine, here and in the video (`reel.html`, two places).
+
+**Title** (100 characters max; the first 60 or so show in search):
+
+    Deck Compare: compare two MTG decklists in one click
+
+Alternatives: `What changed? Compare two MTG decklists in one click | Deck Compare` ·
+`Compare MTG decklists right on the deck page | Deck Compare`.
+
+**Description** (the first two lines show above « more »):
+
+```
+Compare two Magic: The Gathering decklists side by side, right on the deck page. A free browser extension for Chrome, Edge, Firefox and Safari.
+
+Open a deck, click Compare and pick the other deck: one of your saved decks, another open tab, or a link. Every card comes back sorted (only in one deck, only in the other, shared), with the quantity gaps and a similarity figure. Lists from two different sites compare just as well, a Moxfield build against an mtgtop8 winner for instance. Eight deck sites are supported.
+
+Cross-compare goes further: a whole archetype at once, with the most-played cards, the average decklist, the mana curve and the top sideboard choices.
+
+No account, no sign-in, nothing collected: everything runs in your browser.
+
+Chrome Web Store: https://chromewebstore.google.com/detail/deck-compare-%E2%80%93-mtg/miijiappldgijnnokopjfiponelkdhcg
+Microsoft Edge: https://microsoftedge.microsoft.com/addons/detail/deck-compare-%E2%80%93-mtg/akklkakfdidemfbbnjmhiofkhkcnhfbc
+Source code: https://github.com/mcouzinet/deckCompare
+Privacy policy: https://mcouzinet.github.io/deckCompare/privacy-policy.html
+
+The decks in the video are examples. Card images: Scryfall.
+Deck Compare is unofficial Fan Content permitted under the Fan Content Policy. Not approved/endorsed by Wizards. Portions of the materials used are property of Wizards of the Coast. ©Wizards of the Coast LLC.
+
+#MTG #MagicTheGathering #Deckbuilding
+```
+
+**Tags** (500 characters max):
+
+```
+Deck Compare, MTG, Magic The Gathering, decklist, compare decklists, deck comparison, MTG deckbuilding, deck diff, Moxfield, mtgtop8, MTGGoldfish, Archidekt, Modern, Commander, sideboard, metagame, browser extension, Chrome extension
+```
+
+**French translation** (YouTube Studio › Languages › add French: title and description):
+
+    Deck Compare : comparez deux decklists MTG en un clic
+
+```
+Comparez deux decklists Magic: The Gathering côte à côte, directement sur la page du deck. Une extension gratuite pour Chrome, Edge, Firefox et Safari.
+
+Ouvrez un deck, cliquez sur Comparer et choisissez l'autre deck : un de vos decks enregistrés, un autre onglet ouvert, ou un lien. Chaque carte revient triée (propre à un deck, propre à l'autre, en commun), avec les écarts de quantité et un score de similarité. Deux listes de sites différents se comparent tout aussi bien, une version Moxfield face à une liste gagnante sur mtgtop8 par exemple. Huit sites de decks sont pris en charge.
+
+La comparaison croisée va plus loin : tout un archétype d'un coup, avec les cartes les plus jouées, la decklist moyenne, la courbe de mana et les meilleurs choix de réserve.
+
+Aucun compte, aucune connexion, aucune donnée collectée : tout s'exécute dans votre navigateur.
+
+Chrome Web Store : https://chromewebstore.google.com/detail/deck-compare-%E2%80%93-mtg/miijiappldgijnnokopjfiponelkdhcg
+Microsoft Edge : https://microsoftedge.microsoft.com/addons/detail/deck-compare-%E2%80%93-mtg/akklkakfdidemfbbnjmhiofkhkcnhfbc
+Code source : https://github.com/mcouzinet/deckCompare
+Politique de confidentialité : https://mcouzinet.github.io/deckCompare/privacy-policy.html
+
+Les decks de la vidéo sont des exemples. Images des cartes : Scryfall.
+Deck Compare is unofficial Fan Content permitted under the Fan Content Policy. Not approved/endorsed by Wizards. Portions of the materials used are property of Wizards of the Coast. ©Wizards of the Coast LLC.
+
+#MTG #MagicTheGathering #Deckbuilding
+```

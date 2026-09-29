@@ -32,10 +32,17 @@
   // toolbar icon instead (recoloured + DEV badge in background.js).
 
   let host = null;        // the shadow host element, null when not injected
+  // Its shadow root, closed: the panel lists the user's saved decks and their other deck tabs,
+  // and the site's own scripts must not read them (host.shadowRoot is null for them, and for us).
+  let shadow = null;
   let enabled = false;    // mirrors the storage toggle, re-checked before any mount
   let cancelWait = null;  // cancels a pending mountWhenReady observer/timer
   let unwire = null;      // removes wire()'s window/document listeners
   let cancelReanchor = null;  // stops the post-fallback watch for a late toolbar
+  let cancelKeep = null;      // stops keepAttached's watch for a host the page removed
+
+  const INLINE_CSS = 'all:initial;display:inline-flex;vertical-align:middle;';
+  const FLOATING_CSS = 'all:initial;position:fixed;z-index:2147483647;bottom:20px;right:20px;';
 
   // --- lifecycle: mount/unmount so the popup toggle applies without a page reload ---
 
@@ -55,8 +62,9 @@
   function unmount() {
     if (cancelWait) cancelWait();
     if (cancelReanchor) cancelReanchor();
+    if (cancelKeep) cancelKeep();
     if (unwire) { unwire(); unwire = null; }
-    if (host) { host.remove(); host = null; }
+    if (host) { host.remove(); host = null; shadow = null; }
   }
 
   // Some matches are broad (mtgdecks.net/*), so the button would otherwise show on
@@ -80,11 +88,9 @@
     host.classList.toggle('inline', !!anchor);     // :host(.inline) drops the pill shape
 
     // `all:initial` stops the page styling our host; everything else is set explicitly.
-    host.style.cssText = anchor
-      ? 'all:initial;display:inline-flex;vertical-align:middle;'
-      : 'all:initial;position:fixed;z-index:2147483647;bottom:20px;right:20px;';
+    host.style.cssText = anchor ? INLINE_CSS : FLOATING_CSS;
 
-    const root = host.attachShadow({ mode: 'open' });
+    const root = shadow = host.attachShadow({ mode: 'closed' });
     root.innerHTML = TEMPLATE;
     wire(root);
 
@@ -94,6 +100,35 @@
     } else {
       (document.body || document.documentElement).appendChild(host);
     }
+    keepAttached();
+  }
+
+  // A React page can still drop the host when it re-renders the part we sit in. Put the same
+  // host back (panel and listeners intact): next to the anchor when it is there, floating
+  // otherwise, with the usual watch for a late toolbar. Bounded, in case a page fights back.
+  function keepAttached() {
+    if (cancelKeep) cancelKeep();
+    let left = 20;
+    const obs = new MutationObserver(() => {
+      if (!host) { stop(); return; }
+      if (host.isConnected) return;
+      if (left-- <= 0) { stop(); return; }
+      const anchor = hasAnchorEntry() ? anchorFor(document) : null;
+      if (anchor && anchor.parentElement) {
+        host.classList.add('inline');
+        host.style.cssText = INLINE_CSS;
+        anchor.insertAdjacentElement('afterend', host);
+        matchAnchorBox(host, anchor, shadow);
+      } else {
+        host.classList.remove('inline');
+        host.style.cssText = FLOATING_CSS;
+        (document.body || document.documentElement).appendChild(host);
+        watchForAnchor();
+      }
+    });
+    const stop = () => { obs.disconnect(); if (cancelKeep === stop) cancelKeep = null; };
+    cancelKeep = stop;
+    obs.observe(document.documentElement, { childList: true, subtree: true });
   }
 
   // Sit like a peer of the button we were inserted next to, instead of imposing one
@@ -180,8 +215,35 @@
   // reason. So when the site HAS an anchor but it is not in the DOM yet, wait for it
   // before mounting; that also avoids flashing a floating pill that then jumps.
   // The timeout is the giving-up point: mount floating rather than nothing.
+  // Astro pages hydrate their islands after this script may already have run (ManaBox's
+  // deck header is one). Writing into server-rendered markup still waiting for hydration
+  // makes React throw it away and render again, taking the button along and costing the
+  // site its hydration: wait until no island carries `ssr` any more (10 s at most).
+  const hydrating = () => !!document.querySelector('astro-island[ssr]');
+
+  // A loading page mutates hundreds of times, and looking for the anchor queries the DOM and
+  // reads layout: one look per burst of mutations (50 ms) is plenty. A timer, not a frame:
+  // frames stop in a background tab, where the wait must still end.
+  const perBurst = (fn) => {
+    let t = null;
+    return () => { if (!t) t = setTimeout(() => { t = null; fn(); }, 50); };
+  };
+
   function mountWhenReady() {
     if (cancelWait) cancelWait();   // at most one pending wait
+    if (hydrating()) {
+      let settled = false;
+      const done = () => {
+        if (settled) return;
+        settled = true; obs.disconnect(); clearTimeout(timer); cancelWait = null;
+        mountWhenReady();
+      };
+      const obs = new MutationObserver(() => { if (!hydrating()) done(); });
+      obs.observe(document.documentElement, { attributes: true, attributeFilter: ['ssr'], childList: true, subtree: true });
+      const timer = setTimeout(done, 10000);
+      cancelWait = () => { settled = true; obs.disconnect(); clearTimeout(timer); cancelWait = null; };
+      return;
+    }
     if (!hasAnchorEntry() || anchorFor(document)) { mount(); return; }
 
     let settled = false;
@@ -196,7 +258,7 @@
       // can outlast the wait): keep looking and move into place when it shows up.
       if (host && !host.classList.contains('inline')) watchForAnchor();
     };
-    const obs = new MutationObserver(() => { if (anchorFor(document)) finish(); });
+    const obs = new MutationObserver(perBurst(() => { if (!settled && anchorFor(document)) finish(); }));
     obs.observe(document.documentElement, { childList: true, subtree: true });
     const timer = setTimeout(finish, 8000);
     cancelWait = () => {
@@ -214,20 +276,22 @@
   function watchForAnchor() {
     if (!hasAnchorEntry()) return;
     if (cancelReanchor) cancelReanchor();
-    const obs = new MutationObserver(() => {
+    let stopped = false;
+    const obs = new MutationObserver(perBurst(() => {
+      if (stopped) return;
       if (!host || host.classList.contains('inline')) { stop(); return; }
       const anchor = anchorFor(document);
       if (!anchor || !anchor.parentElement) return;
-      const panel = host.shadowRoot && host.shadowRoot.querySelector('.panel');
+      const panel = shadow && shadow.querySelector('.panel');
       if (panel && !panel.hidden) return;
       host.classList.add('inline');
-      host.style.cssText = 'all:initial;display:inline-flex;vertical-align:middle;';
+      host.style.cssText = INLINE_CSS;
       anchor.insertAdjacentElement('afterend', host);
-      matchAnchorBox(host, anchor, host.shadowRoot);
+      matchAnchorBox(host, anchor, shadow);
       stop();
-    });
+    }));
     const timer = setTimeout(() => stop(), 90000);
-    const stop = () => { obs.disconnect(); clearTimeout(timer); if (cancelReanchor === stop) cancelReanchor = null; };
+    const stop = () => { stopped = true; obs.disconnect(); clearTimeout(timer); if (cancelReanchor === stop) cancelReanchor = null; };
     cancelReanchor = stop;
     obs.observe(document.documentElement, { childList: true, subtree: true });
   }
@@ -352,6 +416,21 @@
         background-repeat: no-repeat; background-position: right 12px center; background-size: 14px;
       }
       select[hidden] { display: none; }
+      /* The user's other deck tabs, the popup's list: one click compares with that deck. */
+      .tabs[hidden] { display: none; }
+      .tabs-label { margin: 0 0 6px; font: 600 11px/1.2 var(--dc-font); letter-spacing: .12em; text-transform: uppercase; color: var(--dc-ink-3); }
+      .tabs-list { display: flex; flex-direction: column; gap: 6px; max-height: 150px; overflow-y: auto; margin: 0 0 12px; scrollbar-width: thin; }
+      .tab {
+        display: flex; align-items: center; gap: 8px; width: 100%; flex: none; text-align: left; cursor: pointer;
+        padding: 8px 10px; font: 400 12px/1.3 var(--dc-font); color: var(--dc-ink);
+        background: var(--dc-elev); border: 1px solid var(--dc-line); border-radius: 10px;
+        transition: border-color .12s, box-shadow .12s;
+      }
+      .tab:hover:not(:disabled) { border-color: var(--dc-b); box-shadow: 0 1px 2px rgba(36,28,24,.06), 0 2px 6px rgba(36,28,24,.04); }
+      .tab:disabled { opacity: .45; cursor: default; }
+      .tab:focus-visible { outline: 2px solid var(--dc-b); outline-offset: -2px; }   /* inside: the scrolling list clips it */
+      .tab-src { flex: none; font: 600 11px/1 var(--dc-font); letter-spacing: .06em; padding: 3px 8px; border-radius: 999px; background: var(--dc-bg-deep); color: var(--dc-ink-2); }
+      .tab-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       /* The one action: the popup's teal pill, the only coloured shadow on the sheet. */
       .go {
         display: flex; align-items: center; justify-content: center; gap: 7px; width: 100%;
@@ -383,6 +462,7 @@
         <button class="x" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       </div>
       <div class="title"><span class="pip"></span><span class="title-text"></span></div>
+      <div class="tabs" hidden><div class="tabs-label"></div><div class="tabs-list"></div></div>
       <select hidden></select>
       <input type="text" />
       <button class="go"><span class="go-label"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
@@ -397,11 +477,13 @@
     const select = $('select'), go = $('.go'), msg = $('.msg');
 
     $('.fab-label').textContent = M('compare');
-    $('.title-text').textContent = M('injectPanelTitle');
+    // The fields pick the second deck: the popup's own label, in side B's ink (this page is deck 1).
+    $('.title-text').textContent = `Deck 2 · ${M('compareAgainst')}`;
     input.placeholder = M('pasteADeckUrl');
     input.setAttribute('aria-label', M('pasteADeckUrl'));
     select.setAttribute('aria-label', M('selectDeck'));
     $('.go-label').textContent = M('compare');
+    $('.tabs-label').textContent = M('openTabsLabel');
 
     const setMsg = (text, isErr) => { msg.textContent = text; msg.className = isErr ? 'msg err' : 'msg'; };
 
@@ -421,16 +503,29 @@
 
     // returnFocus is off for outside clicks: the user already clicked somewhere on the
     // host page, and pulling focus back to our button would steal it from them.
-    const setOpen = (open, returnFocus = true) => {
+    const setOpen = (open, returnFocus = true, byKeyboard = false) => {
       panel.hidden = !open;
       fab.setAttribute('aria-expanded', String(open));
       // The saved-deck picker resolves later and may un-hide the <select>: place the panel
       // now so it appears at once, then again when the sheet has its final height.
-      if (open) { placePanel(); input.focus(); fillSavedDecks(select).then(() => { if (!panel.hidden) placePanel(); }); }
+      if (open) {
+        placePanel();
+        input.focus();
+        fillSavedDecks(select).then(() => { if (!panel.hidden) placePanel(); });
+        fillOpenTabs($('.tabs'), $('.tabs-list')).then(() => {
+          if (panel.hidden) return;
+          placePanel();
+          // An open deck tab is the likeliest second deck: a keyboard user starts on it (unless
+          // already typing). A mouse open keeps the caret in the field: open, paste, Enter must
+          // compare the pasted deck, not the first tab.
+          const first = root.querySelector('.tab');
+          if (byKeyboard && first && root.activeElement === input && !input.value) first.focus();
+        });
+      }
       else if (returnFocus) fab.focus();
     };
 
-    fab.addEventListener('click', () => setOpen(panel.hidden));
+    fab.addEventListener('click', (e) => setOpen(panel.hidden, true, e.detail === 0));   // detail 0: Enter or Space
     // Window/document listeners share one AbortController so unmount() removes
     // them all: each popup toggle cycle used to stack another permanent set, each
     // retaining its detached shadow tree. Shadow-internal listeners need none —
@@ -443,11 +538,24 @@
     addEventListener('scroll', () => { if (!panel.hidden) placePanel(); }, { capture: true, passive: true, signal: ac.signal });
     $('.x').addEventListener('click', () => setOpen(false));
 
-    // Escape and a click outside close it, like every other panel on the page.
+    // Escape and a click outside close it, like every other panel on the page; so does the
+    // keyboard leaving it for the page (Tab past Compare used to leave it open behind).
     root.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !panel.hidden) setOpen(false); });
+    panel.addEventListener('focusout', (e) => {
+      if (!panel.hidden && e.relatedTarget && !root.contains(e.relatedTarget)) setOpen(false, false);
+    });
     document.addEventListener('click', (e) => {
       if (!panel.hidden && !e.composedPath().includes(host)) setOpen(false, false);
     }, { signal: ac.signal });
+
+    // An open deck tab compares at once, as in the popup: it is the most common second deck.
+    $('.tabs-list').addEventListener('click', (e) => {
+      const tab = e.target.closest('.tab');
+      if (!tab || go.disabled) return;
+      input.value = tab.dataset.url;
+      root.querySelectorAll('.tab').forEach((b) => { b.disabled = true; });
+      go.click();
+    });
 
     // Picking a saved deck fills the input, so there's a single source of truth.
     select.addEventListener('change', () => { if (select.value) input.value = select.value; });
@@ -457,12 +565,15 @@
       const target = input.value.trim();
       if (!target) { setMsg(M('pasteOrSelect'), true); return; }
       go.disabled = true;
+      let opened = false;
       try {
-        await runComparison(target, setMsg);
+        opened = await runComparison(target, setMsg);
       } catch (err) {
-        setMsg(`${M('error')}: ${err.message}`, true);
+        setMsg(`${M('error')} ${err.message}`, true);
       }
       go.disabled = false;
+      if (opened) setOpen(false, false);   // the results are in their tab: nothing left to do here
+      root.querySelectorAll('.tab').forEach((b) => { b.disabled = false; });
     });
   }
 
@@ -475,6 +586,22 @@
       const decks = await Shared.getSavedDecks();
       Shared.populateSavedDeckSelect(select, decks, M('selectDeck'));
     } catch (_) { /* nothing saved — the URL field still works */ }
+  }
+
+  // The user's other deck tabs, every window, this one first (the background lists them:
+  // content scripts cannot).
+  // Rebuilt on every open; hidden when there are none.
+  async function fillOpenTabs(box, list) {
+    let tabs = [];
+    try { tabs = ((await send({ type: 'LIST_DECK_TABS' })) || {}).tabs || []; } catch (_) { /* none */ }
+    const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const oneSite = new Set(tabs.map((t) => t.label)).size === 1;   // then the chip tells nothing apart
+    box.querySelector('.tabs-label').textContent = `${M('openTabsLabel')} (${tabs.length})`;
+    list.innerHTML = tabs.map((t) =>
+      `<button type="button" class="tab" data-url="${esc(t.url)}" title="${esc(t.title)}">` +
+      (oneSite ? '' : `<span class="tab-src">${esc(t.label)}</span>`) + `<span class="tab-name">${esc(t.title)}</span></button>`
+    ).join('');
+    box.hidden = !tabs.length;
   }
 
   const send = (msg) => new Promise((resolve, reject) => {
@@ -496,20 +623,21 @@
     const targetPromise = send({ type: 'FETCH_DECK', url: targetUrl });
     targetPromise.catch(() => {});
 
-    setMsg(M('readingDeck'));
+    const site = Shared.SUPPORTED_SITES.find((s) => location.href.includes(s.pattern));
+    setMsg(`${M('readingDeck')} ${site ? site.label : location.hostname}…`);
     let deckA = Shared.normalizeDeck(DomParsers.parseDeckFromCurrentSite(document, location.href));
 
     if (!deckA || deckA._needsApiFetch || boardsEmpty(deckA)) {
       setMsg(M('fetchingApi'));
       const resp = await send({ type: 'FETCH_DECK', url: location.href });
-      if (resp.error) { setMsg(`${M('error')}: ${resp.error}`, true); return; }
+      if (resp.error) { setMsg(`${M('error')} ${resp.error}`, true); return; }
       deckA = resp.deck;
     }
     if (boardsEmpty(deckA)) { setMsg(M('unableToRead'), true); return; }
 
     setMsg(M('fetchingSecond'));
     const targetResp = await targetPromise;
-    if (targetResp.error) { setMsg(`${M('error')}: ${targetResp.error}`, true); return; }
+    if (targetResp.error) { setMsg(`${M('error')} ${targetResp.error}`, true); return; }
 
     setMsg(M('openingResults'));
     deckA.url = location.href;
@@ -517,5 +645,6 @@
     await chrome.storage.local.set({ compareData: { deckA, deckB: targetResp.deck } });
     await send({ type: 'OPEN_COMPARE' });   // content scripts can't call chrome.tabs
     setMsg('');
+    return true;
   }
 })();
