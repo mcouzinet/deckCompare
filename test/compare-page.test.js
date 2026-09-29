@@ -9,7 +9,7 @@ const fs = require("fs");
 const path = require("path");
 const { JSDOM } = require("jsdom");
 
-const ROOT = path.join(__dirname, "..");
+const ROOT = path.join(__dirname, "..", "src");
 const deck = (name, main, side = {}, cmd = {}) => ({ name, source: "text", url: "", commanders: cmd, mainboard: main, sideboard: side });
 const TYPES = { "Mountain": "l", "Goblin Guide": "c", "Llanowar Elves": "c", "Lightning Bolt": "", "Shock": "", "Fireblast": "", "Smash to Smithereens": "" };
 const cardCache = () => Object.fromEntries(Object.entries(TYPES).map(([name, t]) =>

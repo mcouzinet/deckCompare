@@ -4,7 +4,7 @@ const assert = require("node:assert/strict");
 const fs = require("fs");
 const path = require("path");
 const { JSDOM } = require("jsdom");
-const D = require("../dom-parsers.js");
+const D = require("../src/dom-parsers.js");
 
 const doc = (name) => new JSDOM(fs.readFileSync(path.join(__dirname, "fixtures", name), "utf8")).window.document;
 const sum = (b) => Object.values(b).reduce((s, q) => s + q, 0);
@@ -91,7 +91,7 @@ test("Archidekt (DOM): no __NEXT_DATA__ falls back to API", () => {
 });
 
 test("mtgdecks (DOM): arena_deck textarea, set codes stripped", () => {
-  const d = require("../shared.js").normalizeDeck(D.parseMtgDecks(doc("mtgdecks.html")));  // content.js normalizes
+  const d = require("../src/shared.js").normalizeDeck(D.parseMtgDecks(doc("mtgdecks.html")));  // content.js normalizes
   assert.deepEqual(Object.keys(d.commanders), ["Aragorn, King of Gondor"]);
   assert.equal(d.mainboard["Sol Ring"], 1);
   assert.equal(sum(d.mainboard), 7);

@@ -1,7 +1,7 @@
 "use strict";
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const { nameKeys, enrichmentFor } = require("../enrich.js");
+const { nameKeys, enrichmentFor } = require("../src/enrich.js");
 
 test("nameKeys lowercases a normal card name", () => {
   assert.deepEqual(nameKeys("Lightning Bolt"), ["lightning bolt"]);
@@ -41,7 +41,7 @@ test("enrichmentFor resolves by full name and by DFC front face", () => {
 });
 
 test("enrichCards spaces its requests and takes a name the batch reports unknown at its word", async () => {
-  const { enrichCards } = require("../enrich.js");
+  const { enrichCards } = require("../src/enrich.js");
   const prev = global.fetch;
   const posts = [];
   const named = [];
@@ -66,7 +66,7 @@ test("enrichCards spaces its requests and takes a name the batch reports unknown
 });
 
 test("enrichCards falls back on /cards/named for the names of a batch that failed", async () => {
-  const { enrichCards } = require("../enrich.js");
+  const { enrichCards } = require("../src/enrich.js");
   const prev = global.fetch;
   const named = [];
   global.fetch = async (url) => {

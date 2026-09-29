@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Deck Compare Reel</title>
+<!--
+  15 s promo video of Deck Compare, 16:9 (1920x1080), rendered by render.js.
+  Same method as the Endstep Tracker and Whozic reels: render(t) is a PURE function of time (no CSS
+  animation, no clock), so render.js captures it frame by frame and sfx.js lays the sound effects on
+  the same timeline, to the sample. Card images are Scryfall's (pinned URLs) and the fonts those of
+  the extension's pages, both loaded once at start. The two decks are made up, like the store
+  screenshots' demo data, but hold to the product's formula: 71 shared of 75 = 95 % similar.
+-->
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Geist+Mono:wght@500;600;700&display=block" rel="stylesheet">
+<style>
+@font-face{font-family:"Beleren";src:url("../../src/fonts/Beleren2016-Bold.woff2") format("woff2");font-weight:400 700;font-display:block}
+/* the stage: the icon's slate and its two cards' inks, the shared green lifted for the dark;
+   then the memo (theme.css), for the extension's own sheets */
+:root{--bg:#0f1218;--surface:#161a22;--surface-2:#1c212b;--surface-3:#262c38;--line:#2a303c;--line-strong:#3b4351;--ink:#eef0f3;--ink-2:#b3b9c3;--ink-3:#858c98;
+--a:#e3a24f;--a-hi:#edb567;--b:#56b6c9;--b-hi:#6fc6d8;--m:#4cc38a;--alarm:#d9485e;
+--paper:#f8f5f2;--paper-well:#efe9e3;--p-ink:#241c18;--p-ink-2:#5e524b;--p-ink-3:#7a6d64;--p-line:#e8dfd8;--p-line-strong:#d6c9bf;--p-a:#a8540f;--p-b:#137083;--p-m:#1e7a4c;
+--f-title:"Bricolage Grotesque","Archivo",system-ui,sans-serif;--f-ui:"Archivo",system-ui,sans-serif;--f-fig:"Beleren",Georgia,serif;--f-mono:"Geist Mono",ui-monospace,monospace;--f-sys:-apple-system,system-ui,"Segoe UI",sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:var(--bg)}
+#stage{position:relative;width:1920px;height:1080px;overflow:hidden;font-family:var(--f-ui);color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+.layer,.scene{position:absolute;inset:0}
+.scene{display:none}
+.a{position:absolute;left:960px;top:540px;transform:translate(-50%,-50%);white-space:nowrap}
+.caps{font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+svg{display:block;overflow:visible}
+img{display:block}
+
+/* backgrounds */
+#floorWrap{overflow:hidden;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 30%,#000 70%,transparent 100%)}
+#floor{position:absolute;left:-1100px;top:640px;width:4120px;height:1100px;transform-origin:50% 0;transform:perspective(700px) rotateX(72deg);background-size:140px 140px}
+#wall{position:absolute;left:-400px;top:-500px;width:2800px;display:flex;flex-wrap:wrap;gap:20px;transform:rotate(-8deg);filter:blur(5px)}
+#wall img{width:150px;height:209px;border-radius:7px;object-fit:cover}
+#veil{background:rgba(15,18,24,.86)}
+#wipe{background:radial-gradient(1400px 1000px at 50% 59%,#8fd6e4 0,#2f8ea1 38%,#123843 72%,#0f1218 100%)}
+#flash{background:radial-gradient(circle at 50% 50%,#fff 0,rgba(255,255,255,0) 60%);opacity:0}
+#grain{opacity:.07;mix-blend-mode:overlay;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+#vig{background:radial-gradient(ellipse at 50% 50%,transparent 55%,rgba(0,0,0,.6))}
+
+/* S1 */
+.ring{border-radius:50%;border:3px solid var(--a)}
+.ring.thin{border-width:2px;opacity:.45}
+.ico{width:220px;height:220px}
+.q{font:800 300px/1 var(--f-title);color:var(--alarm);text-shadow:0 0 60px rgba(217,72,94,.6)}
+.word{font:800 120px/1 var(--f-title);letter-spacing:-.03em;text-transform:uppercase}
+
+/* S2 */
+.title{font:800 220px/.9 var(--f-title);letter-spacing:-.04em;text-transform:uppercase}
+.title span{display:inline-block}
+.hl{background:linear-gradient(90deg,var(--a-hi) 8%,var(--b-hi) 92%);-webkit-background-clip:text;background-clip:text;color:transparent;padding:0 .02em}
+#mk{width:190px;height:190px}
+#mk img{width:100%;height:100%}
+#sq{display:flex;gap:12px;align-items:center;height:60px}
+#sq i{display:block;width:34px;height:48px;border-radius:6px}
+
+/* S3: the deck page, the button, the panel */
+.site{width:900px;border-radius:24px;background:#121419;border:2px solid var(--line-strong);box-shadow:0 40px 90px -40px #000;white-space:normal}
+.chrome{height:58px;display:flex;align-items:center;gap:10px;padding:0 22px;background:#0b0d11;border-bottom:1px solid var(--line);border-radius:22px 22px 0 0}
+.chrome i{display:block;width:13px;height:13px;border-radius:50%;background:#353c48}
+.url{margin-left:14px;flex:1;height:36px;border-radius:18px;background:#191d25;color:var(--ink-3);font:500 19px/1 var(--f-ui);display:flex;align-items:center;gap:10px;padding:0 18px}
+.url svg{width:16px;height:16px}
+.sbody{position:relative;overflow:hidden;border-radius:0 0 22px 22px}
+.sbody .art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%;opacity:.5}
+.sbody .fade{position:absolute;inset:0;background:linear-gradient(90deg,#121419 20%,rgba(18,20,25,.55) 70%,rgba(18,20,25,.2))}
+.sin{position:relative;padding:34px 44px 40px}
+.sfmt{font-size:19px;color:var(--ink-2)}
+.stitle{font:800 66px/1.05 var(--f-ui);letter-spacing:-.02em;color:#fff;margin-top:10px}
+.sby{font:400 23px/1.2 var(--f-ui);color:var(--ink-2);margin-top:8px}
+.tools{display:flex;gap:14px;margin-top:30px}
+.tb{height:60px;padding:0 26px;border-radius:8px;background:#fff;color:#1b1d22;font:600 23px/1 var(--f-ui);display:flex;align-items:center}
+/* the injected button, as on a site: black, a light hairline, the two-tone mark */
+.fab{height:60px;padding:0 24px;border-radius:8px;background:#141414;border:2px solid rgba(255,255,255,.18);color:#fff;font:600 23px/1 var(--f-sys);display:flex;align-items:center;gap:12px}
+.fab svg{width:28px;height:28px}
+.c-back{fill:#e3a24f}.c-front{fill:#56b6c9}
+/* the panel it opens: a sheet of the memo, twice its real size */
+.panel{position:absolute;width:600px;padding:28px 32px 32px;border-radius:28px;background:var(--paper);border:2px solid var(--p-line-strong);color:var(--p-ink-2);font-family:var(--f-sys);transform-origin:0 0;box-shadow:0 12px 24px rgba(0,0,0,.25),0 40px 90px rgba(0,0,0,.5);display:none}
+.prow{display:flex;align-items:center;justify-content:space-between;padding-bottom:20px;margin-bottom:24px;border-bottom:2px solid var(--p-line)}
+.brand{display:flex;align-items:center;gap:14px}
+.brand svg{width:36px;height:36px}
+.bn{font:700 31px/1 var(--f-title);letter-spacing:-.01em;color:var(--p-a)}
+.bn b{color:var(--p-b);font-weight:800}
+.px{width:26px;height:26px;color:var(--p-ink-3)}
+.ptitle{display:flex;align-items:center;gap:14px;margin-bottom:20px;font:600 21px/1.2 var(--f-sys);letter-spacing:.14em;text-transform:uppercase;color:var(--p-b)}
+.ptitle i{display:block;width:12px;height:12px;border-radius:50%;background:var(--p-b)}
+.fld{height:70px;margin-bottom:16px;padding:0 28px;border-radius:20px;background:#fff;border:2px solid var(--p-line-strong);display:flex;align-items:center;justify-content:space-between;font:400 24px/1 var(--f-sys);color:var(--p-ink-3)}
+.fld svg{width:26px;height:26px}
+.fld.on{border-color:var(--p-b);box-shadow:inset 0 0 0 2px var(--p-b)}
+.go{height:72px;border-radius:999px;background:var(--p-b);color:#fff;font:600 26px/1 var(--f-sys);display:flex;align-items:center;justify-content:center;gap:12px;box-shadow:0 4px 20px rgba(19,112,131,.45)}
+.go svg{width:26px;height:26px}
+.menu{position:absolute;left:32px;right:32px;padding:8px;border-radius:18px;background:#fff;border:2px solid var(--p-line-strong);box-shadow:0 24px 56px rgba(0,0,0,.28);transform-origin:50% 0}
+.mi{height:62px;padding:0 20px;border-radius:12px;display:flex;align-items:center;font:500 24px/1 var(--f-sys);color:var(--p-ink)}
+.mi.on{background:rgba(19,112,131,.12);color:var(--p-b)}
+#cursor{position:absolute;left:0;top:0;width:56px;height:56px;transform-origin:12px 7px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.5))}
+.ripple{width:150px;height:150px;border-radius:50%;border:4px solid var(--b-hi)}
+.cap{font-size:30px;color:var(--b-hi)}
+
+/* S3: the results page, a sheet of the memo */
+.cmp{display:grid;grid-template-columns:318px 822px 318px;gap:0 56px;padding:44px 48px 52px;border-radius:30px;background:var(--paper);border:2px solid var(--p-line-strong);box-shadow:0 40px 100px -30px rgba(0,0,0,.7);white-space:normal}
+.zh{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:16px;margin-bottom:24px;border-bottom:2px solid var(--p-line);font:600 21px/1.2 var(--f-ui);letter-spacing:.14em;text-transform:uppercase}
+.zh b{font:700 28px/1 var(--f-mono);letter-spacing:0}
+.za .zh{color:var(--p-a)}.zm .zh{color:var(--p-m)}.zb .zh{color:var(--p-b)}
+.zg{display:grid;grid-template-columns:repeat(2,150px);gap:18px}
+.zm .zg{grid-template-columns:repeat(5,150px)}
+.ci{position:relative;width:150px;height:209px;border-radius:4.7%/3.4%;overflow:hidden;background:#111;box-shadow:0 2px 4px rgba(36,28,24,.12),0 8px 18px rgba(36,28,24,.16)}
+.ci img{width:100%;height:100%}
+.qty{position:absolute;left:8px;top:8px;padding:5px 8px;border-radius:7px;background:rgba(36,28,24,.82);color:#fff;font:700 17px/1 var(--f-mono)}
+
+/* S4: the matchup, as on the results page, on the dark */
+.mname{position:absolute;top:318px;white-space:nowrap}
+.mn{font:400 78px/1.05 var(--f-fig);letter-spacing:-.01em}
+.mrule{width:64px;height:4px;margin:22px 0 16px;background:currentColor}
+.ml{font-size:22px;color:var(--ink-3)}
+#nameA{left:150px;color:var(--a-hi)}
+#nameB{right:150px;text-align:right;color:var(--b-hi)}
+#nameB .mrule{margin-left:auto}
+.fig{display:flex;align-items:flex-start;font:400 250px/1 var(--f-fig);color:var(--ink)}
+.odo{display:flex;height:250px;overflow:hidden}
+.dg{width:.56em;text-align:center}
+.dg span{display:block;height:250px}
+.pc{font-size:.42em;color:var(--ink-3);margin:.3em 0 0 .08em}
+.figlab{font-size:26px;color:var(--ink-2);letter-spacing:.24em}
+.bar{width:1400px;height:16px;border-radius:8px;background:var(--surface-3)}
+.bar i{position:absolute;top:0;height:16px;border-radius:8px;transform-origin:0 50%}
+.legend{width:1400px;display:flex;justify-content:space-between;font:500 24px/1 var(--f-ui);color:var(--ink-2)}
+.legend span{display:flex;align-items:center;gap:12px}
+.legend i{display:block;width:14px;height:14px;border-radius:50%}
+.legend b{font:700 26px/1 var(--f-mono);color:var(--ink)}
+.rays{width:2600px;height:2600px;border-radius:50%;background:repeating-conic-gradient(from 0deg,rgba(86,182,201,.2) 0deg 5deg,transparent 5deg 15deg,rgba(227,162,79,.2) 15deg 20deg,transparent 20deg 30deg);-webkit-mask-image:radial-gradient(circle,#000 0,transparent 62%)}
+.apart{font:800 124px/1 var(--f-title);letter-spacing:-.035em}
+.apart .hl{padding-right:.06em}
+#four{display:flex;gap:220px}
+.pair{display:flex;flex-direction:column;align-items:center;gap:26px}
+.pair .cards{display:flex;gap:22px}
+.pair .ci{width:190px;height:265px;box-shadow:0 20px 40px -12px rgba(0,0,0,.7)}
+.pair .qty{font-size:21px;padding:6px 10px}
+.pl{font-size:24px}
+.part{position:absolute;left:0;top:0;border-radius:4px}
+
+/* S5 */
+#cubeWrap{width:440px;height:440px;perspective:1300px;z-index:3}
+#cube{position:relative;width:440px;height:440px;transform-style:preserve-3d}
+.face{position:absolute;inset:0;border-radius:16px;background:linear-gradient(160deg,#1d2530,#0f1218 60%);border:3px solid rgba(86,182,201,.45);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;backface-visibility:hidden;color:var(--b-hi);text-align:center}
+.face .ft{font:800 56px/.95 var(--f-title);letter-spacing:-.02em;text-transform:uppercase;text-shadow:0 0 40px rgba(86,182,201,.45)}
+.face svg{width:130px;height:130px;filter:drop-shadow(0 0 18px rgba(86,182,201,.5))}
+.face.logoF{background:none;border:none;border-radius:0}
+.face.logoF img{width:440px;height:440px}
+.face.cap{background:#1e2733;border-color:rgba(86,182,201,.25)}
+#fbot{background:#080a0e}
+.shadow{width:480px;height:80px;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.5),transparent)}
+
+/* S6 */
+#lockup{display:flex;align-items:center;gap:34px}
+#logo{width:150px;height:150px;flex:none}
+#logo img{width:100%;height:100%}
+#wm{font:700 124px/1 var(--f-title);letter-spacing:-.02em}
+#wm span{display:inline-block;white-space:pre}
+.slogan{font-size:50px;line-height:1.2;text-align:center;color:var(--ink-2);white-space:normal;width:1600px}
+.slogan em{font-style:normal;font-weight:800;color:var(--ink)}
+.cta{font:800 50px/1 var(--f-ui);letter-spacing:-.01em;padding:22px 56px;border-radius:60px;background:var(--b);color:var(--bg)}
+.legal{font-size:17px;line-height:1.45;color:var(--ink-3);text-align:center}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="layer" id="glow"></div>
+  <div class="layer" id="wallL"><div id="wall"></div><div class="layer" id="veil"></div></div>
+  <div class="layer" id="floorWrap"><div id="floor"></div></div>
+
+  <div class="layer" id="cam">
+    <!-- S1: three beats -->
+    <section class="scene" id="s1">
+      <div class="a ring thin" id="s1r2" style="top:420px;width:600px;height:600px"></div>
+      <div class="a ring" id="s1r1" style="top:420px;width:480px;height:480px"></div>
+      <div class="a ring" id="s1w" style="top:420px;width:480px;height:480px"></div>
+      <div class="a ico" id="s1i0" style="top:420px;color:var(--a-hi)">
+        <svg viewBox="0 0 24 24" width="220" height="220" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.2" y="5" width="9.6" height="14" rx="2.2" transform="rotate(-9 8 12)"/><rect x="11.2" y="5" width="9.6" height="14" rx="2.2" transform="rotate(7 16 12)" fill="#0f1218"/><path d="M13.6 9.8h5M13.6 12.4h5M13.6 15h3" transform="rotate(7 16 12)"/></svg>
+      </div>
+      <div class="a ico" id="s1i1" style="top:420px;color:var(--b-hi)"><svg viewBox="0 0 24 24" width="220" height="220" fill="currentColor" id="s1grid"></svg></div>
+      <div class="a q" id="s1i2" style="top:420px">?</div>
+      <div class="a word" id="s1t0" style="top:830px"><span style="color:var(--a-hi)">2</span> decks.</div>
+      <div class="a word" id="s1t1" style="top:830px"><span style="color:var(--b-hi)">75</span> cards.</div>
+      <div class="a word" id="s1t2" style="top:830px"><span style="color:var(--alarm)">1</span> question.</div>
+    </section>
+
+    <!-- S2: the question -->
+    <section class="scene" id="s2">
+      <div class="layer" id="s2title">
+        <div class="a title" style="top:480px"><span id="w1">What</span></div>
+        <div class="a title" style="top:690px"><span class="hl" id="w3">changed</span><span id="w4">?</span></div>
+      </div>
+      <div class="a" id="sq" style="top:880px"></div>
+    </section>
+
+    <!-- S3: on the deck page, then the results -->
+    <section class="scene" id="s3">
+      <div class="a caps cap" id="cap1" style="top:150px"></div>
+      <div class="a site" id="site" style="top:410px">
+        <div class="chrome"><i></i><i></i><i></i><div class="url"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="2.2"/><path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3"/></svg>mtgtop8.com/event?e=74219&amp;d=661834</div></div>
+        <div class="sbody">
+          <img class="art" id="art" alt="">
+          <div class="fade"></div>
+          <div class="sin">
+            <div class="caps sfmt">Modern · 1st place</div>
+            <div class="stitle">Boros Energy</div>
+            <div class="sby">by Kestrel · Modern Challenge 64</div>
+            <div class="tools"><span class="tb">Download</span><span class="tb">Export</span><span class="fab" id="fab"><svg viewBox="0 0 24 24" fill="none" id="fabMark"></svg><span>Compare</span></span></div>
+          </div>
+        </div>
+        <div class="panel" id="panel">
+          <div class="prow"><span class="brand"><svg viewBox="0 0 24 24" fill="none" class="mark"></svg><span class="bn">Deck<b>Compare</b></span></span><svg class="px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
+          <div class="ptitle"><i></i>Compare this deck</div>
+          <div class="fld" id="sel"><span id="selTxt"></span><svg viewBox="0 0 24 24" fill="none" stroke="#7a6d64" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div>
+          <div class="fld" id="fld"><span id="fldTxt"></span></div>
+          <div class="go" id="go">Compare<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+          <div class="menu" id="menu"></div>
+        </div>
+      </div>
+      <div class="a caps cap" id="cap2" style="top:230px"></div>
+      <div class="a cmp" id="cmp" data-d="grid" style="top:600px">
+        <div class="za"><div class="zh"><span>Only in theirs</span><b id="nA">0</b></div><div class="zg" id="gA"></div></div>
+        <div class="zm"><div class="zh"><span>Shared</span><b id="nM">0</b></div><div class="zg" id="gM"></div></div>
+        <div class="zb"><div class="zh"><span>Only in yours</span><b id="nB">0</b></div><div class="zg" id="gB"></div></div>
+      </div>
+      <div class="a ripple" id="rip" style="opacity:0"></div>
+      <div id="cursor"><svg viewBox="0 0 24 24" width="56" height="56"><path d="M5 3l14 8.2-6.3 1.4 3.7 6.9-2.6 1.4-3.7-6.9L5 18.6z" fill="#fff" stroke="#111" stroke-width="1.3" stroke-linejoin="round"/></svg></div>
+    </section>
+
+    <!-- the mark, above the question, then set into the button (S2 to S3) -->
+    <div class="a" id="mk" style="top:232px;display:none"><img src="../../src/icons/icon.svg" alt=""></div>
+
+    <!-- S4: the reveal -->
+    <section class="scene" id="s4">
+      <div class="a rays" id="rays" style="top:420px;opacity:0"></div>
+      <div class="layer" id="parts"></div>
+      <div class="layer" id="mu">
+        <div class="mname" id="nameA"><div class="mn">Boros Energy</div><div class="mrule"></div><div class="caps ml">mtgtop8 · 1st place</div></div>
+        <div class="mname" id="nameB"><div class="mn">My Boros Energy</div><div class="mrule"></div><div class="caps ml">Moxfield · yours</div></div>
+        <div class="a fig" id="fig" style="top:420px"><div class="odo"><div class="dg" id="d1"></div><div class="dg" id="d0"></div></div><span class="pc">%</span></div>
+        <div class="a caps figlab" id="figLab" style="top:578px">Similar</div>
+        <div class="a bar" id="bar" style="top:680px"><i id="segA" style="background:var(--a)"></i><i id="segM" style="background:var(--m)"></i><i id="segB" style="background:var(--b)"></i></div>
+        <div class="a legend" id="legend" style="top:730px">
+          <span><i style="background:var(--a)"></i>Only in theirs <b>4</b></span>
+          <span><i style="background:var(--m)"></i>Shared <b>71</b></span>
+          <span><i style="background:var(--b)"></i>Only in yours <b>4</b></span>
+        </div>
+      </div>
+      <div class="a apart" id="apart" style="top:450px"><span class="hl">4</span> cards apart.</div>
+      <div class="a" id="four" style="top:720px">
+        <div class="pair"><div class="cards" id="fourA"></div><div class="caps pl" style="color:var(--a-hi)" id="plA">Only in theirs</div></div>
+        <div class="pair"><div class="cards" id="fourB"></div><div class="caps pl" style="color:var(--b-hi)" id="plB">Only in yours</div></div>
+      </div>
+    </section>
+
+    <!-- S5: the cube -->
+    <section class="scene" id="s5">
+      <div class="layer" id="wipe"></div>
+      <div class="a shadow" id="cshadow" style="top:830px"></div>
+      <div class="a" id="cubeWrap" style="top:520px">
+        <div id="cube">
+          <div class="face" id="f0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4.5" width="14" height="17" rx="2.2"/><path d="M9 4.5V3.2h6v1.3"/><path d="M8.5 10h7M8.5 13.5h5"/><path d="M3 21.5L21 2.5"/></svg><div class="ft">No<br>copy-paste</div></div>
+          <div class="face" id="f1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.5 3.9 5.5 3.9 9s-1.3 6.5-3.9 9c-2.6-2.5-3.9-5.5-3.9-9S9.4 5.5 12 3z"/></svg><div class="ft">8 deck<br>sites</div></div>
+          <div class="face" id="f2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="6" width="9" height="13" rx="1.8" transform="rotate(-12 7.5 12.5)"/><rect x="7.5" y="5" width="9" height="13" rx="1.8" fill="#161b23"/><rect x="12" y="6" width="9" height="13" rx="1.8" transform="rotate(12 16.5 12.5)" fill="#161b23"/></svg><div class="ft">Whole<br>archetypes<br>at once</div></div>
+          <div class="face logoF" id="f3"><img src="../../src/icons/icon.svg" alt=""></div>
+          <div class="face cap" id="ftop"></div>
+          <div class="face cap" id="fbot"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- S6: the signature -->
+    <section class="scene" id="s6">
+      <div class="a" id="dwipe" style="top:540px;width:100px;height:100px;border-radius:50%;background:var(--bg)"></div>
+      <div class="a" id="lockup" style="top:400px">
+        <div id="logo"><img src="../../src/icons/icon.svg" alt=""></div>
+        <div id="wm"></div>
+      </div>
+      <div class="a slogan" id="slogan" style="top:570px">Compare any two MTG decklists, <em>right on the deck page.</em></div>
+      <div class="a cta" id="cta" style="top:720px">Chrome · Edge · Firefox · Safari</div>
+      <div class="a caps" id="ctaSub" style="top:822px;font-size:26px;color:var(--ink-2)">No account · nothing collected · 8 deck sites</div>
+      <div class="a legal" id="legal" style="top:1018px">Deck Compare is unofficial Fan Content permitted under the Fan Content Policy. Not approved/endorsed by Wizards.<br>Portions of the materials used are property of Wizards of the Coast. ©Wizards of the Coast LLC. Not affiliated with the deck sites shown.</div>
+    </section>
+  </div>
+
+  <div class="layer" id="flash"></div>
+  <div class="layer" id="grain"></div>
+  <div class="layer" id="vig"></div>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s)
+const $$ = (s) => [...document.querySelectorAll(s)]
+const clamp = (x, a = 0, b = 1) => (x < a ? a : x > b ? b : x)
+const P = (t, a, b) => clamp((t - a) / (b - a))
+const lerp = (a, b, x) => a + (b - a) * x
+const E = {
+  out3: (x) => 1 - (1 - x) ** 3,
+  outExpo: (x) => (x >= 1 ? 1 : 1 - 2 ** (-10 * x)),
+  inOut: (x) => (x < 0.5 ? 4 * x * x * x : 1 - (-2 * x + 2) ** 3 / 2),
+  in3: (x) => x ** 3,
+  back: (x) => { const c1 = 1.9, c3 = c1 + 1; return 1 + c3 * (x - 1) ** 3 + c1 * (x - 1) ** 2 },
+}
+function rng(seed) { return () => { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296 } }
+
+/** Places an element: x/y relative to its CSS position, centred on it unless `c` is false. */
+function T(el, { x = 0, y = 0, s = 1, r = 0, o = 1, b = 0 } = {}, c = true) {
+  el.style.transform = `${c ? 'translate(-50%,-50%) ' : ''}translate3d(${x}px,${y}px,0) scale(${s}) rotate(${r}deg)`
+  el.style.opacity = o
+  el.style.filter = b > 0.05 ? `blur(${b}px)` : 'none'
+}
+const vis = (el, on) => { el.style.display = on ? (el.dataset.d || 'block') : 'none' }
+const inR = (t, a, b) => t >= a && t < b
+/** 0 → 1 → 0 around a click, for presses. */
+const bump = (t, c) => Math.sin(Math.PI * P(t, c - 0.02, c + 0.12))
+
+/* ---------------------------------------------------------------- data */
+const IMG = {
+  'Guide of Souls': 'https://cards.scryfall.io/normal/front/7/6/76c3cad2-1e25-4abe-878d-9194de6fcc27.jpg?1790212061',
+  'Ragavan, Nimble Pilferer': 'https://cards.scryfall.io/normal/front/a/9/a9738cda-adb1-47fb-9f4c-ecd930228c4d.jpg?1783926839',
+  'Ocelot Pride': 'https://cards.scryfall.io/normal/front/8/9/89cf6f57-230f-497e-a14e-ad1e8737fd42.jpg?1783911298',
+  'Ajani, Nacatl Pariah': 'https://cards.scryfall.io/normal/front/0/d/0d16e8e0-31b2-4389-afd6-783c501f6fa0.jpg?1783911238',
+  "Phlage, Titan of Fire's Fury": 'https://cards.scryfall.io/normal/front/e/4/e419cd0b-2449-4cc5-9ead-b9e45e271700.jpg?1783911247',
+  'Galvanic Discharge': 'https://cards.scryfall.io/normal/front/3/2/32aa6e33-221f-414c-9b51-850d97a7e051.jpg?1790212085',
+  'Goblin Bombardment': 'https://cards.scryfall.io/normal/front/e/2/e262f55e-9239-4a97-a19e-9b08fb34502e.jpg?1783926784',
+  'Thraben Charm': 'https://cards.scryfall.io/normal/front/d/d/dd28a646-f38f-4cdf-948c-969cd979e5e6.jpg?1783911295',
+  'Seasoned Pyromancer': 'https://cards.scryfall.io/normal/front/1/4/1427f615-8430-426e-a669-f9fe12033ac4.jpg?1783921882',
+  'Sacred Foundry': 'https://cards.scryfall.io/normal/front/a/7/a7758cc6-4e18-48a5-8720-5f42b5cd9d31.jpg?1784036842',
+  'Lightning Helix': 'https://cards.scryfall.io/normal/front/4/1/4101e3fe-b0e7-4f0f-b9ac-9b61a4d628b3.jpg?1783912843',
+  'Blood Moon': 'https://cards.scryfall.io/normal/front/d/0/d072e9ca-aae7-45dc-8025-3ce590bae63f.jpg?1783930171',
+  'Static Prison': 'https://cards.scryfall.io/normal/front/d/d/dd16222e-349c-4a2b-a7c8-8eb35a8ab332.jpg?1783911296',
+  'Wrath of the Skies': 'https://cards.scryfall.io/normal/front/4/e/4ef1882e-b422-4f30-8a6c-bd71c2601660.jpg?1783911294',
+}
+const ART = 'https://cards.scryfall.io/art_crop/front/7/6/76c3cad2-1e25-4abe-878d-9194de6fcc27.jpg?1790212061'
+// A (orange) is the page you are on, the winner's list; B (teal) is yours, picked in the panel.
+const ONLY_A = [['Static Prison', 2], ['Wrath of the Skies', 2]]
+const ONLY_B = [['Lightning Helix', 2], ['Blood Moon', 2]]
+const SHARED = [['Guide of Souls', 4], ['Ragavan, Nimble Pilferer', 4], ['Ocelot Pride', 4], ['Ajani, Nacatl Pariah', 4], ["Phlage, Titan of Fire's Fury", 3],
+  ['Galvanic Discharge', 4], ['Goblin Bombardment', 1], ['Thraben Charm', 2], ['Seasoned Pyromancer', 2], ['Sacred Foundry', 4]]
+const N_M = 71, SIM = 95
+const MINE = ['My Boros Energy · Modern', 'Izzet Prowess · Pioneer', 'Lorehold Spells · Commander']
+const DECK_URL = 'moxfield.com/decks/7Qp2xKz9Lw'
+const MARK = '<rect class="c-back" x="3.2" y="5" width="9.6" height="14" rx="2.2" transform="rotate(-9 8 12)"/><rect class="c-front" x="11.2" y="5" width="9.6" height="14" rx="2.2" transform="rotate(7 16 12)"/><path d="M13.6 9.8h5M13.6 12.4h5M13.6 15h3" stroke="rgba(0,0,0,.3)" stroke-width="1.5" stroke-linecap="round" transform="rotate(7 16 12)"/>'
+
+/* ---------------------------------------------------------------- timeline */
+const CLICK_FAB = 3.9, CLICK_SEL = 4.28, CLICK_OPT = 4.55, CLICK_GO = 4.8
+const CLICKS = [CLICK_FAB, CLICK_SEL, CLICK_OPT, CLICK_GO]
+// the results: 14 cards land, zone by zone
+const DEAL_ORDER = [['M', 0], ['A', 0], ['M', 1], ['B', 0], ['M', 2], ['M', 3], ['A', 1], ['M', 4], ['B', 1], ['M', 5], ['M', 6], ['M', 7], ['M', 8], ['M', 9]]
+const DEAL = DEAL_ORDER.map((_, i) => 5.42 + i * 0.09)
+// the figure rolls from 0 and lands on SIM at R_MAX; the four cards follow at B_LUFF
+const R0 = 7.55, R_MAX = 8.43, B_LUFF = 9.05
+const FOUR = [9.1, 9.16, 9.22, 9.28]
+const WORDMARK = [['Deck', 'var(--a-hi)', 700], ['Compare', 'var(--b-hi)', 800]]
+const S1C = ['#e3a24f', '#56b6c9', '#d9485e']
+const S1G = ['rgba(227,162,79,.55)', 'rgba(86,182,201,.55)', 'rgba(217,72,94,.55)']
+
+/* Impacts: shake and flash, timed on the sound effects. */
+const SHAKES = [[0, 8], [0.6, 8], [1.2, 8], [1.8, 16], [2.1, 10], [2.4, 6], [7.15, 10], [7.28, 8], [R_MAX, 26], [B_LUFF, 16], [10.62, 14], [12.95, 6]]
+const FLASHES = [[1.8, 0.5], [R_MAX, 0.85], [B_LUFF, 0.3]]
+
+/* ---------------------------------------------------------------- build */
+$$('#fabMark, .mark').forEach((s) => { s.innerHTML = MARK })
+$('#art').src = ART
+{
+  // 75 cards: a 5 x 3 hand of them, a few faded
+  let h = ''
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 5; c++) h += `<rect x="${1.4 + c * 4.35}" y="${2.3 + r * 6.7}" width="3.55" height="5.1" rx=".8" opacity="${(r * 5 + c) % 4 === 3 ? 0.35 : 1}"/>`
+  $('#s1grid').innerHTML = h
+}
+'AAMMMMMMMBB'.split('').forEach((k) => { const i = document.createElement('i'); i.style.background = { A: 'var(--a)', M: 'var(--m)', B: 'var(--b)' }[k]; $('#sq').appendChild(i) })
+MINE.forEach((m, i) => { const d = document.createElement('div'); d.className = 'mi'; d.id = 'mi' + i; d.textContent = m; $('#menu').appendChild(d) })
+const cardEl = ([name, q]) => { const d = document.createElement('div'); d.className = 'ci'; d.innerHTML = `<img src="${IMG[name]}" alt=""><span class="qty">${q}</span>`; return d }
+const ZONES = { A: ONLY_A.map(cardEl), M: SHARED.map(cardEl), B: ONLY_B.map(cardEl) }
+ZONES.A.forEach((d) => $('#gA').appendChild(d)); ZONES.M.forEach((d) => $('#gM').appendChild(d)); ZONES.B.forEach((d) => $('#gB').appendChild(d))
+const FOUR_EL = [...ONLY_A.map(cardEl), ...ONLY_B.map(cardEl)]
+FOUR_EL.forEach((d, i) => $(i < 2 ? '#fourA' : '#fourB').appendChild(d))
+// wall of the decks' own cards, blurred behind a veil
+{
+  const R = rng(7), wall = $('#wall'), names = Object.keys(IMG)
+  for (let k = 0; k < 16 * 12; k++) { const i = document.createElement('img'); i.src = IMG[names[Math.floor(R() * names.length)]]; i.alt = ''; wall.appendChild(i) }
+}
+// odometer strips: the tens wheel starts blank, the units wheel wraps back to 0
+$('#d1').innerHTML = ['&nbsp;', 1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => `<span>${d}</span>`).join('')
+$('#d0').innerHTML = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((d) => `<span>${d}</span>`).join('')
+// sparks of the reveal, in both inks and the shared green
+const PARTS = []
+{
+  const R = rng(3), host = $('#parts'), cols = ['#e3a24f', '#56b6c9', '#4cc38a']
+  for (let k = 0; k < 36; k++) {
+    const d = document.createElement('div')
+    d.className = 'part'
+    const sz = 12 + R() * 22
+    d.style.width = sz + 'px'
+    d.style.height = (R() < 0.5 ? sz : sz * 0.4) + 'px'
+    d.style.background = cols[k % cols.length]
+    d.style.borderRadius = R() < 0.4 ? '50%' : '4px'
+    host.appendChild(d)
+    PARTS.push({ el: d, a: (k / 36) * Math.PI * 2 + R() * 0.3, D: 320 + R() * 440, spin: (R() - 0.5) * 900, sz })
+  }
+}
+const DEAL_ROT = (() => { const R = rng(5); return DEAL_ORDER.map(() => (R() - 0.5) * 16) })()
+{
+  const tz = 'translateZ(220px)'
+  ;['f0', 'f1', 'f2', 'f3'].forEach((id, i) => { $('#' + id).style.transform = `rotateY(${i * 90}deg) ${tz}` })
+  $('#ftop').style.transform = `rotateX(90deg) ${tz}`
+  $('#fbot').style.transform = `rotateX(-90deg) ${tz}`
+}
+WORDMARK.forEach(([w, c, fw]) => w.split('').forEach((ch) => { const s = document.createElement('span'); s.textContent = ch; s.style.color = c; s.style.fontWeight = fw; $('#wm').appendChild(s) }))
+
+/* Positions measured once at rest: the button, the panel's controls, the logo of the end. */
+let LOGO = { x: 0, y: 0 }, AT = {}
+const centre = (el) => { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, r } }
+function measure() {
+  const s3 = $('#s3'), site = $('#site'), panel = $('#panel'), menu = $('#menu')
+  s3.style.display = 'block'; T(site); panel.style.display = 'block'; panel.style.transform = 'none'
+  const sr = site.getBoundingClientRect(), fr = $('#fab').getBoundingClientRect()
+  // the panel opens under the button, left edges aligned, as placePanel() does in the extension
+  panel.style.left = fr.left - sr.left - 2 + 'px'
+  panel.style.top = fr.bottom - sr.top - 2 + 16 + 'px'
+  const selR = $('#sel').getBoundingClientRect(), pr = panel.getBoundingClientRect()
+  menu.style.top = selR.bottom - pr.top - 2 + 8 + 'px'
+  const fab = centre($('#fab')), sel = centre($('#sel')), opt = centre($('#mi0')), go = centre($('#go'))
+  AT = { mark: centre($('#fabMark')), fab: { x: fab.r.right - 34, y: fab.y + 6 }, sel: { x: sel.r.right - 110, y: sel.y + 6 }, opt: { x: opt.r.left + 400, y: opt.y + 6 }, go: { x: go.x + 150, y: go.y + 8 } }
+  AT.origin = { x: sr.left + sr.width / 2, y: sr.top + sr.height / 2 }
+  panel.style.display = ''; s3.style.display = ''
+  const s6 = $('#s6'); s6.style.display = 'block'
+  T($('#lockup'))
+  LOGO = centre($('#logo'))
+  s6.style.display = ''
+}
+
+const fontsNeeded = ['800 100px "Bricolage Grotesque"', '700 100px "Bricolage Grotesque"', '400 100px Beleren', '400 20px Archivo', '500 20px Archivo', '600 20px Archivo', '700 20px Archivo', '800 20px Archivo', '700 20px "Geist Mono"', '500 20px "Geist Mono"']
+window.__ready = Promise.all([...fontsNeeded.map((f) => document.fonts.load(f)), ...[...document.images].map((i) => i.decode())])
+  .then(() => document.fonts.ready).then(() => { measure(); return true })
+
+/* ---------------------------------------------------------------- render */
+function shake(t) {
+  let x = 0, y = 0
+  for (const [t0, A] of SHAKES) {
+    const u = t - t0
+    if (u < 0 || u > 0.5) continue
+    const k = A * Math.exp(-u * 12)
+    x += k * Math.sin(u * 97)
+    y += k * Math.cos(u * 83)
+  }
+  return [x, y]
+}
+function typed(txt, q) { return txt.slice(0, Math.round(txt.length * q)) }
+
+function render(t) {
+  const [sx, sy] = shake(t)
+  $('#cam').style.transform = `translate(${sx}px,${sy}px)`
+  let fl = 0
+  for (const [t0, A] of FLASHES) if (t >= t0 && t < t0 + 0.25) fl = Math.max(fl, A * Math.exp(-(t - t0) * 28))
+  $('#flash').style.opacity = fl
+
+  // backgrounds
+  $('#floorWrap').style.opacity = t < 1.8 ? 0.35 : t < 10.3 ? 0.14 : t < 12.7 ? 0 : 0.28 * P(t, 12.8, 13.4)
+  const fc = t < 1.8 ? S1C[Math.min(2, Math.floor(t / 0.6))] : S1C[1]
+  $('#floor').style.backgroundImage = `linear-gradient(${fc}80 3px,transparent 3px),linear-gradient(90deg,${fc}80 3px,transparent 3px)`
+  $('#floor').style.backgroundPosition = `0 ${(t * 140) % 140}px`
+  $('#wallL').style.opacity = inR(t, 1.8, 7.25) ? P(t, 1.8, 2.2) * (1 - P(t, 7.0, 7.25)) : t >= 12.8 ? 0.8 * P(t, 13.0, 13.8) : 0
+  $('#wall').style.transform = `rotate(-8deg) translateY(${-t * 40}px)`
+  // one glow per beat, then the two decks' inks, one on each side
+  if (t < 1.8) {
+    const c = ['rgba(227,162,79,.2)', 'rgba(86,182,201,.2)', 'rgba(217,72,94,.2)'][Math.min(2, Math.floor(t / 0.6))]
+    $('#glow').style.background = `radial-gradient(1300px 900px at 50% 45%, ${c}, transparent 70%)`
+  } else {
+    const k = inR(t, R_MAX, 10.6) ? 0.24 : 0.13
+    $('#glow').style.background = `radial-gradient(1100px 900px at 22% 45%, rgba(227,162,79,${k}), transparent 70%), radial-gradient(1100px 900px at 78% 45%, rgba(86,182,201,${k}), transparent 70%)`
+  }
+
+  S1(t); S2(t); S3(t); S4(t); S5(t); S6(t)
+}
+
+function S1(t) {
+  const on = t < 1.8
+  vis($('#s1'), on)
+  if (!on) return
+  const bi = Math.min(2, Math.floor(t / 0.6)), u = t - bi * 0.6, c = S1C[bi]
+  const zoom = 1 + 0.035 * (u / 0.6)
+  const r1 = $('#s1r1'), r2 = $('#s1r2'), w = $('#s1w')
+  r1.style.borderColor = c; r2.style.borderColor = c; w.style.borderColor = c
+  r1.style.boxShadow = `0 0 60px ${S1G[bi]}, inset 0 0 60px ${S1G[bi]}`
+  T(r1, { s: lerp(0.55, 1, E.outExpo(P(u, 0, 0.4))) * zoom, o: P(u, 0, 0.05) })
+  T(r2, { s: lerp(0.7, 1, E.outExpo(P(u, 0.04, 0.45))) * zoom, o: 0.45 * P(u, 0.04, 0.1) })
+  T(w, { s: lerp(0.95, 1.9, E.out3(P(u, 0, 0.5))), o: 0.9 * (1 - P(u, 0, 0.5)) })
+  for (let i = 0; i < 3; i++) {
+    const ic = $('#s1i' + i), wd = $('#s1t' + i)
+    if (i !== bi) { ic.style.opacity = 0; wd.style.opacity = 0; continue }
+    let s = lerp(1.7, 1, E.back(P(u, 0, 0.3))) * zoom, o = P(u, 0, 0.06), b = lerp(18, 0, P(u, 0, 0.16))
+    let ws = zoom, wo = P(u, 0.04, 0.1), wy = lerp(80, 0, E.outExpo(P(u, 0.04, 0.32))), wb = lerp(12, 0, P(u, 0.04, 0.2))
+    if (bi < 2 && u > 0.53) { const k = P(u, 0.53, 0.6); s *= 1 + 0.2 * k; o *= 1 - k; ws *= 1 + 0.08 * k; wo *= 1 - k; b = 10 * k; wb = 8 * k }
+    if (bi === 2 && u > 0.5) { const k = E.in3(P(u, 0.5, 0.6)); s *= 1 + 4 * k; o *= 1 - k; ws *= 1 + 0.5 * k; wo *= 1 - k; b = 20 * k; wb = 12 * k }
+    T(ic, { s, o, b, r: lerp(-8, 0, E.out3(P(u, 0, 0.3))) })
+    ic.style.filter = (b > 0.05 ? `blur(${b}px) ` : '') + `drop-shadow(0 0 40px ${S1G[i]})`
+    T(wd, { y: wy, s: ws, o: wo, b: wb })
+  }
+  if (bi === 2 && u > 0.5) { const k = E.in3(P(u, 0.5, 0.6)); T(r1, { s: 1 + 3 * k, o: 1 - k }); T(r2, { s: 1 + 3 * k, o: 0.45 * (1 - k) }) }
+}
+
+function S2(t) {
+  const on = inR(t, 1.8, 3.8)
+  vis($('#s2'), on)
+  if (!on) return
+  for (const [id, t0] of [['#w1', 1.8], ['#w3', 2.1], ['#w4', 2.4]]) {
+    const el = $(id), k = P(t, t0, t0 + 0.22), isQ = id === '#w4'
+    el.style.opacity = P(t, t0, t0 + 0.04)
+    el.style.transform = isQ ? `scale(${lerp(2.2, 1, E.back(k))}) rotate(${lerp(-30, 0, E.back(k))}deg)` : `scale(${lerp(1.9, 1, E.outExpo(k))})`
+    const bl = k < 0.6 ? `blur(${lerp(22, 0, P(k, 0, 0.6))}px) ` : ''
+    el.style.filter = id === '#w3' ? `${bl}drop-shadow(0 0 50px rgba(86,182,201,.35))` : bl || 'none'
+  }
+  // the question rises as the deck page comes in, then fades out
+  const k = E.inOut(P(t, 2.9, 3.15)), ko = P(t, 3.6, 3.75)
+  const ti = $('#s2title')
+  ti.style.transformOrigin = '960px 588px'
+  ti.style.transform = `translateY(${lerp(0, -452, k) - 60 * ko}px) scale(${lerp(1, 0.42, k)})`
+  ti.style.opacity = 1 - ko
+  $$('#sq i').forEach((q, i) => { q.style.transform = `scale(${0.8 + 0.3 * Math.max(0, Math.sin(t * 7 - i * 0.55))})` })
+  T($('#sq'), { o: P(t, 2.2, 2.35) * (1 - P(t, 2.9, 3.05)), s: lerp(0.6, 1, E.back(P(t, 2.2, 2.45))) })
+}
+
+/** The deck page: comes in under the question, is pushed out left by the results tab. */
+function siteState(t) {
+  const kIn = E.outExpo(P(t, 3.12, 3.5)), kPush = E.inOut(P(t, 4.95, 5.35))
+  return { x: lerp(0, -1500, kPush), y: lerp(300, 0, kIn), s: 1, o: P(t, 3.12, 3.22), b: 8 * Math.sin(Math.PI * kPush) }
+}
+/** Where the cursor is: from the corner to each control in turn, pressing on each click. */
+const MOVES = () => [[3.55, { x: 1560, y: 1000 }], [3.85, AT.fab], [3.98, AT.fab], [4.22, AT.sel], [4.32, AT.sel], [4.5, AT.opt], [4.6, AT.opt], [4.76, AT.go]]
+function cursorAt(t) {
+  const m = MOVES()
+  if (t <= m[0][0]) return m[0][1]
+  for (let i = 1; i < m.length; i++) {
+    if (t <= m[i][0]) { const k = E.inOut(P(t, m[i - 1][0], m[i][0])); return { x: lerp(m[i - 1][1].x, m[i][1].x, k), y: lerp(m[i - 1][1].y, m[i][1].y, k) } }
+  }
+  return m[m.length - 1][1]
+}
+
+function S3(t) {
+  Mark(t)
+  const on = inR(t, 3.1, 7.25)
+  vis($('#s3'), on)
+  if (!on) return
+  const st = siteState(t), site = $('#site')
+  vis(site, t < 5.4)
+  if (t < 5.4) T(site, st)
+  const cap1 = $('#cap1')
+  cap1.textContent = typed('01 · Right on the deck page', P(t, 3.72, 3.98))
+  T(cap1, { x: st.x, o: P(t, 3.72, 3.76) })
+  // the button, the panel, the menu
+  const fab = $('#fab')
+  fab.style.transform = `scale(${1 - 0.07 * bump(t, CLICK_FAB)})`
+  fab.style.background = t >= 3.8 ? '#262626' : '#141414'
+  const panel = $('#panel'), pOn = t >= CLICK_FAB + 0.04
+  vis(panel, pOn)
+  if (pOn) T(panel, { s: lerp(0.7, 1, E.back(P(t, CLICK_FAB + 0.04, CLICK_FAB + 0.26))), o: P(t, CLICK_FAB + 0.04, CLICK_FAB + 0.1) }, false)
+  const picked = t >= CLICK_OPT, menuOn = inR(t, CLICK_SEL + 0.01, CLICK_OPT + 0.08)
+  $('#sel').classList.toggle('on', inR(t, CLICK_SEL, CLICK_OPT + 0.05))
+  $('#sel').style.transform = `scale(${1 - 0.03 * bump(t, CLICK_SEL)})`
+  $('#selTxt').textContent = picked ? MINE[0] : 'Select a deck'
+  $('#selTxt').style.color = picked ? 'var(--p-ink)' : ''
+  const menu = $('#menu')
+  vis(menu, menuOn)
+  if (menuOn) { menu.style.transform = `scaleY(${lerp(0.9, 1, E.out3(P(t, CLICK_SEL, CLICK_SEL + 0.1)))})`; menu.style.opacity = P(t, CLICK_SEL, CLICK_SEL + 0.05) * (1 - P(t, CLICK_OPT + 0.02, CLICK_OPT + 0.08)) }
+  $('#mi0').classList.toggle('on', t >= 4.45)
+  // picking a saved deck fills the URL field: the extension's single source of truth
+  const fld = $('#fld')
+  $('#fldTxt').textContent = picked ? DECK_URL : 'Paste a deck URL…'
+  $('#fldTxt').style.color = picked ? 'var(--p-ink)' : ''
+  fld.style.background = picked ? `rgba(19,112,131,${(0.14 * (1 - P(t, CLICK_OPT, CLICK_OPT + 0.35))).toFixed(3)})` : '#fff'
+  const go = $('#go')
+  go.style.transform = `scale(${1 - 0.05 * bump(t, CLICK_GO)})`
+  go.style.background = t >= CLICK_GO - 0.04 ? '#0f5d6d' : ''
+  // cursor and ripples
+  const cur = $('#cursor'), c = cursorAt(t), pressed = Math.max(...CLICKS.map((k) => bump(t, k)))
+  const cx = c.x + st.x, cy = c.y + st.y
+  cur.style.transform = `translate(${cx - 12}px,${cy - 7}px) scale(${1 - 0.14 * pressed})`
+  cur.style.opacity = P(t, 3.55, 3.65) * (1 - P(t, 4.95, 5.1))
+  const rp = $('#rip')
+  rp.style.opacity = 0
+  for (const k of CLICKS) {
+    const kr = P(t, k, k + 0.4)
+    if (kr > 0 && kr < 1) T(rp, { x: cx - 960, y: cy - 540, s: lerp(0.2, 1.3, E.out3(kr)), o: 0.8 * (1 - kr) })
+  }
+  // the results tab pushes the page out
+  const kOut = E.in3(P(t, 6.98, 7.22)), cmp = $('#cmp'), cap2 = $('#cap2')
+  const cmpX = lerp(1500, 0, E.inOut(P(t, 4.97, 5.37)))
+  vis(cmp, t >= 4.95)
+  vis(cap2, t >= 4.95)
+  if (t < 4.95) return
+  T(cmp, { x: cmpX, s: lerp(1, 0.85, kOut), o: 1 - kOut, b: 10 * kOut + 8 * Math.sin(Math.PI * P(t, 4.97, 5.37)) })
+  cap2.textContent = typed('02 · Every card, sorted', P(t, 5.15, 5.4))
+  T(cap2, { x: cmpX, o: P(t, 5.15, 5.19) * (1 - kOut) })
+  const n = { A: 0, M: 0, B: 0 }
+  DEAL_ORDER.forEach(([z, i], j) => {
+    const t0 = DEAL[j], el = ZONES[z][i], k = P(t, t0, t0 + 0.3)
+    T(el, { y: lerp(-70, 0, E.outExpo(k)), s: lerp(1.35, 1, E.back(k)), r: lerp(DEAL_ROT[j], 0, E.out3(k)), o: P(t, t0, t0 + 0.07), b: lerp(10, 0, P(t, t0, t0 + 0.12)) }, false)
+    if (t >= t0) n[z]++
+  })
+  const q = (list, k) => list.slice(0, k).reduce((s, [, x]) => s + x, 0)
+  $('#nA').textContent = q(ONLY_A, n.A)
+  $('#nB').textContent = q(ONLY_B, n.B)
+  $('#nM').textContent = Math.round((N_M * n.M) / SHARED.length)
+}
+
+/** The mark: pops above the question, then flies into the Compare button of the page. */
+function Mark(t) {
+  const on = inR(t, 1.8, 3.47), mk = $('#mk')
+  vis(mk, on)
+  if (!on) return
+  const st = siteState(t), kv = E.inOut(P(t, 2.92, 3.42))
+  const tx = AT.mark.x + st.x - 960, ty = AT.mark.y + st.y - 232
+  const s0 = lerp(0, 1, E.back(P(t, 1.8, 2.15)))
+  T(mk, { x: lerp(0, tx, kv), y: lerp(0, ty, kv), s: lerp(s0, 28 / 190, kv), o: 1 - P(t, 3.36, 3.46), r: lerp(4 * Math.sin(t * 3), 0, kv) })
+}
+
+function S4(t) {
+  const on = inR(t, 7.0, 10.65)
+  vis($('#s4'), on)
+  if (!on) return
+  $('#s4').style.transformOrigin = '960px 480px'
+  $('#s4').style.transform = `scale(${1 + 0.06 * E.in3(P(t, 7.5, R_MAX)) * (1 - E.outExpo(P(t, R_MAX, R_MAX + 0.4)))})`
+  // the matchup: the two names slam in, the figure rolls between them
+  const kUp = E.inOut(P(t, 8.82, 9.08)), mu = $('#mu')
+  mu.style.transformOrigin = '960px 480px'
+  mu.style.transform = `translateY(${lerp(0, -330, kUp)}px) scale(${lerp(1, 0.6, kUp)})`
+  const nA = P(t, 7.15, 7.42), nB = P(t, 7.28, 7.55)
+  T($('#nameA'), { x: lerp(-520, 0, E.outExpo(nA)), o: P(t, 7.15, 7.19), b: lerp(16, 0, P(t, 7.15, 7.24)) }, false)
+  T($('#nameB'), { x: lerp(520, 0, E.outExpo(nB)), o: P(t, 7.28, 7.32), b: lerp(16, 0, P(t, 7.28, 7.37)) }, false)
+  const land = E.outExpo(P(t, R_MAX, R_MAX + 0.3))
+  T($('#fig'), { s: lerp(0.7, 1, E.back(P(t, 7.45, 7.65))) * (t >= R_MAX ? lerp(1.25, 1, land) : 1), o: P(t, 7.45, 7.5) })
+  T($('#figLab'), { o: P(t, 7.5, 7.58), y: lerp(20, 0, E.out3(P(t, 7.5, 7.7))) })
+  // the odometer: the units wheel spins, the tens wheel turns only while the units pass 9
+  const q = P(t, R0, R_MAX), v = SIM * (1 - (1 - q) ** 2.4)
+  const speed = (SIM * 2.4 * (1 - q) ** 1.4) / (R_MAX - R0)
+  const u = v % 10, tens = Math.floor(v / 10) + clamp(u - 9)
+  const d0 = $('#d0'), d1 = $('#d1')
+  d0.style.transform = `translateY(${-u * 250}px)`; d0.style.filter = `blur(${clamp(speed * 0.04, 0, 12).toFixed(2)}px)`
+  d1.style.transform = `translateY(${-tens * 250}px)`; d1.style.filter = `blur(${clamp(speed * 0.004, 0, 6).toFixed(2)}px)`
+  // the overlap bar draws in, left to right, the instant the figure lands (the product's one motion)
+  const W = 1400, gap = 6, wA = (W - 2 * gap) * (4 / 79), wM = (W - 2 * gap) * (71 / 79)
+  ;[['#segA', 0, wA], ['#segM', wA + gap, wM], ['#segB', wA + wM + 2 * gap, wA]].forEach(([id, x, w], i) => {
+    const el = $(id)
+    el.style.left = x + 'px'; el.style.width = w + 'px'
+    el.style.transform = `scaleX(${E.out3(P(t, R_MAX + 0.08 + i * 0.1, R_MAX + 0.55 + i * 0.1))})`
+  })
+  T($('#bar'), { o: P(t, R_MAX + 0.05, R_MAX + 0.12) })
+  T($('#legend'), { o: P(t, R_MAX + 0.12, R_MAX + 0.24), y: lerp(16, 0, E.out3(P(t, R_MAX + 0.12, R_MAX + 0.32))) })
+  T($('#rays'), { s: lerp(0.4, 1.1, E.outExpo(P(t, R_MAX, R_MAX + 0.5))), o: 0.9 * P(t, R_MAX, R_MAX + 0.1), r: t * 14, y: lerp(0, -130, kUp) })
+  // four cards apart: the answer, side by side
+  T($('#apart'), { s: lerp(2.2, 1, E.outExpo(P(t, B_LUFF, B_LUFF + 0.32))) * (1 + 0.015 * Math.sin(t * 6)), o: P(t, B_LUFF, B_LUFF + 0.05), b: lerp(24, 0, P(t, B_LUFF, B_LUFF + 0.16)), r: lerp(-8, -2, E.outExpo(P(t, B_LUFF, B_LUFF + 0.4))) })
+  T($('#four'), {})
+  FOUR_EL.forEach((el, i) => {
+    const t0 = FOUR[i], k = P(t, t0, t0 + 0.3)
+    T(el, { s: lerp(0.5, 1, E.back(k)), r: lerp(i < 2 ? -10 : 10, i % 2 ? 3 : -3, E.out3(k)), o: P(t, t0, t0 + 0.06), y: lerp(60, 0, E.outExpo(k)) }, false)
+    el.style.boxShadow = `0 20px 40px -12px rgba(0,0,0,.7), 0 0 44px ${i < 2 ? 'rgba(227,162,79,.4)' : 'rgba(86,182,201,.4)'}`
+  })
+  T($('#plA'), { o: P(t, 9.3, 9.42), y: lerp(14, 0, E.out3(P(t, 9.3, 9.5))) }, false)
+  T($('#plB'), { o: P(t, 9.36, 9.48), y: lerp(14, 0, E.out3(P(t, 9.36, 9.56))) }, false)
+  const up = t - (B_LUFF + 0.03)
+  for (const p of PARTS) {
+    if (up < 0) { p.el.style.opacity = 0; continue }
+    const r = p.D * E.outExpo(P(up, 0, 0.8))
+    const x = 960 + Math.cos(p.a) * r - p.sz / 2, y = 450 + Math.sin(p.a) * r * 0.75 + 220 * up * up - p.sz / 2
+    p.el.style.transform = `translate(${x}px,${y}px) rotate(${p.spin * up}deg)`
+    p.el.style.opacity = 1 - P(up, 0.45, 1.0)
+  }
+}
+
+function S5(t) {
+  const on = inR(t, 10.3, 12.95)
+  vis($('#s5'), on)
+  if (!on) return
+  // the teal wave starts from the middle
+  $('#wipe').style.clipPath = `circle(${lerp(0, 1300, E.inOut(P(t, 10.3, 10.6)))}px at 960px 560px)`
+  // the cube falls, turns three times, then lands as the logo
+  const drop = E.in3(P(t, 10.4, 10.62)), hop = 40 * Math.sin(Math.PI * P(t, 10.62, 10.77))
+  const turns = E.back(P(t, 11.05, 11.3)) + E.inOut(P(t, 11.65, 11.88)) + E.inOut(P(t, 12.25, 12.55))
+  const kL = E.inOut(P(t, 12.45, 12.95))
+  const sway = (1 - kL) * 5 * Math.sin(t * 2.4)
+  const rx = lerp(lerp(-40, -14, drop), 0, kL)
+  const ry = -90 * turns - 22 * (1 - kL) + sway
+  $('#cube').style.transform = `translateZ(-220px) rotateX(${rx}deg) rotateY(${ry}deg)`
+  const cx = lerp(0, LOGO.x - 960, kL), cy = lerp(lerp(-1100, 0, drop) - hop, LOGO.y - 520, kL)
+  T($('#cubeWrap'), { x: cx, y: cy, s: lerp(1, 150 / 440, kL), o: P(t, 10.4, 10.44) })
+  T($('#cshadow'), { s: lerp(0.3, 1, drop) * (1 - kL), o: 0.9 * drop * (1 - kL) })
+}
+
+function S6(t) {
+  const on = t >= 12.5
+  vis($('#s6'), on)
+  if (!on) return
+  // the dark comes back from the logo
+  const kd = E.inOut(P(t, 12.5, 12.8))
+  T($('#dwipe'), { x: LOGO.x - 960, y: LOGO.y - 540, s: lerp(0, 50, kd), o: 1 - P(t, 13.05, 13.5) })
+  $('#s6').style.transformOrigin = '960px 540px'; $('#s6').style.transform = `scale(${lerp(1, 1.04, P(t, 13.1, 15.0))})`
+  $('#logo').style.opacity = t >= 12.95 ? 1 : 0
+  $('#logo').style.filter = `drop-shadow(0 0 28px rgba(86,182,201,${(0.35 * P(t, 12.95, 13.35)).toFixed(3)}))`
+  T($('#lockup'))
+  $$('#wm span').forEach((sp, i) => {
+    const t0 = 12.85 + i * 0.035, k = P(t, t0, t0 + 0.25)
+    sp.style.opacity = P(t, t0, t0 + 0.06)
+    sp.style.transform = `translateX(${lerp(-60, 0, E.outExpo(k))}px) skewX(${lerp(-18, 0, E.outExpo(k))}deg)`
+    sp.style.filter = k < 0.7 ? `blur(${lerp(14, 0, k / 0.7)}px)` : 'none'
+  })
+  T($('#slogan'), { y: lerp(40, 0, E.outExpo(P(t, 13.05, 13.4))), o: P(t, 13.05, 13.2) })
+  const cta = $('#cta')
+  T(cta, { s: lerp(0.6, 1, E.back(P(t, 13.3, 13.6))), o: P(t, 13.3, 13.35) })
+  T($('#ctaSub'), { y: lerp(20, 0, E.outExpo(P(t, 13.45, 13.7))), o: P(t, 13.45, 13.55) })
+  T($('#legal'), { o: P(t, 13.55, 13.85) })
+  const pulse = 0.35 + 0.2 * (0.5 + 0.5 * Math.sin((t - 13.6) * 4))
+  cta.style.boxShadow = `0 0 ${50 + 30 * pulse}px rgba(86,182,201,${pulse})`
+}
+
+window.__render = render
+</script>
+<script src="sfx.js"></script>
+</body>
+</html>

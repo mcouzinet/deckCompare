@@ -6,6 +6,18 @@ Les releases sont numérotées **`X.Y`** (1.1, 1.2…) et taguées `vX.Y` ; entr
 builds de dev se lisent **`X.Y.Z`** (1.1.5, 1.1.6… après la 1.1), `Z` bumpé à chaque itération
 testée (voir `AGENTS.md`).
 
+## [Non publié]
+
+### Maintenance
+
+- Le code de l'extension passe dans `src/`, à plat et sans autre changement : les paquets des
+  stores sont identiques à ceux de la 1.3. En dev, l'extension non empaquetée se charge désormais
+  depuis `src/`. `privacy-policy.html` reste à la racine, où GitHub Pages la sert.
+- `store-listing.md` devient `store/listing.md`, resserré : règle des noms de sites, liens des quatre
+  fiches, tableau des dépôts ; les notes de version d'avant la 1.0.13 et les captures « alternates »
+  de la 1.1 sont retirées.
+- Les sources de la vidéo promo (`store/reel/`) et la miniature YouTube entrent dans le dépôt.
+
 ## [1.3] - 2026-09-29
 
 Quatrième version publiée sur le Chrome Web Store, deuxième sur Edge Add-ons et addons.mozilla.org,
@@ -227,7 +239,7 @@ perd les hôtes de Google Fonts, les polices étant désormais embarquées.
   transmis pour passer leur anti-bot, onglet d'arrière-plan en cas de blocage), Scryfall et Google
   Fonts, et chaque permission. Contact : les issues GitHub.
 
-## [1.2] — 2026-09-24
+## [1.2] - 2026-09-24
 
 Troisième version publiée sur le Chrome Web Store, six builds de dev après la 1.1 (1.1.6 →
 1.1.11), et **première version pour Firefox** (addons.mozilla.org) ; le paquet Chrome sert aussi
@@ -280,7 +292,7 @@ par un chemin de content-script sur un hôte déjà autorisé (`www.mtggoldfish.
 - **Apostrophe typographique et espace insécable** (`Urza’s Saga`, `&nbsp;` dans une cellule
   scrapée) ramenés à la forme droite/simple, même raison.
 
-## [1.1] — 2026-09-08
+## [1.1] - 2026-09-08
 
 Deuxième version publiée sur le Chrome Web Store, cinq builds de dev après la 1.0.13 (1.1.1 →
 1.1.5) et première release numérotée `X.Y`. **Aucune permission requise ajoutée** : le manifest
@@ -352,7 +364,7 @@ permis.
   cet hôte manque vraiment (vérification origine par origine) et le refus parle de « ces
   sites ». Le réglage, lui, demande toujours tous les hôtes optionnels d'un coup.
 
-## [1.0.13] — 2026-09-03
+## [1.0.13] - 2026-09-03
 
 Première version mise en ligne sur le Chrome Web Store depuis la **0.9.0** (en ligne le
 2026-09-05). La v1.0.0, taguée le 2026-09-02, avait été annulée avant publication : son contenu
@@ -517,7 +529,7 @@ le wordmark sont inchangés ; le monde est construit autour d'eux.
   noms, sites supportés, scan d'onglets), l'analyse croisée (`pool-analyze.js`) et
   l'enrichissement Scryfall (`enrich.js`) rejoignent les parseurs sous harnais.
 
-## [0.9.0] — 2026-08-31
+## [0.9.0] - 2026-08-31
 
 ### Ajouté
 - Prise en charge de deux nouveaux sites, au même niveau que les six existants :
@@ -543,7 +555,7 @@ le wordmark sont inchangés ; le monde est construit autour d'eux.
   (`Face avant // Face arrière`). Une comparaison entre sites n'est fiable que si
   les deux listes suivent la même convention de nommage.
 
-## [0.8.0] — 2026-08-12
+## [0.8.0] - 2026-08-12
 
 ### Corrigé
 - Parseur **Magic-Ville** : prise en charge des attributs HTML non quotés
@@ -556,7 +568,7 @@ le wordmark sont inchangés ; le monde est construit autour d'eux.
 - Garde « aucune carte » : une page sans carte renvoie une erreur explicite au lieu
   d'une comparaison vide.
 
-## [0.7.0] — 2026-08-09
+## [0.7.0] - 2026-08-09
 
 ### Corrigé
 - Récupération derrière Cloudflare (MTGGoldfish, mtgdecks) via
@@ -567,23 +579,23 @@ le wordmark sont inchangés ; le monde est construit autour d'eux.
   tentative automatique côté Scryfall.
 - Premiers tests unitaires.
 
-## [0.6.0] — 2026-07-02
+## [0.6.0] - 2026-07-02
 
 ### Modifié
 - Internationalisation de l'analyseur de pool, heuristique de commandant partagée et
   suppression de code mort.
 
-## [0.5.0] — 2026-06-21
+## [0.5.0] - 2026-06-21
 
 ### Modifié
 - Migration vers l'API native d'internationalisation de Chrome.
 
-## [0.4.0] — 2026-06-21
+## [0.4.0] - 2026-06-21
 
 ### Ajouté
 - Séparation des créatures, vue en liste, cartes plus grandes et nettoyage de code.
 
-[Non publié]: https://github.com/mcouzinet/deckCompare/compare/v1.2...HEAD
+[Non publié]: https://github.com/mcouzinet/deckCompare/compare/v1.3...HEAD
 [1.3]: https://github.com/mcouzinet/deckCompare/compare/v1.2...v1.3
 [1.2]: https://github.com/mcouzinet/deckCompare/compare/v1.1...v1.2
 [1.1]: https://github.com/mcouzinet/deckCompare/compare/v1.0.13...v1.1

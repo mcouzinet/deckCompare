@@ -3,7 +3,7 @@ const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("fs");
 const path = require("path");
-const P = require("../parsers.js");
+const P = require("../src/parsers.js");
 
 const fx = (name, enc) => fs.readFileSync(path.join(__dirname, "fixtures", name), enc || "utf8");
 const sum = (b) => Object.values(b).reduce((s, q) => s + q, 0);
@@ -42,7 +42,7 @@ test("MTGGoldfish: text decklist with Sideboard divider", () => {
 test("mtgdecks: arena_deck textarea, set codes stripped, commander split", () => {
   // Set codes are stripped at the entry point (background.js normalizes every fetched
   // deck), not by the parser — so assert the deck as the app actually sees it.
-  const d = require("../shared.js").normalizeDeck(P.parseMtgDecks(fx("mtgdecks.html")));
+  const d = require("../src/shared.js").normalizeDeck(P.parseMtgDecks(fx("mtgdecks.html")));
   assert.match(d.name, /Aragorn, King of Gondor/);
   assert.deepEqual(Object.keys(d.commanders), ["Aragorn, King of Gondor"]);
   assert.equal(d.mainboard["Sol Ring"], 1);              // "(LTC) 280" stripped

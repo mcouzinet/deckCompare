@@ -1,13 +1,14 @@
 # Deck Compare — notes pour agents
 
-Extension navigateur (MV3 ; Chrome, Edge, Firefox) qui compare deux decklists Magic côte à côte
-et analyse un **pool** de decks (la « comparaison croisée »). En dev, le navigateur charge le
-dossier tel quel ; `npm run build` ne sert qu'à produire les paquets des stores. Tests :
-`npm test` (node:test + jsdom ; `npm install` une fois pour jsdom).
+Extension navigateur (MV3 ; Chrome, Edge, Firefox, Safari) qui compare deux decklists Magic côte à
+côte et analyse un **pool** de decks (la « comparaison croisée »). Le code est dans `src/` : en dev,
+le navigateur charge ce dossier tel quel (« Charger l'extension non empaquetée ») ; `npm run build`
+ne sert qu'à produire les paquets des stores. Tests : `npm test` (node:test + jsdom ; `npm install`
+une fois pour jsdom).
 
 ## Règle de versioning (IMPORTANT)
 
-`manifest.json` suit **`X.Y` pour une release, `X.Y.Z` pour un build de dev** :
+`src/manifest.json` suit **`X.Y` pour une release, `X.Y.Z` pour un build de dev** :
 
 - **Release** — `X.Y` (1.1, 1.2…) : la version publiée sur le Chrome Web Store, taguée `vX.Y`.
   `Y` avance d'un à chaque release ; `X` pour une release majeure/cassante.
@@ -18,22 +19,22 @@ dossier tel quel ; `npm run build` ne sert qu'à produire les paquets des stores
   < `1.2`. Une release doit rester strictement supérieure à la version publiée précédente
   (`1.1` > `1.0.13`, OK).
 
-L'état courant se lit dans l'environnement, pas ici : version dans `manifest.json`, releases
+L'état courant se lit dans l'environnement, pas ici : version dans `src/manifest.json`, releases
 dans les tags git `vX.Y`, lot en cours en tête de `CHANGELOG.md` (« Non publié »).
 
 **Couper une release `X.Y`** (fait quand les zips sont dans `dist/` et le tag sur `origin`) :
 
-1. `manifest.json` → `"X.Y"` ; `CHANGELOG.md` : « Non publié » devient `[X.Y] — date`, avec son
-   lien de comparaison en bas ; `store-listing.md` : note de version `vX.Y` FR et EN.
+1. `src/manifest.json` → `"X.Y"` ; `CHANGELOG.md` : « Non publié » devient `[X.Y] - date`, avec son
+   lien de comparaison en bas ; `store/listing.md` : note de version `vX.Y` FR et EN.
 2. `npm test`, `npm run build`, puis `npx web-ext lint --source-dir dist/firefox` (0 erreur).
    Vérifier qu'aucun hôte **requis** n'a été ajouté depuis la release précédente
-   (`git diff vX.(Y-1) -- manifest.json`).
+   (`git diff vX.(Y-1) -- src/manifest.json`).
 3. Commit `chore(release): X.Y`, tag **léger** `vX.Y`, puis `git push origin main` **et**
    `git push origin vX.Y` : un tag léger ne part pas avec `--follow-tags`.
 4. Les dépôts (Chrome Web Store, Edge Add-ons, addons.mozilla.org, Mac App Store) sont faits par
    l'utilisateur, avec `dist/deckcompare-X.Y-chrome.zip` (Chrome et Edge),
    `dist/deckcompare-X.Y-firefox.zip`, et pour Safari une archive Xcode du projet `safari/` (versions
-   montées comme ci-dessus).
+   montées comme ci-dessus). Chaque envoi se note dans le tableau des dépôts de `store/listing.md`.
 
 **Pourquoi bumper à chaque itération** : Chrome ne recharge PAS les content-scripts d'un onglet
 déjà ouvert quand on recharge l'extension. Le numéro visible dans `chrome://extensions` est le
@@ -85,8 +86,8 @@ changements de permissions le font.)
 
 - **Politique de confidentialité et réponses des stores suivent le code** : toute permission,
   donnée stockée ou requête réseau nouvelle se reporte dans `privacy-policy.html` (servie par
-  GitHub Pages, liée par les trois stores) et dans la section « Privacy practices » de
-  `store-listing.md`, dans le même commit.
+  GitHub Pages depuis la racine de `main`, liée par les quatre stores : elle reste à la racine, le
+  build l'y prend) et dans la section « Privacy practices » de `store/listing.md`, dans le même commit.
 - **Pas de permission requise ajoutée** sans prévenir : ça désactive l'extension pour tous les
   utilisateurs jusqu'à ré-acceptation. Nouveaux hôtes → `optional_host_permissions`. Ajouter un
   content-script sur un **path** d'un hôte **déjà permis** (ex. `mtgtop8.com/archetype*` alors que
@@ -195,7 +196,7 @@ changements de permissions le font.)
   et, à défaut, `poolEnrichCache` se lisent par `Shared.cachedCardTypes`, côté page (images dès
   le premier affichage) comme côté background.
 - **Aucune police chargée du réseau** : Archivo (latin et latin étendu), Bricolage Grotesque et
-  Geist Mono (latin) sont les sous-ensembles variables de Google Fonts, embarqués dans `fonts/`
+  Geist Mono (latin) sont les sous-ensembles variables de Google Fonts, embarqués dans `src/fonts/`
   avec leur licence OFL (`OFL-*.txt`, qui doivent partir avec eux : `scripts/build.js` les liste),
   déclarés dans `theme.css` ; le CSP n'autorise plus aucun hôte Google. Une nouvelle graisse ou un
   nouveau sous-ensemble se télécharge de la même façon, pas par un `<link>`.
@@ -208,9 +209,13 @@ changements de permissions le font.)
 
 ## Où trouver quoi
 
+- Arborescence : `src/` l'extension (manifest, pages, scripts, `_locales`, `fonts`, `icons`, à plat) ;
+  `test/` les tests et leurs fixtures ; `scripts/build.js` les paquets dans `dist/` ; `safari/` l'app
+  macOS ; `store/` les fiches, médias et sources de la vidéo promo (`store/reel/`) ;
+  `privacy-policy.html` à la racine pour GitHub Pages.
 - Lot en cours et historique des versions : `CHANGELOG.md`.
-- Textes des fiches, réponses de confidentialité, médias : `store-listing.md` ; images dans `store/`.
-- Icône : la source est `icons/icon.svg` ; les PNG 16/48/128 et `store/logo-300x300.png` en
+- Textes des fiches, réponses de confidentialité, dépôts, médias : `store/listing.md`.
+- Icône : la source est `src/icons/icon.svg` ; les PNG 16/48/128 et `store/logo-300x300.png` en
   dérivent. La rendre avec Chrome (puppeteer) : ImageMagick rend ses dégradés faux.
 - Avant de toucher à l'interface : `DESIGN.md` (le monde « Le mémo », tokens et règles nommées).
 - Public, objectifs et principes du produit : `PRODUCT.md`.

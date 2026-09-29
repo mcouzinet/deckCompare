@@ -1,8 +1,8 @@
 "use strict";
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const { nameKeys } = require("../enrich.js");
-const { analyzePool, filterDecks, matchesFilters } = require("../pool-analyze.js");
+const { nameKeys } = require("../src/enrich.js");
+const { analyzePool, filterDecks, matchesFilters } = require("../src/pool-analyze.js");
 
 // Build an enrichMap (name-key -> enrichment) the way enrich.js would.
 function buildMap(defs) {
@@ -121,7 +121,7 @@ test("analyzePool derives the pool's colours from the consensus when no deck has
 });
 
 // ---- one decklist against the pool ----
-const { compareToPool, consensusShare, averageDeck, deckSimilarity } = require("../pool-analyze.js");
+const { compareToPool, consensusShare, averageDeck, deckSimilarity } = require("../src/pool-analyze.js");
 
 test("deckSimilarity is compare.js's figure: shared copies over the larger deck, all boards", () => {
   const a = { commanders: { "Krenko, Mob Boss": 1 }, mainboard: { "Lightning Bolt": 4, "Shock": 4 }, sideboard: {} };
@@ -188,7 +188,7 @@ test("a deck of the pool is read against the others, and consensusShare(selfIn) 
 });
 
 test("closestDeck finds the nearest deck by the same similarity, skipping the reference itself", () => {
-  const { closestDeck } = require("../pool-analyze.js");
+  const { closestDeck } = require("../src/pool-analyze.js");
   // vs the list: A shares 34 of its 39 copies (87 %), B 32 of 35 (91 %)
   const mine = { mainboard: { "Mountain": 30, "Lightning Bolt": 4, "Fireball": 1 } };
   assert.deepEqual(closestDeck(mine, DECKS), { index: 1, similarity: 91 });
@@ -198,7 +198,7 @@ test("closestDeck finds the nearest deck by the same similarity, skipping the re
 });
 
 test("poolMedians places a list among the decks as the rail measures them, quiet under three decks", () => {
-  const { poolMedians, consensusShare } = require("../pool-analyze.js");
+  const { poolMedians, consensusShare } = require("../src/pool-analyze.js");
   const a2 = analyzePool(DECKS, MAP, []);
   assert.equal(poolMedians(a2, DECKS), null);
   const three = [...DECKS, { name: "Krenko C", source: "text", commanders: { "Krenko, Mob Boss": 1 },

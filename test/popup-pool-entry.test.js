@@ -8,7 +8,7 @@ const fs = require("fs");
 const path = require("path");
 const { JSDOM } = require("jsdom");
 
-const ROOT = path.join(__dirname, "..");
+const ROOT = path.join(__dirname, "..", "src");
 const TAB = "https://archidekt.com/decks/77";
 const deck = (url, cmd) => ({ name: url, source: "archidekt", url, commanders: { [cmd]: 1 }, mainboard: { "Sol Ring": 1 }, sideboard: {} });
 const opened = [];

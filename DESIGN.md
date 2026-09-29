@@ -182,7 +182,7 @@ Each role has a wash (`--a-wash`, `--b-wash`, `--match-wash`, 10% alpha) for the
 
 ## Typography
 
-**Display Font:** Beleren — the Magic card face, bundled in `fonts/` (with Iowan Old Style, Georgia, serif)
+**Display Font:** Beleren, the Magic card face, bundled in `src/fonts/` (with Iowan Old Style, Georgia, serif)
 **Body Font:** Archivo (with system-ui, -apple-system, Segoe UI, Helvetica, sans-serif)
 **Label/Mono Font:** Geist Mono (with ui-monospace, SFMono-Regular, monospace)
 **Wordmark:** Bricolage Grotesque 700/800 — the wordmark only, locked by the brand.

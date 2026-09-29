@@ -1,62 +1,38 @@
-# Chrome Web Store listing
+# Store listings
 
-Source of truth for the listing text, kept here because it is edited in the developer
-console and is not otherwise versioned anywhere.
+Source of truth for what the four stores show (Chrome Web Store, Edge Add-ons,
+addons.mozilla.org, Mac App Store): texts, privacy answers and media. The consoles version
+nothing, so this file does; the media sit beside it in `store/`.
 
-> **2026-09-02 — rejected for keyword stuffing** (case *Yellow Argon*). The detailed
-> description ended on a bare comma-separated run of all eight site names, in both the
-> English and the French listing:
->
-> > Works with eight platforms: Moxfield, Archidekt, MTGGoldfish, mtgtop8, Magic-Ville,
-> > mtgdecks.net, Melee, getpaird.
->
-> The sites are genuinely supported, so the facts were not the problem — the *shape* was.
-> An enumerated list of proper nouns is the pattern their heuristic looks for. The text
-> below states the count and names at most two sites inside a sentence; the full list
-> lives in the extension itself and in the README, where it belongs.
->
-> **Rule for future edits: never write more than two site names in a row.**
+**Rule: never write more than two site names in a row.** On 2026-09-02 the Chrome Web Store
+rejected the listing for keyword stuffing (case *Yellow Argon*): the detailed description ended
+on a bare comma-separated run of every site name. The facts were fine, the shape was not. The
+texts state the count and name at most two sites inside a sentence; the full list lives in the
+extension and in the README.
 
-> **2026-09-05 — 1.0.13 is live** (store page: Version 1.0.13, updated September 5, 2026;
-> previous live version 0.9.0). The console text is behind this file on two points: both
-> descriptions still say « Analyse de pool » / "Pool analysis" instead of « Comparaison
-> croisée » / "Cross-compare", and the patch note shown is the **v1.0** one, which describes
-> the cancelled 1.0.0 world ("a playmat under a single overhead light") that never shipped.
-> Paste the v1.0.13 notes below in its place. **Note (1.1):** the description bullets below
-> already describe 1.1, where the Compare button is on by default; a 1.0.13 console update
-> must keep « désactivé par défaut » / "off by default" until 1.1 is live.
->
-> **2026-09-08 — 1.1 cut** (manifest `1.1`, tag `v1.1`, `deckcompare-v1.1.zip`): the bullets
-> below now match the shipped build. Console to-do at upload: replace both descriptions, and
-> paste the **v1.1** and **v1.0.13** patch notes (newest first) in place of the v1.0 one.
+## Listings and submissions
 
----
+- Chrome Web Store: https://chromewebstore.google.com/detail/deck-compare-%E2%80%93-mtg/miijiappldgijnnokopjfiponelkdhcg
+- Edge Add-ons: https://microsoftedge.microsoft.com/addons/detail/deck-compare-%E2%80%93-mtg/akklkakfdidemfbbnjmhiofkhkcnhfbc
+- addons.mozilla.org: https://addons.mozilla.org/firefox/addon/deck-compare-mtg/
+- Mac App Store: app `io.github.mcouzinet.deckcompare`, not on sale yet.
 
-> **2026-09-24 — 1.2 cut** (manifest `1.2`, tag `v1.2`). Three uploads, same texts and media:
-> `dist/deckcompare-1.2-chrome.zip` to the Chrome Web Store and to Edge Add-ons,
-> `dist/deckcompare-1.2-firefox.zip` to addons.mozilla.org (first Firefox listing — see
-> *Firefox and Edge listings* below for the fields those two consoles ask for).
-> Edge Add-ons: 1.2 submitted on 2026-09-24 (first Edge listing, logo + EN/FR descriptions), live on 2026-09-25:
-> https://microsoftedge.microsoft.com/addons/detail/deck-compare-%E2%80%93-mtg/akklkakfdidemfbbnjmhiofkhkcnhfbc
-> addons.mozilla.org: 1.2 submitted on 2026-09-24 (first Firefox listing).
-> Mac App Store: macOS app 1.2, build 2, submitted on 2026-09-25 (first Safari listing).
-> Chrome Web Store: 1.2 submitted on 2026-09-25, **live and public** the same day.
+| Version | Chrome Web Store | Edge Add-ons | addons.mozilla.org | Mac App Store |
+|---|---|---|---|---|
+| 1.3 | sent 2026-09-29 | sent 2026-09-29 | sent 2026-09-29 | build 4, sent 2026-09-29 |
+| 1.2 | live 2026-09-25 | first listing, live 2026-09-25 | first listing, live 2026-09-27 | first listing, build 2, sent 2026-09-25 |
+| 1.1 | cut 2026-09-08 | | | |
+| 1.0.13 | live 2026-09-05 | | | |
 
-> **2026-09-29, 1.3 cut** (manifest `1.3`, tag `v1.3`). Same uploads as 1.2:
-> `dist/deckcompare-1.3-chrome.zip` to the Chrome Web Store and to Edge Add-ons,
-> `dist/deckcompare-1.3-firefox.zip` to addons.mozilla.org, and for the Mac App Store an Xcode
-> archive of `safari/` (1.3, build 4) once `npm run build safari` has written `dist/safari/`.
-> Both detailed descriptions now say nine sites; paste the **v1.3** patch notes above v1.2.
-> First screenshot redone with ManaBox: `1-le-bouton-sur-neuf-sites.png` replaces the eight-site
-> montage, in first position on every store (delete the old one in each console). The video still
-> says eight sites (`store/reel/reel.html`, two places). The scripting and host permission
-> justifications below already name manabox.app and the open deck tabs the extension lists.
-> Submitted on 2026-09-29 to all four: Chrome Web Store, Edge Add-ons, addons.mozilla.org and the
-> Mac App Store (1.3, build 4), with the texts, notes and first screenshot above.
+Each release uploads `dist/deckcompare-X.Y-chrome.zip` (Chrome Web Store and Edge Add-ons),
+`dist/deckcompare-X.Y-firefox.zip` (addons.mozilla.org) and an Xcode archive of `safari/` (Mac App
+Store, see *App Store* below), with the two descriptions, the new patch note above the others, and
+the media. Still to redo for ManaBox: the promo video, which says eight sites
+(`store/reel/reel.html`, two places).
 
 ## Short description (132 characters max)
 
-Comes from `_locales/*/messages.json` → `appDescription`. **112 characters at most**: Safari rejects
+Comes from `src/_locales/*/messages.json` → `appDescription`. **112 characters at most**: Safari rejects
 the package above that (the French one was shortened on 2026-09-24; a test guards the limit).
 
 - **EN**: Instantly compare two Magic: The Gathering decklists side by side with a visual diff and similarity score.
@@ -64,7 +40,7 @@ the package above that (the French one was shortened on 2026-09-24; a test guard
 
 ---
 
-## Detailed description — English
+## Detailed description (English)
 
 Compare two Magic: The Gathering decklists side by side, without copying or pasting anything.
 
@@ -84,7 +60,7 @@ No account, no sign-in, no analytics, no data collected. Everything runs locally
 
 ---
 
-## Detailed description — Français
+## Detailed description (Français)
 
 Comparez deux listes de cartes Magic: The Gathering côte à côte, sans rien copier ni coller.
 
@@ -127,14 +103,6 @@ Le bouton « Comparer » est désormais présent d'office sur les sites de decks
 
 Le bouton « Comparer » arrive sur les sites de decks eux-mêmes (opt-in dans les Réglages) ; le deuxième deck se choisit en un clic parmi tes onglets ouverts ; la page de résultats gagne « Comparer un autre » et l'inversion des decks. L'analyse de pool devient la « Comparaison croisée » : elle se lance en un clic depuis une page d'archétype mtgtop8, filtre les decks par carte et fonctionne sans commandant. Les cartes recto-verso sont reconnues d'un site à l'autre et Magic-Ville se charge de nouveau. L'identité visuelle est entièrement remplacée — un mémo sur papier crème, en Beleren. Aucune permission supplémentaire n'est exigée à la mise à jour.
 
-**v0.9**
-
-Prise en charge de deux nouveaux sites, au même niveau que les six existants : Melee (melee.gg) et getpaird (getpaird.io). Les deux fonctionnent partout : collage d'URL, détection de l'onglet actif et analyseur de pool.
-
-**v0.8**
-
-Magic-Ville réparé — les decks Magic-Ville ne se chargeaient plus. C'est corrigé, y compris la détection du commandant en Duel Commander. Messages d'erreur plus clairs quand une page ne contient pas de decklist lisible. Vérifications automatiques ajoutées sur les sites supportés.
-
 ### English
 
 **v1.3**
@@ -152,14 +120,6 @@ The Compare button now ships on the deck sites out of the box, and can be switch
 **v1.0.13**
 
 The "Compare" button lands on the deck sites themselves (opt-in in Settings); the second deck is one click away from your open tabs; the results page gains "Compare another" and deck swapping. Pool analysis becomes "Cross-compare": it opens in one click from an mtgtop8 archetype page, filters decks by card, and works without a commander. Double-faced cards are matched across sites and Magic-Ville loads again. The visual identity is fully replaced — a memo on cream paper, set in Beleren. No new permission is required on update.
-
-**v0.9**
-
-Two new sites supported at full parity with the existing six: Melee (melee.gg) and getpaird (getpaird.io) — URL paste, active-tab detection and the pool analyser all work.
-
-**v0.8**
-
-Magic-Ville fixed (including Duel Commander commander detection), clearer error messages on unreadable pages, automated checks on supported sites.
 
 ---
 
@@ -230,14 +190,14 @@ asks the same thing (Edge, Opera, an AMO reviewer).
 
 **Privacy policy URL**: https://mcouzinet.github.io/deckCompare/privacy-policy.html
 
-## Firefox and Edge listings (1.2)
+## Firefox and Edge listings
 
 Same name, short and detailed descriptions, screenshots and promo images as the Chrome Web
 Store. What differs:
 
-**addons.mozilla.org** (Firefox, first listing)
+**addons.mozilla.org** (Firefox)
 
-- Package: `dist/deckcompare-1.2-firefox.zip`. Add-on id `deckcompare@mcouzinet.github.io`
+- Package: `dist/deckcompare-X.Y-firefox.zip`. Add-on id `deckcompare@mcouzinet.github.io`
   (in the manifest; permanent once published).
 - Summary (250 characters max): the short description above.
 - Add one sentence to the detailed description, Firefox only —
@@ -247,13 +207,14 @@ Store. What differs:
   Privacy policy: https://mcouzinet.github.io/deckCompare/privacy-policy.html.
 - License: MIT (the repository's `LICENSE`).
 - Source code: not needed — nothing is minified or bundled; the build only rewrites the manifest.
-  If a reviewer asks, point to the GitHub tag `v1.2` and `npm run build`.
+  If a reviewer asks, point to the GitHub tag `vX.Y` and `npm run build`.
 - Data collection: declared in the manifest as none.
-- Version notes — EN: *First release for Firefox.* FR : *Première version pour Firefox.*
+- Version notes: the version's patch note, English and French (the first listing, 1.2, said
+  *First release for Firefox.* / *Première version pour Firefox.*).
 
 **Edge Add-ons** (Partner Center)
 
-- Package: `dist/deckcompare-1.2-chrome.zip` — the Chrome package, unchanged.
+- Package: `dist/deckcompare-X.Y-chrome.zip`, the Chrome package, unchanged.
 - Category: Entertainment. Privacy policy URL as above.
 - Required for **each language in the package** — English and French, since `_locales` ships both:
   a description and the **extension logo** `store/logo-300x300.png` (1:1, 300×300 recommended,
@@ -286,7 +247,8 @@ The wrapper app lives in `safari/Deck Compare/Deck Compare.xcodeproj`; it refere
 3. Scheme **Deck Compare**, destination **Any Mac** › Product › **Archive**. In the Organizer:
    **Distribute App** › App Store Connect › Distribute. Xcode creates the distribution certificate
    if the team has none.
-4. Once the build is processed, attach it to version 1.2 in App Store Connect and submit. Test it
+4. Once the build is processed, attach it to the version in App Store Connect and submit (a new
+   version is created with « + » beside « macOS App » once the previous one is approved). Test it
    first with TestFlight on the Mac if you like.
 5. Each new upload needs a higher build number (`CURRENT_PROJECT_VERSION`), higher than every build
    already uploaded whatever its version (macOS never restarts at 1: 1.2 went up to build 3, 1.3
@@ -295,7 +257,7 @@ The wrapper app lives in `safari/Deck Compare/Deck Compare.xcodeproj`; it refere
 
 **Listing** (fill English, then add the French localization)
 
-- Name: the extension's `appName` (`_locales/en/messages.json`).
+- Name: the extension's `appName` (`src/_locales/en/messages.json`).
 - Subtitle (30 max): EN `Compare MTG decklists` · FR `Comparez vos decklists MTG`.
 - Promotional text (170 max):
   EN: Compare two Magic: The Gathering decklists side by side, right from the deck page: shared cards, exclusives, quantity gaps and a similarity score.
@@ -328,10 +290,11 @@ appear, and ManaBox decks may not be readable at all.
 Guideline 4.4 wants the containing app to offer "some functionality, such as help screens"; the
 packager's app shows only how to enable the extension, which reviewers may question.
 
-## Media (1.1, 2026-09-08)
+## Media
 
-All in the light « Le mémo » world, French UI, captured from the real 1.1 build in a driven
-Chrome for Testing with the extension loaded (real sites, real decks, real Scryfall images).
+All in the light « Le mémo » world, French UI, captured from real builds (1.1 for screenshots 2
+to 5, 1.3 for the first) in a driven Chrome for Testing with the extension loaded (real sites,
+real decks, real Scryfall images).
 Store screenshots are 1280×800 PNG, in this order:
 
 1. `store/screenshots/1-le-bouton-sur-neuf-sites.png` (1.3): the « Comparer » button captured in
@@ -350,8 +313,6 @@ Store screenshots are 1280×800 PNG, in this order:
    the saved-decks line are supplied by a harness (a popup opened as a page cannot see another
    active tab).
 
-Alternates (full-page captures by the user, reduced): `store/alternates/`.
-
 Promo images, English (one set serves every locale), redrawn on cream paper with the current
 icon: `store/promo-small-440x280.png`, `store/promo-marquee-1400x560.png` (the marquee embeds a crop of
 screenshot 2). Two site names at most appear in a row, as in the descriptions.
@@ -365,17 +326,13 @@ signature. Real Scryfall images, made-up decks held to the product's formula (71
 `node store/reel/render.js` writes `store/reel/out/deckcompare-15s.mp4` (git-ignored); the render
 loads Google Fonts and Scryfall, so it needs the network. The stores take it as a YouTube link.
 
-Pipeline: `scratchpad/shots/*.js` (puppeteer-core + Chrome for Testing, `--load-extension`;
-the branded Chrome ≥ 137 refuses that flag), 2× capture then Lanczos resize to exact size.
-Montage tiles: six sites cropped in a headful Chrome for Testing (Moxfield through a test copy of
-the package that declares its content script statically — the shipped build asks for that host
-at runtime); MTGGoldfish, Magic-Ville and mtgdecks sit behind Cloudflare challenges that block
-automated Chrome, so their tiles come from the user's own Chrome (page zoomed 2×, frame exported
-as GIF, cropped). Composition: `scratchpad/montage/montage.html` rendered at 2×.
-The 1.3 collage takes fresh 2× tiles for Archidekt, getPaird and ManaBox (headless Chrome for
-Testing, a test copy of the package with the optional hosts granted at install) and reuses the
-1.2 tiles for the six others: Cloudflare now blocks automated Chrome on Moxfield and Melee too,
-and mtgtop8 shows a consent wall. To redo them, capture those pages from the user's own Chrome.
+Pipeline: puppeteer-core and Chrome for Testing with `--load-extension` (the branded Chrome
+refuses that flag since 137), 2× capture then Lanczos resize to the exact size. The first
+screenshot is a collage of per-site tiles: Archidekt, getPaird and ManaBox were captured for 1.3
+(headless, a test copy of the package with the optional hosts granted at install); the six others
+come from the 1.2 montage, because Cloudflare blocks automated Chrome on Moxfield, MTGGoldfish,
+mtgdecks, Melee and Magic-Ville, and mtgtop8 shows a consent wall. To redo those, capture the pages
+from the user's own Chrome.
 
 ---
 

@@ -24,10 +24,12 @@ const path = require("path");
 const { execFileSync } = require("child_process");
 
 const ROOT = path.resolve(__dirname, "..");
+const SRC = path.join(ROOT, "src");   // the extension, as the browser loads it in development
 const DIST = path.join(ROOT, "dist");
 const GECKO_ID = "deckcompare@mcouzinet.github.io";
 
-// Everything the extension needs at runtime and nothing else (no tests, docs, promo art).
+// Everything the extension needs at runtime and nothing else (no tests, docs, promo art), read
+// from src/; the privacy policy is read from the repository root, where GitHub Pages serves it.
 const FILES = [
   "manifest.json", "theme.css",
   "popup.html", "compare.html", "pool.html", "privacy-policy.html",
@@ -41,6 +43,7 @@ const FILES = [
   "fonts/BricolageGrotesque-latin.woff2", "fonts/GeistMono-latin.woff2",
   "fonts/OFL-Archivo.txt", "fonts/OFL-BricolageGrotesque.txt", "fonts/OFL-GeistMono.txt",
 ];
+const FROM_ROOT = ["privacy-policy.html"];
 
 const TARGETS = {
   chrome: (m) => m,
@@ -71,7 +74,7 @@ const EXTRA_FILES = { safari: ["icons/icon1024.png"] };
 function build(target) {
   const transform = TARGETS[target];
   if (!transform) throw new Error(`unknown target "${target}" (${Object.keys(TARGETS).join(", ")})`);
-  const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, "manifest.json"), "utf8"));
+  const manifest = JSON.parse(fs.readFileSync(path.join(SRC, "manifest.json"), "utf8"));
 
   // Every script the manifest references must be in FILES, or the package is silently broken.
   const referenced = new Set([manifest.background && manifest.background.service_worker]);
@@ -82,7 +85,7 @@ function build(target) {
   fs.rmSync(dir, { recursive: true, force: true });
   const files = FILES.concat(EXTRA_FILES[target] || []);
   for (const f of files) {
-    const src = path.join(ROOT, f);
+    const src = path.join(FROM_ROOT.includes(f) ? ROOT : SRC, f);
     if (!fs.existsSync(src)) throw new Error(`missing file: ${f}`);
     fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true });
     if (f !== "manifest.json") fs.copyFileSync(src, path.join(dir, f));

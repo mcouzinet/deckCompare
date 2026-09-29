@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Deck Compare YouTube Thumbnail</title>
+<!--
+  YouTube thumbnail of the promo video, 1280x720, in the reel's world: rendered at 2x by
+  `node store/reel/render.js thumbnail`, then resized to store/youtube-thumbnail-1280x720.jpg.
+  Read small: YouTube shows it down to 168 px wide, so one question, two cards, one figure.
+  Kept clear: the top edge (the embed's title bar) and the bottom-right corner (the duration).
+-->
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=block" rel="stylesheet">
+<style>
+@font-face{font-family:"Beleren";src:url("../../src/fonts/Beleren2016-Bold.woff2") format("woff2");font-weight:400 700;font-display:block}
+:root{--bg:#0f1218;--ink:#eef0f3;--ink-2:#b3b9c3;--ink-3:#858c98;--a:#e3a24f;--a-hi:#edb567;--b:#56b6c9;--b-hi:#6fc6d8;
+--f-title:"Bricolage Grotesque","Archivo",system-ui,sans-serif;--f-ui:"Archivo",system-ui,sans-serif;--f-fig:"Beleren",Georgia,serif}
+*{box-sizing:border-box}
+html,body{margin:0;width:1280px;height:720px;overflow:hidden;background:var(--bg)}
+#t{position:relative;width:1280px;height:720px;overflow:hidden;color:var(--ink);font-family:var(--f-ui);-webkit-font-smoothing:antialiased;
+  background:radial-gradient(760px 620px at 18% 42%,rgba(227,162,79,.2),transparent 70%),radial-gradient(820px 680px at 74% 46%,rgba(86,182,201,.24),transparent 70%),var(--bg)}
+.layer{position:absolute;inset:0}
+#rays{position:absolute;left:918px;top:340px;width:1900px;height:1900px;margin:-950px 0 0 -950px;border-radius:50%;background:repeating-conic-gradient(from 4deg,rgba(86,182,201,.16) 0deg 5deg,transparent 5deg 15deg,rgba(227,162,79,.16) 15deg 20deg,transparent 20deg 30deg);-webkit-mask-image:radial-gradient(circle,#000 0,transparent 58%)}
+#grain{opacity:.07;mix-blend-mode:overlay;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+#vig{background:radial-gradient(ellipse at 50% 50%,transparent 58%,rgba(0,0,0,.55))}
+
+/* the question, as in the video */
+#q{position:absolute;left:62px;top:128px;font:800 128px/.9 var(--f-title);letter-spacing:-.04em;text-transform:uppercase}
+#q span{display:block}
+.hl{background:linear-gradient(90deg,var(--a-hi) 8%,var(--b-hi) 92%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 34px rgba(86,182,201,.35))}
+#sub{position:absolute;left:66px;top:382px;font:600 31px/1.25 var(--f-ui);color:var(--ink-2)}
+#sub b{color:var(--ink);font-weight:700}
+
+/* the two decks: the icon's two cards, made real */
+.card{position:absolute;width:262px;height:365px;border-radius:4.7%/3.4%;overflow:hidden;background:#111}
+.card img{display:block;width:100%;height:100%}
+#cA{left:690px;top:132px;transform:rotate(-9deg);box-shadow:0 0 0 5px var(--a),0 0 70px rgba(227,162,79,.55),0 30px 60px -10px rgba(0,0,0,.8)}
+#cB{left:884px;top:120px;transform:rotate(7deg);box-shadow:0 0 0 5px var(--b),0 0 70px rgba(86,182,201,.55),0 30px 60px -10px rgba(0,0,0,.8)}
+/* the figure where the icon puts its disc */
+#fig{position:absolute;left:918px;top:512px;width:188px;height:188px;margin:-94px 0 0 -94px;border-radius:50%;padding:6px;background:linear-gradient(90deg,var(--a),var(--b));box-shadow:0 18px 40px rgba(0,0,0,.6)}
+#fig div{width:100%;height:100%;border-radius:50%;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center}
+#fig b{font:400 74px/1 var(--f-fig);color:var(--ink);letter-spacing:-.01em;display:flex;align-items:flex-start}
+#fig b i{font-style:normal;font-size:32px;color:var(--ink-3);margin:8px 0 0 3px}
+#fig span{font:700 15px/1 var(--f-ui);letter-spacing:.22em;text-transform:uppercase;color:var(--ink-2);margin-top:6px}
+
+/* the signature, bottom left (bottom right is the duration's) */
+#mark{position:absolute;left:62px;top:604px;display:flex;align-items:center;gap:18px}
+#mark img{display:block;width:66px;height:66px}
+#mark div{font:700 46px/1 var(--f-title);letter-spacing:-.02em;color:var(--a-hi)}
+#mark div b{font-weight:800;color:var(--b-hi)}
+</style>
+</head>
+<body>
+<div id="t">
+  <div id="rays"></div>
+  <div class="card" id="cA"><img src="https://cards.scryfall.io/large/front/e/4/e419cd0b-2449-4cc5-9ead-b9e45e271700.jpg?1783911247" alt=""></div>
+  <div class="card" id="cB"><img src="https://cards.scryfall.io/large/front/7/6/76c3cad2-1e25-4abe-878d-9194de6fcc27.jpg?1790212061" alt=""></div>
+  <div id="fig"><div><b>95<i>%</i></b><span>Similar</span></div></div>
+  <div id="q"><span>What</span><span class="hl">changed?</span></div>
+  <div id="sub">Compare two MTG decklists,<br><b>in one click.</b></div>
+  <div id="mark"><img src="../../src/icons/icon.svg" alt=""><div>Deck<b>Compare</b></div></div>
+  <div class="layer" id="grain"></div>
+  <div class="layer" id="vig"></div>
+</div>
+<script>
+window.__ready = Promise.all([
+  ...['800 100px "Bricolage Grotesque"', '700 100px "Bricolage Grotesque"', '400 100px Beleren', '600 20px Archivo', '700 20px Archivo'].map((f) => document.fonts.load(f)),
+  ...[...document.images].map((i) => i.decode()),
+]).then(() => document.fonts.ready).then(() => true)
+</script>
+</body>
+</html>

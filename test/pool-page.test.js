@@ -9,7 +9,7 @@ const fs = require("fs");
 const path = require("path");
 const { JSDOM } = require("jsdom");
 
-const ROOT = path.join(__dirname, "..");
+const ROOT = path.join(__dirname, "..", "src");
 const deck = (name, main, cmd = { "Krenko, Mob Boss": 1 }) => ({ name, source: "text", url: "", commanders: cmd, mainboard: main, sideboard: {} });
 const POOL = [
   deck("Alpha", { "Mountain": 30, "Lightning Bolt": 4, "Goblin Guide": 4 }),

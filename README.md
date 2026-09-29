@@ -1,10 +1,11 @@
 # Deck Compare — MTG
 
 <p align="center">
-  <img src="icons/icon128.png" width="96" alt="Deck Compare icon">
+  <img src="src/icons/icon128.png" width="96" alt="Deck Compare icon">
 </p>
 
-Chrome extension to compare Magic: The Gathering decklists side by side, across all major platforms.
+Browser extension (Chrome, Edge, Firefox, Safari) to compare Magic: The Gathering decklists side by
+side, across all major deck sites.
 
 ## Features
 
@@ -82,14 +83,14 @@ button until you grant them.
 ### Safari
 
 A Safari package is built from the same source (`npm run build safari` → `dist/safari/`), and the
-macOS wrapper app that carries it is the Xcode project in `safari/`. The Mac App Store release is on
-its way.
+macOS wrapper app that carries it is the Xcode project in `safari/`. The Mac App Store version is in
+review.
 
 ### Manual install (developer mode)
 
 1. Clone this repo
 2. Chrome / Edge: go to `chrome://extensions/` (`edge://extensions/`), enable **Developer mode**,
-   click **Load unpacked** and select the project folder
+   click **Load unpacked** and select the `src/` folder
 3. Firefox: `npm run build`, then `about:debugging#/runtime/this-firefox` → **Load Temporary
    Add-on…** → pick `dist/firefox/manifest.json`
 
@@ -102,12 +103,25 @@ npm run build
 Writes `dist/chrome/`, `dist/firefox/` and `dist/safari/` plus one zip per browser. Only the manifest differs
 between targets (`scripts/build.js`); the source tree stays browser-neutral.
 
+## Repository layout
+
+- `src/`: the extension itself, loaded as is in development (manifest, pages, scripts, `_locales`,
+  fonts, icons)
+- `test/`: unit tests (`npm test`, node:test and jsdom) and their site fixtures
+- `scripts/build.js`: one store package per browser in `dist/` (`npm run build`)
+- `safari/`: the Xcode project of the macOS app that carries the Safari extension
+- `store/`: store texts and privacy answers (`store/listing.md`), screenshots, promo art, and the
+  promo video sources (`store/reel/`)
+- `privacy-policy.html`: the privacy policy, served by GitHub Pages
+- `AGENTS.md` (working notes), `DESIGN.md` (design system), `PRODUCT.md` (product brief),
+  `CHANGELOG.md` (in French)
+
 ## Tech
 
 - WebExtension Manifest V3 — Chrome, Edge and the other Chromium browsers, Firefox 128+
-- Vanilla JS, no bundler: the folder loads as is; `npm run build` only packages it per browser
+- Vanilla JS, no bundler: `src/` loads as is; `npm run build` only packages it per browser
 - Card images via [Scryfall API](https://scryfall.com/docs/api)
-- Fonts, all bundled in `fonts/` (no font is fetched): Archivo (interface), Beleren (figures and deck names), Geist Mono (measurements), Bricolage Grotesque (wordmark)
+- Fonts, all bundled in `src/fonts/` (no font is fetched): Archivo (interface), Beleren (figures and deck names), Geist Mono (measurements), Bricolage Grotesque (wordmark)
 
 ## Privacy
 
@@ -117,8 +131,8 @@ See the full [Privacy Policy](https://mcouzinet.github.io/deckCompare/privacy-po
 
 ## License
 
-[MIT](LICENSE). Not covered by it: the Beleren typeface in `fonts/`, property of Wizards of the
-Coast; Archivo, Bricolage Grotesque and Geist Mono, also in `fonts/`, under the SIL Open Font
+[MIT](LICENSE). Not covered by it: the Beleren typeface in `src/fonts/`, property of Wizards of the
+Coast; Archivo, Bricolage Grotesque and Geist Mono, also in `src/fonts/`, under the SIL Open Font
 License 1.1 (their license files sit beside them); and the page excerpts in `test/fixtures/`,
 which remain their sites' property.
 

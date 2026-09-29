@@ -56,7 +56,8 @@ exports.
 
 ## Capabilities and Constraints
 
-- Chrome Manifest V3. Vanilla JS, no build step, no framework, no bundler.
+- Manifest V3, one source for Chrome, Edge, Firefox and Safari. Vanilla JS, no framework, no
+  bundler: the build only writes one package per browser, the manifest being the one difference.
 - A shared `theme.css` carries the palette and the single button component across the
   three extension pages, and `shared.js` carries the cross-surface logic (deck
   normalisation, saved-deck reader, optional-origin table); the injected in-page button
@@ -65,7 +66,8 @@ exports.
 - Internationalised through `chrome.i18n` / `_locales`: English and French, resolved from
   the browser language. Every user-facing string lives in `_locales`.
 - No account, no backend, no analytics, no cookies. Everything runs client-side.
-- Optional host permissions are requested only when the user enables the in-page button;
+- Optional host permissions are requested only from a click (the in-page button setting, the
+  popup, or a ManaBox deck link);
   adding a *required* host permission would disable the extension for every existing user
   until they re-accept, so that must never happen.
 - The similarity figure is `sharedQty / max(totalA, totalB)` — a containment ratio, not
@@ -76,7 +78,7 @@ exports.
 Locked by the maintainer; a visual replacement must build around these, not over them.
 
 - **The icon** — two overlapping cards, orange and teal. It is the Web Store identity.
-  `icons/icon16|48|128.png`, redrawn as inline SVG in `inject-button.js`.
+  `src/icons/icon16|48|128.png`, redrawn as inline SVG in `inject-button.js`.
 - **The wordmark** — "Deck" + bold "Compare", orange then teal, in Bricolage Grotesque.
 - **The A/B/shared colour encoding** — deck 1 warm orange, deck 2 teal, shared green: the
   icon's own encoding. The exact values follow the visual world (on the light "Memo" world of
@@ -85,14 +87,15 @@ Locked by the maintainer; a visual replacement must build around these, not over
   accent in that pass: it is no longer a UI colour. It carries identical meaning across all four surfaces including
   the injected shadow DOM, and it is the one system the product already has.
 
-Name: Deck Compare — MTG. Published on the Chrome Web Store.
+Name: Deck Compare — MTG. Published on the Chrome Web Store, Edge Add-ons and addons.mozilla.org; in review on the Mac App
+Store.
 
 ## Evidence on Hand
 
-- Live product on the Chrome Web Store since 2026-09-05, also packaged for Edge and Firefox; versions and release history in `CHANGELOG.md`.
+- Live product on the Chrome Web Store since 2026-09-05, on Edge Add-ons and addons.mozilla.org since 1.2, in review on the Mac App Store; versions and
+  release history in `CHANGELOG.md`, submissions in `store/listing.md`.
 - Real card data and imagery via the Scryfall API (`image_uris`, type lines).
 - Unit tests over the nine site parsers with fixtures in `test/fixtures/`.
-- A design critique snapshot at `.impeccable/critique/` scoring the pre-v1 UI 20/40.
 - Store assets in `store/`: screenshots, `promo-marquee-1400x560.png`, `promo-small-440x280.png`.
 - No user research, no analytics, no install numbers, no testimonials — none exist, and
   future work must not invent them.

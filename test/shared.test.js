@@ -1,7 +1,7 @@
 "use strict";
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const { fixCommanderHeuristic, sumBoard, normalizeName, SUPPORTED_SITES } = require("../shared.js");
+const { fixCommanderHeuristic, sumBoard, normalizeName, SUPPORTED_SITES } = require("../src/shared.js");
 
 const siteMatch = (url) => (SUPPORTED_SITES.find((s) => s.deckRe.test(url)) || {}).label;
 
@@ -25,7 +25,7 @@ test("SUPPORTED_SITES rejects homepages and listings (no false one-click shortcu
 });
 
 test("getOpenDeckTabs keeps deck tabs, drops the caller, non-decks and dupes", async () => {
-  const { getOpenDeckTabs } = require("../shared.js");
+  const { getOpenDeckTabs } = require("../src/shared.js");
   const prev = global.chrome;
   global.chrome = { tabs: { query: async () => [
     { url: "https://www.moxfield.com/decks/aaa", title: "My Deck" },
@@ -45,7 +45,7 @@ test("getOpenDeckTabs keeps deck tabs, drops the caller, non-decks and dupes", a
 });
 
 test("getOpenDeckTabs returns [] where chrome.tabs is unavailable", async () => {
-  const { getOpenDeckTabs } = require("../shared.js");
+  const { getOpenDeckTabs } = require("../src/shared.js");
   const prev = global.chrome;
   global.chrome = undefined;
   try { assert.deepEqual(await getOpenDeckTabs("x"), []); }
@@ -145,7 +145,7 @@ function mainOf(n) {
 }
 
 test("injectEnabled: the in-page button is on unless explicitly switched off (1.1 default)", () => {
-  const { injectEnabled, INJECT_KEY } = require("../shared.js");
+  const { injectEnabled, INJECT_KEY } = require("../src/shared.js");
   assert.equal(INJECT_KEY, "injectButton");
   assert.equal(injectEnabled(undefined), true);   // fresh install, or never opened Settings
   assert.equal(injectEnabled(true), true);
@@ -153,7 +153,7 @@ test("injectEnabled: the in-page button is on unless explicitly switched off (1.
 });
 
 test("isOptionalHost: only the optional origins (Moxfield, the non-www twins) need a granted permission", () => {
-  const { isOptionalHost } = require("../shared.js");
+  const { isOptionalHost } = require("../src/shared.js");
   assert.equal(isOptionalHost("https://www.moxfield.com/decks/abc"), true);
   assert.equal(isOptionalHost("https://mtggoldfish.com/deck/1"), true);        // bare twin: optional
   assert.equal(isOptionalHost("https://www.mtggoldfish.com/deck/1"), false);   // declared statically
@@ -163,7 +163,7 @@ test("isOptionalHost: only the optional origins (Moxfield, the non-www twins) ne
 });
 
 test("injectResetOnUpdate: an update from any pre-1.1 build clears the toggle, a 1.1.x reload keeps it", () => {
-  const { injectResetOnUpdate } = require("../shared.js");
+  const { injectResetOnUpdate } = require("../src/shared.js");
   assert.equal(injectResetOnUpdate("1.0.13"), true);    // the live version: its `false` may be a declined prompt
   assert.equal(injectResetOnUpdate("1.0.0"), true);
   assert.equal(injectResetOnUpdate("0.9.0"), true);
@@ -176,8 +176,8 @@ test("injectResetOnUpdate: an update from any pre-1.1 build clears the toggle, a
 });
 
 test("normalizeDeck re-keys every board by front face and merges quantities (one entry point for all sources)", () => {
-  const { normalizeDeck } = require("../shared.js");
-  const { analyzePool } = require("../pool-analyze.js");
+  const { normalizeDeck } = require("../src/shared.js");
+  const { analyzePool } = require("../src/pool-analyze.js");
   const mox = normalizeDeck({ name: "A", _needsApiFetch: true, commanders: { "Raffine, Scheming Seer": 1 },
     mainboard: { "Life // Death": 1, "Life/Death": 2, "Island": 7 }, sideboard: {} });
   assert.deepEqual(mox.mainboard, { Life: 3, Island: 7 });
@@ -191,7 +191,7 @@ test("normalizeDeck re-keys every board by front face and merges quantities (one
 });
 
 test("sameDeckPage ignores the hash and www (finding a deck's tab for the fetch fallback)", () => {
-  const { sameDeckPage } = require("../shared.js");
+  const { sameDeckPage } = require("../src/shared.js");
   assert.equal(sameDeckPage("https://www.mtggoldfish.com/deck/7593392",
                             "https://www.mtggoldfish.com/deck/7593392#paper"), true);
   assert.equal(sameDeckPage("https://mtggoldfish.com/deck/7593392",
@@ -207,7 +207,7 @@ test("sameDeckPage ignores the hash and www (finding a deck's tab for the fetch 
 
 test("every locale's appDescription fits Safari's 112-character limit (Chrome allows 132)", () => {
   const fs = require("fs"); const path = require("path");
-  const dir = path.join(__dirname, "..", "_locales");
+  const dir = path.join(__dirname, "..", "src", "_locales");
   for (const loc of fs.readdirSync(dir)) {
     const m = JSON.parse(fs.readFileSync(path.join(dir, loc, "messages.json"), "utf8"));
     const d = m.appDescription && m.appDescription.message;
@@ -217,21 +217,21 @@ test("every locale's appDescription fits Safari's 112-character limit (Chrome al
 });
 
 test("OPTIONAL_SCRIPTS and the manifest's optional_host_permissions list the same origins", () => {
-  const { OPTIONAL_SCRIPTS } = require("../shared.js");
-  const manifest = require("../manifest.json");
+  const { OPTIONAL_SCRIPTS } = require("../src/shared.js");
+  const manifest = require("../src/manifest.json");
   assert.deepEqual([...OPTIONAL_SCRIPTS.map((e) => e.origin)].sort(), [...manifest.optional_host_permissions].sort());
 });
 
 test("every locale declares the same message keys", () => {
   const fs = require("fs"); const path = require("path");
-  const dir = path.join(__dirname, "..", "_locales");
+  const dir = path.join(__dirname, "..", "src", "_locales");
   const keys = (loc) => Object.keys(JSON.parse(fs.readFileSync(path.join(dir, loc, "messages.json"), "utf8"))).sort();
   const [first, ...rest] = fs.readdirSync(dir);
   for (const loc of rest) assert.deepEqual(keys(loc), keys(first), `${loc} and ${first} differ`);
 });
 
 test("requestManaBoxAccess asks for the ManaBox hosts it is given, and nothing else", async () => {
-  const { requestManaBoxAccess } = require("../shared.js");
+  const { requestManaBoxAccess } = require("../src/shared.js");
   const prev = global.chrome;
   const asked = [];
   global.chrome = { permissions: { request: async ({ origins }) => { asked.push(origins); return true; } } };
@@ -245,7 +245,7 @@ test("requestManaBoxAccess asks for the ManaBox hosts it is given, and nothing e
 });
 
 test("cachedCardTypes serves known cards and retries a name Scryfall lacked after a day", async () => {
-  const { cachedCardTypes } = require("../shared.js");
+  const { cachedCardTypes } = require("../src/shared.js");
   const prev = global.chrome;
   const now = Date.now();
   const cardTypeCache = {
@@ -266,7 +266,7 @@ test("cachedCardTypes serves known cards and retries a name Scryfall lacked afte
 });
 
 test("cachedCardTypes falls back on the cross-compare page's cache, front face first", async () => {
-  const { cachedCardTypes } = require("../shared.js");
+  const { cachedCardTypes } = require("../src/shared.js");
   const prev = global.chrome;
   const now = Date.now();
   const poolEnrichCache = {
@@ -283,7 +283,7 @@ test("cachedCardTypes falls back on the cross-compare page's cache, front face f
 });
 
 test("deckTabTitle keeps the deck's name and drops what each site wraps around it", () => {
-  const { deckTabTitle } = require("../shared.js");
+  const { deckTabTitle } = require("../src/shared.js");
   assert.equal(deckTabTitle("Aragorn, the Uniter (budget) • (Altruism Commander deck) • Archidekt"), "Aragorn, the Uniter (budget)");
   assert.equal(deckTabTitle("Eldrazi Deck for Magic: the Gathering"), "Eldrazi");
   assert.equal(deckTabTitle("Terra Rea - Duel Commander | Moxfield"), "Terra Rea - Duel Commander");   // a dash inside the name stays
@@ -297,7 +297,7 @@ test("deckTabTitle keeps the deck's name and drops what each site wraps around i
 });
 
 test("getOpenDeckTabs lists the caller's window first and never crosses the private-browsing line", async () => {
-  const { getOpenDeckTabs } = require("../shared.js");
+  const { getOpenDeckTabs } = require("../src/shared.js");
   const prev = global.chrome;
   const all = [
     { url: "https://archidekt.com/decks/1", title: "Other window • (Commander deck) • Archidekt", windowId: 2, incognito: false },
