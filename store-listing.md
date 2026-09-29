@@ -42,27 +42,15 @@ console and is not otherwise versioned anywhere.
 > Mac App Store: macOS app 1.2, build 2, submitted on 2026-09-25 (first Safari listing).
 > Chrome Web Store: 1.2 submitted on 2026-09-25, **live and public** the same day.
 
-> **1.3 to do (ManaBox, in dev since 1.2.1)**: both detailed descriptions still say eight sites
-> (« Huit sites »), right for 1.2, which is still under review on AMO and the Mac App Store: make
-> it nine at the 1.3 upload, not before. The first screenshot is the eight-site montage
-> (`1-le-bouton-sur-huit-sites.png`): add a ManaBox tile, or keep it. The scripting and host
-> permission justifications below already name manabox.app.
->
-> Draft patch notes for 1.3 (move them under *Patch notes* at the release, adjusted to what ships):
->
-> **v1.3** (FR) ManaBox rejoint les sites pris en charge : le bouton « Comparer » s'y ajoute sur
-> autorisation, en un clic, et le deck se lit depuis sa page. Comparaison croisée : « Comparer ma
-> liste » mesure ta propre liste à l'ensemble sans la compter (similarité à la decklist moyenne,
-> cartes du consensus, manques, cartes peu jouées ailleurs, deck le plus proche), et chaque deck
-> du lot se met en avant d'un survol ou d'un clic. Depuis le popup, « Ce deck face aux N decks »
-> y envoie le deck ouvert. Aucune permission requise en plus : ManaBox reste facultatif.
->
-> **v1.3** (EN) ManaBox joins the supported sites: the Compare button appears there once allowed,
-> in one click, and the deck is read from its own page. Cross-compare: "Compare my list" measures
-> your own list against the set without counting it (similarity to the average decklist, share of
-> the consensus, missing cards, cards seldom played elsewhere, closest deck), and any deck of the
-> set can be put forward with a hover or a click. From the popup, "This deck against the N decks"
-> sends the open deck there. No new required permission: ManaBox stays optional.
+> **2026-09-29, 1.3 cut** (manifest `1.3`, tag `v1.3`). Same uploads as 1.2:
+> `dist/deckcompare-1.3-chrome.zip` to the Chrome Web Store and to Edge Add-ons,
+> `dist/deckcompare-1.3-firefox.zip` to addons.mozilla.org, and for the Mac App Store an Xcode
+> archive of `safari/` (1.3, build 1) once `npm run build safari` has written `dist/safari/`.
+> Both detailed descriptions now say nine sites; paste the **v1.3** patch notes above v1.2.
+> Media kept as they were: the first screenshot is still the eight-site montage
+> (`1-le-bouton-sur-huit-sites.png`) and the video still says eight sites (`store/reel/reel.html`,
+> two places); add ManaBox when they are next redone. The scripting and host permission
+> justifications below already name manabox.app and the open deck tabs the extension lists.
 
 ## Short description (132 characters max)
 
@@ -80,7 +68,7 @@ Compare two Magic: The Gathering decklists side by side, without copying or past
 
 Open a deck page, click the extension, and choose the second deck: from another deck tab you already have open, from your own saved decks, or from a pasted link. You get a full visual breakdown in a new tab — cards unique to each deck shown as image grids, shared cards listed with their quantity differences highlighted, and a similarity figure.
 
-Because it reads the decklist straight from the page you are already on, a deck hosted on one site can be compared against a deck hosted on another. Eight deck sites are supported, Moxfield and Archidekt among them; the extension shows the full list under its settings.
+Because it reads the decklist straight from the page you are already on, a deck hosted on one site can be compared against a deck hosted on another. Nine deck sites are supported, Moxfield, Archidekt and ManaBox among them; the extension shows the full list under its settings.
 
 Also included:
 
@@ -100,7 +88,7 @@ Comparez deux listes de cartes Magic: The Gathering côte à côte, sans rien co
 
 Ouvrez une page de deck, cliquez sur l'extension, et choisissez le second deck : parmi les autres onglets de deck déjà ouverts, parmi vos decks enregistrés, ou à partir d'un lien collé. Vous obtenez une comparaison visuelle complète dans un nouvel onglet — les cartes propres à chaque deck en grilles d'images, les cartes communes en liste avec les écarts de quantité mis en évidence, et un score de similarité.
 
-Comme la liste est lue directement depuis la page où vous êtes, un deck hébergé sur un site peut être comparé à un deck hébergé sur un autre. Huit sites de decks sont pris en charge, dont Moxfield et Archidekt ; l'extension affiche la liste complète dans ses réglages.
+Comme la liste est lue directement depuis la page où vous êtes, un deck hébergé sur un site peut être comparé à un deck hébergé sur un autre. Neuf sites de decks sont pris en charge, dont Moxfield, Archidekt et ManaBox ; l'extension affiche la liste complète dans ses réglages.
 
 Également inclus :
 
@@ -117,9 +105,13 @@ Aucun compte, aucune connexion, aucune analyse d'audience, aucune donnée collec
 ## Patch notes
 
 Shown under the detailed description in both listings, newest first, one short paragraph per
-version. Newest first: **v1.2**, **v1.1**, then **v1.0.13**.
+version. Newest first: **v1.3**, **v1.2**, **v1.1**, then **v1.0.13**.
 
 ### Français
+
+**v1.3**
+
+ManaBox rejoint les sites pris en charge : le bouton « Comparer » s'y ajoute sur autorisation, en un clic, et le deck se lit depuis sa page. Comparaison croisée : « Comparer ma liste » mesure ta propre liste à l'ensemble sans la compter (similarité à la decklist moyenne, cartes du consensus, manques, cartes peu jouées ailleurs, deck le plus proche), chaque deck du lot se met en avant d'un survol ou d'un clic, et depuis le popup « Ce deck face aux N decks » y envoie le deck ouvert. La page de résultats montre plus de cartes par écran, dit ce que compte le pourcentage, copie chaque liste pour un éditeur de decks et filtre les écarts de quantité ; le popup, le panneau des sites et « Comparer un autre » proposent tes onglets de deck ouverts. Tout se charge plus vite, et les polices sont intégrées : l'extension ne contacte plus Google. Aucune permission requise en plus : ManaBox reste facultatif.
 
 **v1.2**
 
@@ -142,6 +134,10 @@ Prise en charge de deux nouveaux sites, au même niveau que les six existants : 
 Magic-Ville réparé — les decks Magic-Ville ne se chargeaient plus. C'est corrigé, y compris la détection du commandant en Duel Commander. Messages d'erreur plus clairs quand une page ne contient pas de decklist lisible. Vérifications automatiques ajoutées sur les sites supportés.
 
 ### English
+
+**v1.3**
+
+ManaBox joins the supported sites: the Compare button appears there once allowed, in one click, and the deck is read from its own page. Cross-compare: "Compare my list" measures your own list against the set without counting it (similarity to the average decklist, share of the consensus, missing cards, cards seldom played elsewhere, closest deck), any deck of the set can be put forward with a hover or a click, and from the popup "This deck against the N decks" sends the open deck there. The results page shows more cards per screen, says what its percentage counts, copies each list for a deck builder and filters quantity mismatches; the popup, the panel on deck sites and "Compare another" offer your open deck tabs. Everything loads faster, and the fonts now ship inside: the extension no longer contacts Google. No new required permission: ManaBox stays optional.
 
 **v1.2**
 

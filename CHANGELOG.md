@@ -6,7 +6,12 @@ Les releases sont numérotées **`X.Y`** (1.1, 1.2…) et taguées `vX.Y` ; entr
 builds de dev se lisent **`X.Y.Z`** (1.1.5, 1.1.6… après la 1.1), `Z` bumpé à chaque itération
 testée (voir `AGENTS.md`).
 
-## [Non publié]
+## [1.3] - 2026-09-29
+
+Quatrième version publiée sur le Chrome Web Store, deuxième sur Edge Add-ons et addons.mozilla.org,
+quatre builds de dev après la 1.2 (1.2.1 → 1.2.4). **Aucune permission requise ajoutée** : ManaBox
+(`manabox.app`, `www.manabox.app`) entre dans les hôtes optionnels, demandés sur un clic, et le CSP
+perd les hôtes de Google Fonts, les polices étant désormais embarquées.
 
 ### Ajouté
 
@@ -579,6 +584,7 @@ le wordmark sont inchangés ; le monde est construit autour d'eux.
 - Séparation des créatures, vue en liste, cartes plus grandes et nettoyage de code.
 
 [Non publié]: https://github.com/mcouzinet/deckCompare/compare/v1.2...HEAD
+[1.3]: https://github.com/mcouzinet/deckCompare/compare/v1.2...v1.3
 [1.2]: https://github.com/mcouzinet/deckCompare/compare/v1.1...v1.2
 [1.1]: https://github.com/mcouzinet/deckCompare/compare/v1.0.13...v1.1
 [1.0.13]: https://github.com/mcouzinet/deckCompare/compare/v0.9.0...v1.0.13
