@@ -32,9 +32,12 @@ dans les tags git `vX.Y`, lot en cours en tête de `CHANGELOG.md` (« Non publi�
 3. Commit `chore(release): X.Y`, tag **léger** `vX.Y`, puis `git push origin main` **et**
    `git push origin vX.Y` : un tag léger ne part pas avec `--follow-tags`.
 4. Les dépôts (Chrome Web Store, Edge Add-ons, addons.mozilla.org, Mac App Store) sont faits par
-   l'utilisateur, avec `dist/deckcompare-X.Y-chrome.zip` (Chrome et Edge),
-   `dist/deckcompare-X.Y-firefox.zip`, et pour Safari une archive Xcode du projet `safari/` (versions
-   montées comme ci-dessus). Chaque envoi se note dans le tableau des dépôts de `store/listing.md`.
+   l'utilisateur : `scripts/publish.sh` envoie le tag poussé (mode d'emploi et clés : « Automated
+   publishing » de `store/listing.md`), ou à la main avec `dist/deckcompare-X.Y-chrome.zip` (Chrome
+   et Edge), `dist/deckcompare-X.Y-firefox.zip`, et pour Safari une archive Xcode du projet `safari/`
+   (versions montées comme ci-dessus). Un agent peut lancer `scripts/publish.sh --dry-run`, qui ne
+   contacte aucun store ; la vraie publication attend une demande explicite de l'utilisateur. Chaque
+   envoi se note dans le tableau des dépôts de `store/listing.md`.
 
 **Pourquoi bumper à chaque itération** : Chrome ne recharge PAS les content-scripts d'un onglet
 déjà ouvert quand on recharge l'extension. Le numéro visible dans `chrome://extensions` est le
@@ -210,7 +213,7 @@ changements de permissions le font.)
 ## Où trouver quoi
 
 - Arborescence : `src/` l'extension (manifest, pages, scripts, `_locales`, `fonts`, `icons`, à plat) ;
-  `test/` les tests et leurs fixtures ; `scripts/build.js` les paquets dans `dist/` ; `safari/` l'app
+  `test/` les tests et leurs fixtures ; `scripts/build.js` les paquets dans `dist/`, `scripts/publish.sh` leur envoi aux stores ; `safari/` l'app
   macOS ; `store/` les fiches, médias et sources de la vidéo promo (`store/reel/`) ;
   `privacy-policy.html` à la racine pour GitHub Pages.
 - Lot en cours et historique des versions : `CHANGELOG.md`.

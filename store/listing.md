@@ -27,8 +27,42 @@ extension and in the README.
 Each release uploads `dist/deckcompare-X.Y-chrome.zip` (Chrome Web Store and Edge Add-ons),
 `dist/deckcompare-X.Y-firefox.zip` (addons.mozilla.org) and an Xcode archive of `safari/` (Mac App
 Store, see *App Store* below), with the two descriptions, the new patch note above the others, and
-the media. Still to redo for ManaBox: the promo video, which says eight sites
-(`store/reel/reel.html`, two places).
+the media; `scripts/publish.sh` sends the packages (see *Automated publishing*). Still to redo for
+ManaBox: the promo video, which says eight sites (`store/reel/reel.html`, two places).
+
+## Automated publishing (`scripts/publish.sh`)
+
+Endstep Tracker's `publish.sh`, adapted. `scripts/publish.sh --dry-run`, then `scripts/publish.sh` (all
+four stores) or `scripts/publish.sh edge firefox …`. It publishes the highest `vX.Y` tag, which must be
+pushed, and builds the packages from the tag itself in a temporary worktree (its own tests,
+`scripts/build.js` and Xcode project, whose `MARKETING_VERSION` must read the tag's version), so later
+commits never reach a store. The dry run checks the tag, the tests, the packages and the keys, and
+contacts no store (Chrome excepted: it checks the refresh token). A real run asks for confirmation in
+the terminal (`--yes` skips it).
+
+Keys and IDs live in the macOS Keychain, service `deckcompare-publish`, never in the repository; the
+script never prints them nor puts them on a command line. `scripts/publish.sh --keys edge`, run in a
+terminal, asks for each missing one (typed at a prompt, without echo); `--keys --replace edge` asks
+again, to fix or renew them. The account keys are Endstep Tracker's too, which keeps its own copy
+(`endstep-publish`): a renewed key goes into both.
+
+| Keychain item | Where to find it |
+|---|---|
+| `edge-product-id` | Partner Center > Microsoft Edge > Overview > Deck Compare > Extension identity: a GUID, also in the page's URL (not the store id `akkl…`) |
+| `edge-client-id`, `edge-api-key` | Partner Center > Microsoft Edge > Publish API > Create API credentials (the key has an expiry date: renew it there) |
+| `chrome-item-id` | `miijiappldgijnnokopjfiponelkdhcg` |
+| `chrome-publisher-id` | Chrome Web Store Developer Dashboard > Publisher > Settings |
+| `chrome-client-id`, `chrome-client-secret` | Google Cloud: enable the "Chrome Web Store API"; OAuth consent screen External and **In production** (while in Testing, refresh tokens expire after 7 days); Credentials > OAuth client ID, type Web application, redirect URI `https://developers.google.com/oauthplayground` |
+| `chrome-refresh-token` | OAuth Playground > settings > use your own OAuth credentials; scope `https://www.googleapis.com/auth/chromewebstore`; Authorize APIs with the Google account that owns the item; Exchange authorization code for tokens |
+| `amo-jwt-issuer`, `amo-jwt-secret` | https://addons.mozilla.org/developers/addon/api/key/ |
+| `asc-key-id`, `asc-issuer-id` | App Store Connect > Users and Access > Integrations > App Store Connect API > Team Keys; the key file goes to `~/.appstoreconnect/private_keys/AuthKey_<asc-key-id>.p8` (it can be downloaded only once) |
+
+What each store gets: Chrome, through API v2, the zip then a publish that goes live after review;
+Edge, the zip then a submission whose certification notes link the tag's `CHANGELOG.md`; Firefox,
+`web-ext sign` on the listed channel, published after AMO's review; Safari, the app archived and
+uploaded to App Store Connect. What stays in the dashboards: listing texts and screenshots, AMO's
+version notes, and for Safari the last step (select the processed build on the version, fill in
+"What's new", Submit for Review). Each submission still goes in the table above.
 
 ## Short description (132 characters max)
 

@@ -49,6 +49,10 @@ perd les hôtes de Google Fonts, les polices étant désormais embarquées.
   deck de la même façon, bandeau compris, et son nombre de cartes du consensus ; un clic
   l'épingle comme référence. Il est alors mesuré aux autres decks, pas à un pool qui le
   contient. Au clavier, les flèches haut et bas parcourent les decks de la même façon. La page du
+- `scripts/publish.sh` publie la dernière release (le tag `vX.Y` poussé) sur les quatre stores, repris
+  du `publish.sh` d'Endstep Tracker : paquets construits depuis le tag dans un worktree temporaire,
+  `--dry-run` qui ne contacte aucun store, confirmation avant l'envoi, clés dans le Trousseau macOS
+  (service `deckcompare-publish`, saisies par `--keys`).
   deck s'ouvre désormais par la flèche de la ligne. Sous 1000 px de large, la liste des decks
   reste affichée, compacte, au-dessus des résultats (elle disparaissait avec le rail).
 - **ManaBox** (manabox.app), neuvième site : le bouton « Comparer » dans la barre d'actions du
