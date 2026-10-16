@@ -5,18 +5,21 @@
 //     install, and only serves to count each device once);
 //   - on uninstall, the browser opens a short page on that server, which counts the uninstall.
 // Never sent: decks, matches, names, pages visited, or anything typed. The server keeps no IP address.
-// Off when the setting `telemetry` is false, and on Firefox unless the technical data permission is granted.
+// Off when the setting `telemetry` is false, on Firefox unless the technical data permission is granted, and on
+// Safari until the setting is ticked: the Mac App Store asks for consent first (guideline 5.1.1).
 (() => {
   const STATS = 'https://stats.tolarianstudio.com';
   const PROJECT = 'deckcompare';
-  const VERSION = chrome.runtime.getManifest().version;
+  const MANIFEST = chrome.runtime.getManifest();
+  const VERSION = MANIFEST.version;
+  const SAFARI = !!(MANIFEST.browser_specific_settings && MANIFEST.browser_specific_settings.safari);
   const ua = navigator.userAgent;
   const NAV = /Edg\//.test(ua) ? 'edge' : /Firefox\//.test(ua) ? 'firefox'
     : /Safari\//.test(ua) && !/Chrom(e|ium)\//.test(ua) ? 'safari' : 'chrome';
 
   async function allowed() {
     const { telemetry } = await chrome.storage.local.get('telemetry');
-    if (telemetry === false) return false;
+    if (telemetry === false || (SAFARI && telemetry !== true)) return false;
     if (NAV !== 'firefox') return true;
     // Firefox asks at install time (data_collection_permissions, optional "technicalAndInteraction").
     try { return await globalThis.browser.permissions.contains({ data_collection: ['technicalAndInteraction'] }); } catch { return false; }
@@ -52,8 +55,9 @@
     if (reason === 'install') send('install');
     else if (reason === 'update' && previousVersion !== VERSION) send('update');
   });
-  chrome.runtime.onStartup.addListener(daily);
   chrome.storage.onChanged.addListener((changes, area) => { if (area === 'local' && 'telemetry' in changes) { uninstallUrl(); daily(); } });
+  // Each wake of the background reloads this script: that call is the daily one (an onStartup listener
+  // as well ran it twice at browser start, both reading the day before either wrote it).
   daily();
   uninstallUrl();
 })();

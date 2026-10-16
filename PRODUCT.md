@@ -67,7 +67,9 @@ exports.
   reach.
 - Internationalised through `chrome.i18n` / `_locales`: English and French, resolved from
   the browser language. Every user-facing string lives in `_locales`.
-- No account, no backend, no analytics, no cookies. Everything runs client-side.
+- No account, no backend, no cookies. Everything runs client-side, apart from anonymous usage
+  statistics (install, update, one daily signal with a random id, uninstall) sent to the author's own
+  server: on by default, off in the settings, asked for on Firefox and off until ticked on Safari.
 - Optional host permissions are requested only from a click (the in-page button setting, the
   popup, or a ManaBox deck link);
   adding a *required* host permission would disable the extension for every existing user
@@ -112,7 +114,8 @@ Store.
    accumulate cost — no extra tab, no repeated setup, no re-entering what was entered.
 4. **MTG vocabulary is the user's own.** Board names, commander, mana curve and archetype
    stay; they are not simplified away.
-5. **Local by default.** No account, no backend, no telemetry — and no required permission
+5. **Local by default.** No account, no backend, no personal data: the only signal that leaves is
+   the anonymous usage count, and it can be switched off. And no required permission
    added after the fact.
 
 ## Accessibility & Inclusion

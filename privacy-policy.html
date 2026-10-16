@@ -50,6 +50,7 @@
     <p>The extension contacts only the following:</p>
     <ul>
       <li><strong>The supported deck sites</strong>, to fetch the decks you chose to compare. Requests to MTGGoldfish, mtgdecks and Magic-Ville carry the cookies your browser already holds for those sites, so that their bot protection lets them through; the extension never reads or stores those cookies. When one of these sites blocks a direct request, the extension opens the deck page in a background tab, reads it and closes it. ManaBox decks are always read that way, from the deck page (the tab you already have open, or a background tab opened for it), never through a request of the extension's own.</li>
+      <li><strong>stats.tolarianstudio.com</strong>, the author's own server, for the anonymous usage statistics described under "Analytics and tracking" (unless you switch them off).</li>
       <li><strong>Scryfall</strong> (<code>api.scryfall.com</code>, <code>cards.scryfall.io</code>), to get card types and images: the names of the cards on screen are sent to Scryfall for that purpose. See <a href="https://scryfall.com/docs/api">Scryfall's API terms</a>.</li>
     </ul>
     <p>The typefaces of the extension's own pages ship inside it: no font is downloaded.</p>
@@ -84,7 +85,7 @@
       <li>at most once a day while the browser runs: the same, plus a random identifier drawn when the extension is installed. It identifies nothing but this installation and only serves to count each device once; it is kept 120 days;</li>
       <li>when it is uninstalled, the browser opens a short page on that server, which counts the uninstall (version and browser name).</li>
     </ul>
-    <p>Nothing else is ever sent: no deck, card, page visited, or anything you type. The server does not record IP addresses. The figures are only used by the author, as totals. You can switch this off at any time in the extension's settings ("Anonymous usage statistics"): from then on nothing is sent and no page opens on uninstall. On Firefox it is only sent if you allowed "technical and interaction data" when installing.</p>
+    <p>Nothing else is ever sent: no deck, card, page visited, or anything you type. The server does not record IP addresses. The figures are only used by the author, as totals. You can switch this off at any time in the extension's settings ("Anonymous usage statistics"): from then on nothing is sent and no page opens on uninstall. On Firefox it is only sent if you allowed "technical and interaction data" when installing; on Safari, only once you tick the setting.</p>
     <p>No advertising, and the extension sets no cookies of its own.</p>
 
     <h2>Changes to this policy</h2>

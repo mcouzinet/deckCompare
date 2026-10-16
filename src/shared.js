@@ -469,13 +469,16 @@
   // whose manifest names Safari, takes out the "Buy me a coffee" pill (.bmc) and the "Rate this
   // extension" link (.store-link). Every other build keeps them.
   function dropStoreLinks() {
-    let safari = false;
-    try { safari = !!chrome.runtime.getManifest().browser_specific_settings.safari; } catch { /* no manifest: a web page, a test */ }
-    if (safari) for (const el of document.querySelectorAll(".bmc, .store-link")) el.remove();
+    if (safariBuild()) for (const el of document.querySelectorAll(".bmc, .store-link")) el.remove();
+  }
+  // The Safari build: its manifest names Safari (scripts/build.js). Also the build whose usage
+  // statistics wait for a tick in the settings (telemetry.js, same test).
+  function safariBuild() {
+    try { return !!chrome.runtime.getManifest().browser_specific_settings.safari; } catch { return false; /* no manifest: a web page, a test */ }
   }
 
   const api = {
-    shareLink, readShareLink, SHARE_HASH, storeUrl, dropStoreLinks,
+    shareLink, readShareLink, SHARE_HASH, storeUrl, dropStoreLinks, safariBuild,
     fixCommanderHeuristic, sumBoard, normalizeName, normalizeDeck, cacheRead, cacheMerge, CARD_TYPE_TTL, cachedCardTypes, plural,
     setDocumentLang, OPTIONAL_SCRIPTS, originMatchesHost, isOptionalHost, requestManaBoxAccess, INJECT_KEY, injectEnabled, injectResetOnUpdate,
     SUPPORTED_SITES, getOpenDeckTabs, deckTabTitle, sameDeckPage,

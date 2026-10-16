@@ -163,7 +163,8 @@ async function loadSavedDecks() {
   const stored = await chrome.storage.local.get([...keys, 'deckSource', Shared.INJECT_KEY]);
   settingsInject.checked = Shared.injectEnabled(stored[Shared.INJECT_KEY]);   // on unless switched off
   const { telemetry } = await chrome.storage.local.get('telemetry');
-  settingsTelemetry.checked = telemetry !== false;                           // anonymous usage statistics (telemetry.js)
+  // anonymous usage statistics (telemetry.js): on unless switched off, but on Safari only once ticked
+  settingsTelemetry.checked = Shared.safariBuild() ? telemetry === true : telemetry !== false;
   refreshInjectGrant();
 
   // The merged, source-tagged deck list comes from the same shared reader the

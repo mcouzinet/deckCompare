@@ -4,11 +4,11 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const code = fs.readFileSync(require('node:path').join(__dirname, '..', 'src', 'telemetry.js'), 'utf8');
 
-async function run({ ua = 'Mozilla/5.0 Chrome/140.0 Safari/537.36', stored = {}, firefoxGranted = true, day = '2026-10-16' } = {}) {
+async function run({ ua = 'Mozilla/5.0 Chrome/140.0 Safari/537.36', stored = {}, firefoxGranted = true, day = '2026-10-16', manifest = {} } = {}) {
   const store = { ...stored }, sent = [], listeners = {}, uninstall = [];
   const on = (name) => ({ addListener: (f) => { listeners[name] = f; } });
   const chrome = {
-    runtime: { getManifest: () => ({ version: '1.5' }), onInstalled: on('installed'), onStartup: on('startup'), setUninstallURL: async (u) => uninstall.push(u) },
+    runtime: { getManifest: () => ({ version: '1.5', ...manifest }), onInstalled: on('installed'), onStartup: on('startup'), setUninstallURL: async (u) => uninstall.push(u) },
     storage: { local: { get: async (k) => ({ [k]: store[k] }), set: async (o) => Object.assign(store, o) }, onChanged: on('changed') },
   };
   const ctx = {
@@ -24,8 +24,10 @@ async function run({ ua = 'Mozilla/5.0 Chrome/140.0 Safari/537.36', stored = {},
 }
 
 (async () => {
-  // First run: one "active" a day with the random id, and the uninstall page set.
+  // First run: one "active" a day with the random id, and the uninstall page set; the browser's start
+  // sends no second one.
   let r = await run();
+  assert.equal(r.listeners.startup, undefined);
   assert.deepEqual(r.sent.map((s) => s.e), ['active']);
   assert.equal(r.sent[0].id, '3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b');
   assert.deepEqual({ p: r.sent[0].p, b: r.sent[0].b, v: r.sent[0].v }, { p: 'deckcompare', b: 'chrome', v: '1.5' });
@@ -49,6 +51,11 @@ async function run({ ua = 'Mozilla/5.0 Chrome/140.0 Safari/537.36', stored = {},
   assert.equal(r.sent[0].b, 'firefox');
   // Edge and Safari are told apart from Chrome.
   assert.equal((await run({ ua: 'Mozilla/5.0 Chrome/140.0 Safari/537.36 Edg/140.0' })).sent[0].b, 'edge');
-  assert.equal((await run({ ua: 'Mozilla/5.0 (Macintosh) Version/18.4 Safari/605.1.15' })).sent[0].b, 'safari');
+  const safari = { ua: 'Mozilla/5.0 (Macintosh) Version/18.4 Safari/605.1.15', manifest: { browser_specific_settings: { safari: {} } } };
+  // The Safari build waits for the setting to be ticked (Mac App Store, guideline 5.1.1).
+  r = await run(safari);
+  assert.equal(r.sent.length, 0);
+  assert.deepEqual(r.uninstall, ['']);
+  assert.equal((await run({ ...safari, stored: { telemetry: true } })).sent[0].b, 'safari');
   console.log('telemetry ok');
 })().catch((e) => { console.error(e); process.exit(1); });

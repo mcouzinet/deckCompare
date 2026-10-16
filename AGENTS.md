@@ -218,6 +218,12 @@ changements de permissions le font.)
   place dans la CSP en `<meta>` de `compare.html` (elle vaut aussi dans l'extension, en plus de
   celle du manifest). `Shared.storeUrl` lit l'user agent : c'est la seule exception assumée au code
   neutre, une page web n'ayant pas d'autre moyen de savoir quel store proposer.
+- **Statistiques d'usage** (`telemetry.js`, 1.3.3) : seul envoi hors des sites et de Scryfall, vers
+  `stats.tolarianstudio.com`, qui doit rester dans le `connect-src` du manifest (sans lui, le fetch
+  est refusé, en silence). Actives par défaut, coupées par la case des réglages (`telemetry: false`) ;
+  sur Firefox seulement avec la permission « technicalAndInteraction », sur Safari seulement case
+  cochée (`telemetry: true`, consentement exigé par Apple). « active » part une fois par jour, à
+  l'évaluation du script : pas de second appel sur `onStartup`, qui doublait le signal au démarrage.
 - **Aucune police chargée du réseau** : Archivo (latin et latin étendu), Bricolage Grotesque et
   Geist Mono (latin) sont les sous-ensembles variables de Google Fonts, embarqués dans `src/fonts/`
   avec leur licence OFL (`OFL-*.txt`, qui doivent partir avec eux : `scripts/build.js` les liste),
