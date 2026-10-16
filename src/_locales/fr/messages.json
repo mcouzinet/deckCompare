@@ -82,6 +82,8 @@
   "errGetpairdStatus":         { "message": "Erreur getpaird:" },
   "errGetpairdDeckNotFound":   { "message": "Deck getpaird introuvable" },
   "errGetpairdParseFailed":    { "message": "Impossible de parser la page getpaird" },
+  "settingsTelemetryLabel": { "message": "Statistiques d'usage anonymes" },
+  "settingsTelemetryHint": { "message": "Indique à l'auteur que l'extension est installée, mise à jour ou utilisée aujourd'hui (version et navigateur seulement, avec un identifiant aléatoire d'installation). Jamais vos decks ni les pages visitées." },
   "settingsInjectLabel":       { "message": "Bouton de comparaison sur les sites de decks" },
   "settingsInjectHint":        { "message": "Ajoute un bouton Deck Compare sur les pages de deck prises en charge. Activé par défaut ; Moxfield et ManaBox demandent une autorisation en plus." },
   "settingsBtnTitle":          { "message": "Réglages" },

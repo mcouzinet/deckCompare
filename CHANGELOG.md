@@ -8,6 +8,10 @@ testée (voir `AGENTS.md`).
 
 ## [Non publié]
 
+### Ajouté
+
+- **Statistiques d'usage anonymes** : l'extension signale son installation, ses mises à jour, un jour d'utilisation (au plus une fois par jour, avec un identifiant aléatoire qui ne sert qu'à compter chaque appareil une fois) et sa désinstallation (une courte page s'ouvre). Jamais de deck ni de page visitée ; pas d'adresse IP gardée. Se coupe dans les réglages ; sur Firefox, seulement avec l'accord donné à l'installation. Politique de confidentialité mise à jour.
+
 ### Maintenance
 
 - Le code de l'extension passe dans `src/`, à plat et sans autre changement : les paquets des

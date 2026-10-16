@@ -125,7 +125,7 @@ between targets (`scripts/build.js`); the source tree stays browser-neutral.
 
 ## Privacy
 
-No data collected. No analytics. No cookies. Everything runs locally.
+No personal data collected, no cookies: decks are compared locally. Only anonymous usage statistics are sent (install, update, one signal a day, uninstall), and they can be switched off in the settings.
 
 See the full [Privacy Policy](https://mcouzinet.github.io/deckCompare/privacy-policy.html).
 

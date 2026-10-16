@@ -1,7 +1,7 @@
 // Service worker – handles deck fetching from APIs (avoids CORS)
 // Chrome runs this as a service worker (importScripts); the Firefox build lists shared.js
 // and parsers.js before this file in background.scripts, where importScripts does not exist.
-if (typeof importScripts === 'function') importScripts('shared.js', 'parsers.js');
+if (typeof importScripts === 'function') importScripts('shared.js', 'parsers.js', 'telemetry.js');
 
 // 1.1 turned the in-page button on by default: an update from any pre-1.1 build drops the
 // stored toggle once (Shared.injectResetOnUpdate says why a stored `false` from 1.0.x cannot
