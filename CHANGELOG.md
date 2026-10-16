@@ -22,6 +22,12 @@ testée (voir `AGENTS.md`).
   caractères, sous les 2 000 d'un message Discord. Si le presse-papiers refuse, le lien s'affiche à
   copier à la main. Sous 760 px, « Inverser » et « Partager » passent en icônes pour tenir sur une
   ligne. La politique de confidentialité et les réponses aux stores décrivent le partage.
+- **Statistiques d'usage anonymes** (1.3.3) : l'extension signale son installation, ses mises à
+  jour, un jour d'utilisation (au plus une fois par jour, avec un identifiant aléatoire qui ne sert
+  qu'à compter chaque appareil une fois) et sa désinstallation (une courte page s'ouvre). Jamais de
+  deck ni de page visitée ; pas d'adresse IP gardée. Se coupe dans les réglages ; sur Firefox,
+  seulement avec l'accord donné à l'installation, et sur Safari seulement une fois la case cochée.
+  Politique de confidentialité mise à jour.
 
 ### Corrigé
 

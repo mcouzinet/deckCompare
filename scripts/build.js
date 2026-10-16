@@ -33,7 +33,7 @@ const GECKO_ID = "deckcompare@mcouzinet.github.io";
 const FILES = [
   "manifest.json", "theme.css",
   "popup.html", "compare.html", "pool.html", "privacy-policy.html",
-  "background.js", "shared.js", "parsers.js", "dom-parsers.js", "content.js",
+  "background.js", "telemetry.js", "shared.js", "parsers.js", "dom-parsers.js", "content.js",
   "inject-button.js", "inject-archetype.js", "enrich.js", "pool-analyze.js", "web-host.js",
   "popup.js", "compare.js", "pool.js",
   "icons/icon16.png", "icons/icon48.png", "icons/icon128.png",
@@ -50,12 +50,13 @@ const TARGETS = {
   firefox: (m) => {
     const out = JSON.parse(JSON.stringify(m));
     const worker = out.background && out.background.service_worker;
-    if (worker) out.background = { scripts: ["shared.js", "parsers.js", worker] };
+    if (worker) out.background = { scripts: ["shared.js", "parsers.js", "telemetry.js", worker] };
     out.browser_specific_settings = {
       gecko: {
         id: GECKO_ID,
         strict_min_version: "128.0",   // optional_host_permissions + scripting.registerContentScripts
-        data_collection_permissions: { required: ["none"] },
+        // Anonymous usage statistics (telemetry.js): optional, offered by Firefox at install time.
+        data_collection_permissions: { required: ["none"], optional: ["technicalAndInteraction"] },
       },
     };
     return out;

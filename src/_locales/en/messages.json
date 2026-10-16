@@ -82,6 +82,8 @@
   "errGetpairdStatus":         { "message": "getpaird error:" },
   "errGetpairdDeckNotFound":   { "message": "getpaird deck not found" },
   "errGetpairdParseFailed":    { "message": "Could not parse the getpaird page" },
+  "settingsTelemetryLabel": { "message": "Anonymous usage statistics" },
+  "settingsTelemetryHint": { "message": "Tells the author the extension is installed, updated or used today (version and browser only, with a random install id). Never your decks or the pages you visit." },
   "settingsInjectLabel":       { "message": "Compare button on deck sites" },
   "settingsInjectHint":        { "message": "Adds a Deck Compare button on supported deck pages. On by default; Moxfield and ManaBox need one extra permission." },
   "settingsBtnTitle":          { "message": "Settings" },

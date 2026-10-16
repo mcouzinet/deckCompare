@@ -90,7 +90,7 @@ Also included:
 • Board filters for commanders, mainboard and sideboard, with every figure recalculated for what you are looking at
 • Card images and types from Scryfall
 
-No account, no sign-in, no analytics, no data collected. Everything runs locally in your browser.
+No account, no sign-in, no personal data collected: everything runs locally in your browser. Only anonymous usage statistics are sent, and they can be switched off in the settings.
 
 ---
 
@@ -110,7 +110,7 @@ Comme la liste est lue directement depuis la page où vous êtes, un deck héber
 • Filtres par zone — commandants, deck principal, réserve — avec tous les chiffres recalculés pour ce que vous regardez
 • Images et types de cartes via Scryfall
 
-Aucun compte, aucune connexion, aucune analyse d'audience, aucune donnée collectée. Tout s'exécute localement dans votre navigateur.
+Aucun compte, aucune connexion, aucune donnée personnelle collectée : tout s'exécute localement dans votre navigateur. Seules des statistiques d'usage anonymes sont envoyées, et elles se coupent dans les réglages.
 
 ---
 
@@ -218,8 +218,10 @@ asks the same thing (Edge, Opera, an AMO reviewer).
 **Data usage**
 
 - What user data do you plan to collect: tick **Website content** only (the decklists read from
-  the pages), as the live listing already declares. Nothing else — no personal, authentication,
-  location, history or activity data.
+  the pages), as the live listing already declares. Nothing else: no personal, authentication,
+  location, history or activity data. The anonymous usage statistics (telemetry.js: install, update,
+  one daily signal with a random install id) hold no personal data; if asked, say so in the
+  justification field and point to the privacy policy.
 - Tick the three certifications: no sale or transfer to third parties outside the approved use
   cases; no use unrelated to the single purpose; no use for creditworthiness or lending.
 
@@ -317,7 +319,7 @@ The wrapper app lives in `safari/Deck Compare/Deck Compare.xcodeproj`; it refere
 - Copyright: `2026 Mickael Couzinet`. Category: Entertainment, as on the Chrome Web Store.
   Age rating: answer *none* throughout → 4+.
 - Screenshots (Mac, 1280×800, PNG without alpha, 1 to 10): the five in `store/screenshots/`.
-- App Privacy: **Data Not Collected** (App Privacy page, with the privacy policy URL; only an
+- App Privacy: since the anonymous usage statistics, **Usage Data, Product Interaction**, not linked to the user, not used for tracking, purpose *Analytics* (App Privacy page, with the privacy policy URL; only an
   Account Holder or Admin can publish it).
 - Content rights (App Information): the app **shows and accesses third-party content** (card
   images and types from Scryfall, decklists read from the deck sites), used as fan content under

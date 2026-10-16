@@ -13,6 +13,7 @@ const settingsPanel = document.getElementById('settings-panel');
 const settingsUser = document.getElementById('settings-user');
 const settingsHint = document.getElementById('settings-hint');
 const settingsInject = document.getElementById('settings-inject');
+const settingsTelemetry = document.getElementById('settings-telemetry');
 const injectGrant = document.getElementById('inject-grant');            // Settings: allow on Moxfield
 const injectGrantMain = document.getElementById('inject-grant-main');   // main view, on such a tab
 const tabpick = document.getElementById('tabpick');
@@ -51,6 +52,8 @@ document.getElementById('settings-title').textContent = chrome.i18n.getMessage('
 document.getElementById('settings-user-label').textContent = chrome.i18n.getMessage('settingsUser');
 document.getElementById('settings-loadfrom-label').textContent = chrome.i18n.getMessage('settingsLoadFrom');
 document.getElementById('settings-inject-label').textContent = chrome.i18n.getMessage('settingsInjectLabel');
+document.getElementById('settings-telemetry-label').textContent = chrome.i18n.getMessage('settingsTelemetryLabel');
+document.getElementById('settings-telemetry-hint').textContent = chrome.i18n.getMessage('settingsTelemetryHint');
 document.getElementById('settings-inject-hint').textContent = chrome.i18n.getMessage('settingsInjectHint');
 document.getElementById('inject-grant-text').textContent = chrome.i18n.getMessage('injectGrantMox');
 document.getElementById('inject-grant-main-text').textContent = chrome.i18n.getMessage('injectGrantHere');
@@ -159,6 +162,8 @@ async function loadSavedDecks() {
   const keys = DECK_SOURCES.map(s => `${s.id}User`);
   const stored = await chrome.storage.local.get([...keys, 'deckSource', Shared.INJECT_KEY]);
   settingsInject.checked = Shared.injectEnabled(stored[Shared.INJECT_KEY]);   // on unless switched off
+  const { telemetry } = await chrome.storage.local.get('telemetry');
+  settingsTelemetry.checked = telemetry !== false;                           // anonymous usage statistics (telemetry.js)
   refreshInjectGrant();
 
   // The merged, source-tagged deck list comes from the same shared reader the
@@ -410,6 +415,8 @@ async function requestInjectGrant(origins = OPTIONAL_ORIGINS) {
 
 injectGrant.addEventListener('click', () => requestInjectGrant());                    // Settings: every optional host
 injectGrantMain.addEventListener('click', () => requestInjectGrant(currentTabOrigins())); // main view: just this site
+
+settingsTelemetry.addEventListener('change', () => chrome.storage.local.set({ telemetry: settingsTelemetry.checked }));
 
 settingsInject.addEventListener('change', async () => {
   if (!settingsInject.checked) {
