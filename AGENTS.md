@@ -242,6 +242,11 @@ changements de permissions le font.)
   `test/` les tests et leurs fixtures ; `scripts/build.js` les paquets dans `dist/`, `scripts/publish.sh` leur envoi aux stores ; `safari/` l'app
   macOS ; `store/` les fiches, médias et sources de la vidéo promo (`store/reel/`) ;
   `privacy-policy.html` à la racine pour GitHub Pages.
+- Page de présentation : `site/index.html`, en ligne sur `https://deckcompare.tolarianstudio.com`
+  (l'ancienne `deckcompare.surge.sh` y redirige). `dist/site` l'assemble avec `src/theme.css`,
+  `src/fonts`, l'icône 48, `store/screenshots` (dans `shots/`), la vidéo `store/reel/out/deckcompare-15s.mp4`,
+  `store/youtube-thumbnail-1280x720.jpg` (en `poster.jpg`) et la bannière ; publier avec
+  `node ~/Developer/infra/deploy-static.mjs dist/site deckcompare.tolarianstudio.com` (Node 22).
 - Lot en cours et historique des versions : `CHANGELOG.md`.
 - Textes des fiches, réponses de confidentialité, dépôts, médias : `store/listing.md`.
 - Icône : la source est `src/icons/icon.svg` ; les PNG 16/48/128 et `store/logo-300x300.png` en
