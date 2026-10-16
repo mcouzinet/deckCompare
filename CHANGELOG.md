@@ -8,6 +8,38 @@ testée (voir `AGENTS.md`).
 
 ## [Non publié]
 
+### Ajouté
+
+- **Partager une comparaison** (1.3.1). « Partager », en haut de la page de résultats, copie un
+  lien qui ouvre la même comparaison chez n'importe qui, avec ou sans l'extension : les deux decks
+  voyagent dans le lien lui-même, compressés après le `#`, qu'aucun navigateur n'envoie au serveur.
+  Le lien mène à `share/` sur GitHub Pages, qui passe la main à `src/compare.html` ; hors de
+  l'extension, `web-host.js` y tient lieu de `chrome.*` (textes de `_locales`, types et images
+  demandés à Scryfall, rien d'enregistré chez le lecteur). La page dit le jour du partage (les
+  decks ont pu changer depuis), propose d'installer l'extension à la place de « Comparer un
+  autre », garde le lien dans la barre d'adresse quand on suit la légende, et dit quand un lien est
+  abîmé. Deux decks Commander qui partagent un tiers de leurs cartes tiennent en 1 500 à 1 900
+  caractères, sous les 2 000 d'un message Discord. Si le presse-papiers refuse, le lien s'affiche à
+  copier à la main. Sous 760 px, « Inverser » et « Partager » passent en icônes pour tenir sur une
+  ligne. La politique de confidentialité et les réponses aux stores décrivent le partage.
+
+### Corrigé
+
+- **Safari : plus de « Offre-moi un café » ni de lien vers le Chrome Web Store** (1.3.2). Apple a
+  refusé le build 4 de la 1.3 au titre de la règle 3.1.1 : un pourboire au développeur doit passer
+  par ses achats intégrés. Le build Safari retire la pilule « Offre-moi un café » du popup et de la
+  page de résultats, et « Note cette extension », qui menait au Chrome Web Store ; les autres
+  navigateurs gardent les deux. Le manifest décide (`browser_specific_settings.safari`), le code
+  reste le même partout.
+- **« Note cette extension » mène à la fiche du bon store.** Le lien ouvrait le Chrome Web Store
+  avec l'identifiant de l'extension dans le navigateur courant : une page morte sur Edge et
+  Firefox. Il ouvre désormais la fiche Edge Add-ons, addons.mozilla.org ou Chrome Web Store selon
+  le navigateur.
+- **Comparaison croisée : une carte écrite sans ses accents trouve son image et son type.** Un
+  export MTGO écrit « Lorien Revealed » là où Scryfall répond « Lórien Revealed » : la carte
+  restait sans image ni type. La recherche (`enrich.js`) compare aussi les noms sans accents ; la
+  page d'un lien partagé en profite.
+
 ### Maintenance
 
 - Le code de l'extension passe dans `src/`, à plat et sans autre changement : les paquets des
@@ -17,6 +49,10 @@ testée (voir `AGENTS.md`).
   fiches, tableau des dépôts ; les notes de version d'avant la 1.0.13 et les captures « alternates »
   de la 1.1 sont retirées.
 - Les sources de la vidéo promo (`store/reel/`) et la miniature YouTube entrent dans le dépôt.
+- `scripts/publish.sh` publie la dernière release (le tag `vX.Y` poussé) sur les quatre stores, repris
+  du `publish.sh` d'Endstep Tracker : paquets construits depuis le tag dans un worktree temporaire,
+  `--dry-run` qui ne contacte aucun store, confirmation avant l'envoi, clés dans le Trousseau macOS
+  (service `deckcompare-publish`, saisies par `--keys`).
 
 ## [1.3] - 2026-09-29
 
@@ -49,10 +85,6 @@ perd les hôtes de Google Fonts, les polices étant désormais embarquées.
   deck de la même façon, bandeau compris, et son nombre de cartes du consensus ; un clic
   l'épingle comme référence. Il est alors mesuré aux autres decks, pas à un pool qui le
   contient. Au clavier, les flèches haut et bas parcourent les decks de la même façon. La page du
-- `scripts/publish.sh` publie la dernière release (le tag `vX.Y` poussé) sur les quatre stores, repris
-  du `publish.sh` d'Endstep Tracker : paquets construits depuis le tag dans un worktree temporaire,
-  `--dry-run` qui ne contacte aucun store, confirmation avant l'envoi, clés dans le Trousseau macOS
-  (service `deckcompare-publish`, saisies par `--keys`).
   deck s'ouvre désormais par la flèche de la ligne. Sous 1000 px de large, la liste des decks
   reste affichée, compacte, au-dessus des résultats (elle disparaissait avec le rail).
 - **ManaBox** (manabox.app), neuvième site : le bouton « Comparer » dans la barre d'actions du

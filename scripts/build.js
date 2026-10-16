@@ -34,7 +34,7 @@ const FILES = [
   "manifest.json", "theme.css",
   "popup.html", "compare.html", "pool.html", "privacy-policy.html",
   "background.js", "shared.js", "parsers.js", "dom-parsers.js", "content.js",
-  "inject-button.js", "inject-archetype.js", "enrich.js", "pool-analyze.js",
+  "inject-button.js", "inject-archetype.js", "enrich.js", "pool-analyze.js", "web-host.js",
   "popup.js", "compare.js", "pool.js",
   "icons/icon16.png", "icons/icon48.png", "icons/icon128.png",
   "_locales/en/messages.json", "_locales/fr/messages.json",

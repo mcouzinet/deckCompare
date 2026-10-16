@@ -125,3 +125,13 @@ test("with the settings open, their messages show under them (the main view is h
   $("#settings-close").click();
   assert.ok($(".p-body").contains(status));   // back in the main view
 });
+
+test("the Safari build's popup offers no tip (Mac App Store, guideline 3.1.1); the others keep it", async () => {
+  const chromeBuild = await openPopup({});
+  assert.ok(chromeBuild.window.document.querySelector(".bmc"));
+  const safari = await openPopup({}, (chrome) => {
+    chrome.runtime.getManifest = () => ({ version: "test", host_permissions: [], content_scripts: [], browser_specific_settings: { safari: {} } });
+  });
+  assert.equal(safari.window.document.querySelector(".bmc"), null);
+  assert.ok(safari.window.document.getElementById("settings-toggle"));   // the rest of the header stays
+});

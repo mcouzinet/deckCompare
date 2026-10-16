@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <!-- The page is also served on the web, where a shared link's pair is anyone's to write: only
+       its own files run there, whatever a name holds. In the extension it adds to the manifest's. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://api.scryfall.com https://cards.scryfall.io; connect-src 'self' https://api.scryfall.com; base-uri 'none'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Deck Compare</title>
   <meta name="color-scheme" content="light">
@@ -33,7 +36,7 @@
       max-width: 1280px; margin: 0 auto;
     }
     .mat-edge .spacer { flex: 1; }
-    .edge-actions { display: flex; align-items: center; gap: var(--unit); }
+    .edge-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--unit); }
     .tb-wrap { position: relative; }
 
     /* Buy me a coffee: a quiet pill beside the actions. */
@@ -47,6 +50,20 @@
     }
     .bmc svg { width: 15px; height: 15px; }
     .bmc:hover { color: var(--b); border-color: var(--b); background: var(--elev); }
+
+    /* Share copies the pair's link; for a beat it says so in the action ink, a state, or in the
+       alarm's when no link could be made. */
+    #share-btn.copied { color: var(--brand-btn); border-color: var(--brand-btn); }
+    #share-btn.failed { color: var(--warn); border-color: var(--warn); }
+    /* A pair opened from a shared link says so, and since when: the decks may have moved on.
+       Compare another needs the extension, so the extension's store takes its place. */
+    .shared-tag {
+      padding: calc(var(--unit) * .5) calc(var(--unit) * 1.4);
+      font-size: var(--fs-xs); color: var(--ink-2);
+      background: var(--bg-deep); border-radius: var(--r-pill);
+    }
+    body:not(.shared-view) .shared-tag, body:not(.shared-view) #get-btn, body.shared-view .tb-wrap { display: none; }
+    #get-btn { text-decoration: none; }
 
     /* --- the matchup: two names, and the figure between them ----------------------- */
     .matchup {
@@ -404,8 +421,11 @@
       .counter { order: -1; }
       .sides { grid-template-columns: minmax(0,1fr); }
       .seam-legend { flex-direction: column; gap: var(--unit); }
-      /* The coffee pill keeps its cup and lets the two actions share the top row. */
+      /* The coffee pill keeps its cup, Swap and Share their icons (their names stay, for screen
+         readers and in their titles), so the actions share one row beside the cup. */
       .bmc #bmc-text-compare { display: none; }
+      #swap-text, #share-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+      #swap-btn, #share-btn { padding: calc(var(--unit) * 1.2); }
     }
   </style>
 </head>
@@ -430,6 +450,7 @@
       <img src="icons/icon48.png" alt="">
       <span>Deck<b>Compare</b></span>
     </span>
+    <span class="shared-tag" id="shared-tag"></span>
     <div class="spacer"></div>
     <a href="https://buymeacoffee.com/mcouzinet" target="_blank" rel="noopener" class="bmc" id="bmc-link">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h11v5a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4V8Z"/><path d="M16 9h2a2.5 2.5 0 0 1 0 5h-2"/><path d="M7 3v2M10.5 3v2M14 3v2"/></svg>
@@ -440,6 +461,14 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16H3m0 0 3-3m-3 3 3 3"/><path d="M17 8h4m0 0-3-3m3 3-3 3"/></svg>
         <span id="swap-text"></span>
       </button>
+      <button class="mat-btn" id="share-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <span id="share-text"></span>
+      </button>
+      <a class="mat-btn mat-btn--go" id="get-btn" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4-4m4 4 4-4"/><path d="M5 20h14"/></svg>
+        <span id="get-text"></span>
+      </a>
       <div class="tb-wrap">
         <button class="mat-btn mat-btn--go" id="another-btn" aria-expanded="false" aria-controls="another-pop">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
@@ -578,10 +607,11 @@
 
   <div class="footnote">
     <span id="footnote"></span>
-    <span>·</span>
-    <a id="rate-link" target="_blank" rel="noopener"></a>
+    <span class="store-link">·</span>
+    <a class="store-link" id="rate-link" target="_blank" rel="noopener"></a>
   </div>
 
+  <script src="web-host.js"></script>
   <script src="shared.js"></script>
   <script src="compare.js"></script>
 </body>

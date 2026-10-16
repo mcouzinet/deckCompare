@@ -24,10 +24,17 @@
   // The front-face split mirrors Shared.normalizeName's slash tolerance — Scryfall/
   // Moxfield write "Life // Death" but mtgtop8's MTGO export writes "Life/Death", so
   // either form must key to the same enriched card.
+  // Each also without its accents: an MTGO export writes "Lorien Revealed" where Scryfall answers
+  // "Lórien Revealed", and toLowerCase keeps the accent.
   function nameKeys(name) {
     const lower = String(name).toLowerCase().trim();
     const front = lower.split(/\s*\/\/?\s*/)[0].trim();
-    return front !== lower ? [lower, front] : [lower];
+    const keys = front !== lower ? [lower, front] : [lower];
+    for (const k of [...keys]) {
+      const plain = k.normalize("NFD").replace(/\p{M}/gu, "");
+      if (!keys.includes(plain)) keys.push(plain);
+    }
+    return keys;
   }
 
   function toEnriched(c) {

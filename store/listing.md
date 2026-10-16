@@ -19,7 +19,7 @@ extension and in the README.
 
 | Version | Chrome Web Store | Edge Add-ons | addons.mozilla.org | Mac App Store |
 |---|---|---|---|---|
-| 1.3 | sent 2026-09-29 | sent 2026-09-29 | sent 2026-09-29 | build 4, sent 2026-09-29 |
+| 1.3 | sent 2026-09-29 | sent 2026-09-29 | sent 2026-09-29 | build 4, sent 2026-09-29, rejected 2026-10-05 (3.1.1, see *App Store*); build 5 sent 2026-10-05 (branch `safari-1.3-build5`) |
 | 1.2 | live 2026-09-25 | first listing, live 2026-09-25 | first listing, live 2026-09-27 | first listing, build 2, sent 2026-09-25 |
 | 1.1 | cut 2026-09-08 | | | |
 | 1.0.13 | live 2026-09-05 | | | |
@@ -169,6 +169,7 @@ asks the same thing (Edge, Opera, an AMO reviewer).
 > Compare Magic: The Gathering decklists. The extension reads decklists from supported deck sites
 > (or pasted text) and shows how two decks differ — cards unique to each, shared cards, quantity
 > gaps and a similarity score — or what a group of decks has in common (cross-compare).
+> A comparison can be copied as a link, to show it to someone else.
 
 **activeTab justification**
 
@@ -221,6 +222,15 @@ asks the same thing (Edge, Opera, an AMO reviewer).
   location, history or activity data.
 - Tick the three certifications: no sale or transfer to third parties outside the approved use
   cases; no use unrelated to the single purpose; no use for creditworthiness or lending.
+
+**Sharing** (for a reviewer who asks; the privacy policy says the same):
+
+> The results page's Share button copies a link holding the comparison (both decklists, their
+> names and addresses, compressed after the # of the URL). The extension sends it nowhere; the user
+> pastes it where they choose. The link opens a static page of the project's GitHub Pages site,
+> which reads the decks from the part after the #, never sent to any server, and asks Scryfall for
+> the card images, as the extension does. The page is built from the extension's own files; inside
+> the extension, web-host.js (the page's stand-in for chrome.* on the web) does nothing.
 
 **Privacy policy URL**: https://mcouzinet.github.io/deckCompare/privacy-policy.html
 
@@ -286,7 +296,7 @@ The wrapper app lives in `safari/Deck Compare/Deck Compare.xcodeproj`; it refere
    first with TestFlight on the Mac if you like.
 5. Each new upload needs a higher build number (`CURRENT_PROJECT_VERSION`), higher than every build
    already uploaded whatever its version (macOS never restarts at 1: 1.2 went up to build 3, 1.3
-   is build 4), and each release the
+   to build 5), and each release the
    new `MARKETING_VERSION`, both in the app **and** the extension target.
 
 **Listing** (fill English, then add the French localization)
@@ -317,6 +327,14 @@ The wrapper app lives in `safari/Deck Compare/Deck Compare.xcodeproj`; it refere
 - App Review notes: *The app installs a Safari web extension. In Safari › Settings › Extensions,
   enable Deck Compare and allow it on archidekt.com, then open
   https://archidekt.com/decks/4868475 and click « Compare » in the site's toolbar.*
+
+**No tip, no other store** (guideline 3.1.1). Build 4 of 1.3 was rejected on 2026-10-05 under
+3.1.1, Payments: In-App Purchase: the « Buy me a coffee » pill of the popup and of the results page
+pays the developer outside in-app purchase. The Safari build takes it out, with « Rate this
+extension », which led to the Chrome Web Store (`Shared.dropStoreLinks`, keyed on the manifest's
+`browser_specific_settings.safari`); the other stores keep both. Reply to App Review with the new
+build: *The "Buy me a coffee" link has been removed from the app: Deck Compare offers no purchase,
+subscription or tip of any kind. Its link to another store's listing was removed as well.*
 
 **Known limits on Safari**: Apple documents neither `optional_host_permissions` nor its
 behaviour: the in-page button on Moxfield, on ManaBox and on the www / non-www variants may not

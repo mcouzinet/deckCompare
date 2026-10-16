@@ -44,6 +44,9 @@ side, across all major deck sites.
    deck URL, or search your loaded decks by name
 3. Get a full visual breakdown in a new tab — then swap the two decks, or compare against
    a different one, without leaving the page
+4. Share it: **Share** copies a link that opens the same comparison for anyone, with or without
+   the extension. The two decks travel inside the link, after the `#`, which browsers never send
+   to a server
 
 ### Permissions
 

@@ -70,7 +70,7 @@
       const merged = {};
       for (const [name, qty] of Object.entries(deck[board])) {
         const key = normalizeName(name);
-        merged[key] = (merged[key] || 0) + qty;
+        merged[key] = (Object.hasOwn(merged, key) ? merged[key] : 0) + qty;
       }
       deck[board] = merged;
     }
@@ -330,7 +330,152 @@
     return /^fr/i.test(lang) ? n > 1 : n !== 1;
   }
 
+  // ---- share links ----
+  // A comparison travels whole in its link, after the #: a browser never sends that part, so no
+  // server sees the decks and nothing is stored anywhere. The link opens share/ on GitHub Pages
+  // (which serves this repository), and share/ sends it on to compare.html, where web-host.js
+  // stands in for chrome.*.
+  // Format 1, "#<data>.1", is deflate-raw in base64url of text lines: the day it was shared, each
+  // deck's name, source and address, then each board ("#c", "#m", "#s": commanders, mainboard,
+  // sideboard) as the cards both decks play, then "<" and the cards of deck 1 alone, ">" and
+  // those of deck 2 alone. A card is its name, for one copy (one in each deck, in the first
+  // group); other counts come first, "x:y Name" in the first group and "n Name" in the others.
+  // Every name is written once and most without a count, so two Commander decks sharing a third
+  // of their cards come to 1,500 to 1,900 characters, under the 2,000 of a Discord message. The
+  // format's number comes last so that the link ends on a digit: chat and Markdown linkifiers
+  // leave a trailing "_" or "." out of a link, and base64url ends on "_" once in 64.
+  // Links outlive releases, in chat logs: a new format takes a new number, and this one keeps
+  // reading.
+  const SHARE_PAGE = "https://mcouzinet.github.io/deckCompare/share/";
+  const SHARE_HASH = /^#?([\w-]+)\.(\d+)$/;
+  const SHARE_BOARDS = { c: "commanders", m: "mainboard", s: "sideboard" };
+  // What a link may hold, the same for its writer and its reader: two decks come to a few hundred
+  // lines, the longest card name has 141 characters.
+  const SHARE_LINES = 2000, SHARE_COUNT = 9999, SHARE_NAME = 200;
+  const SHARE_MAX = 256 * 1024;   // decompressed bytes: a damaged or forged link is cut there
+
+  // The bytes a (de)compression stream makes of `bytes`, `cap` at most. Fed a kilobyte at a time,
+  // each once the last is read, so a forged link inflates no further than the cap.
+  async function streamed(bytes, stream, cap = Infinity) {
+    const writer = stream.writable.getWriter();
+    (async () => {
+      for (let i = 0; i < bytes.length; i += 1024) await writer.write(bytes.subarray(i, i + 1024));
+      await writer.close();
+    })().catch(() => {});   // a damaged link fails on the reading side
+    const reader = stream.readable.getReader();
+    const parts = [];
+    let size = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.length;
+      if (size > cap) { reader.cancel().catch(() => {}); throw new Error("too large"); }
+      parts.push(value);
+    }
+    const out = new Uint8Array(size);
+    let at = 0;
+    for (const p of parts) { out.set(p, at); at += p.length; }
+    return out;
+  }
+
+  // Throws when the pair cannot make a link (a count past SHARE_COUNT, more than SHARE_LINES lines).
+  async function shareLink(deckA, deckB, day = new Date()) {
+    const line = (s) => String(s || "").replace(/\s+/g, " ").trim();
+    const pad = (n) => String(n).padStart(2, "0");
+    const lines = [`${day.getFullYear()}-${pad(day.getMonth() + 1)}-${pad(day.getDate())}`];
+    for (const d of [deckA, deckB]) lines.push(line(d.name), line(d.source), line(d.url));
+    // A name alone only where it cannot read as a count or a mark: "12 Angry Men" keeps its "1 ".
+    const bare = (name) => !/^(\d+[: ]|[#<>])/.test(name);
+    const card = (counts, name) => {
+      if (counts.some((n) => n > SHARE_COUNT)) throw new Error("count");
+      return counts.every((n) => n === 1) && bare(name) ? name : `${counts.join(":")} ${name}`;
+    };
+    for (const [tag, board] of Object.entries(SHARE_BOARDS)) {
+      const a = deckA[board] || {}, b = deckB[board] || {};
+      // Left out, as the reader would: a name an export's decorations emptied, or too long for a card.
+      const names = [...new Set([...Object.keys(a), ...Object.keys(b)])]
+        .filter((n) => line(n) && line(n).length <= SHARE_NAME).sort();
+      const both = names.filter((n) => a[n] > 0 && b[n] > 0);
+      const alone = [["<", names.filter((n) => a[n] > 0 && !(b[n] > 0)), a], [">", names.filter((n) => b[n] > 0 && !(a[n] > 0)), b]];
+      if (!both.length && !alone[0][1].length && !alone[1][1].length) continue;
+      lines.push(`#${tag}`);
+      for (const n of both) lines.push(card([a[n], b[n]], line(n)));
+      for (const [mark, list, side] of alone) {
+        if (list.length) lines.push(mark);
+        for (const n of list) lines.push(card([side[n]], line(n)));
+      }
+    }
+    if (lines.length > SHARE_LINES) throw new Error("too many cards");
+    const packed = await streamed(new TextEncoder().encode(lines.join("\n")), new CompressionStream("deflate-raw"));
+    let bin = "";
+    for (let i = 0; i < packed.length; i += 0x8000) bin += String.fromCharCode(...packed.subarray(i, i + 0x8000));
+    return `${SHARE_PAGE}#${btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")}.1`;
+  }
+
+  // Anyone can write a hash: a deck's address becomes its name's link only on a supported deck site.
+  const DECK_HOSTS = new Set(SUPPORTED_SITES.map((s) => s.pattern.split("/")[0]));
+  function deckAddress(u) {
+    try {
+      const url = new URL(u);
+      return /^https?:$/.test(url.protocol) && DECK_HOSTS.has(url.hostname.replace(/^www\./, "")) ? url.href : "";
+    } catch { return ""; }
+  }
+
+  // The pair a shared link carries ({ deckA, deckB, day }), or null: not such a link, or damaged.
+  async function readShareLink(hash) {
+    const m = SHARE_HASH.exec(String(hash || ""));
+    // 64K characters hold far more than two decks: longer is not one of these links.
+    if (!m || m[2] !== "1" || m[1].length > 65536) return null;
+    try {
+      const bytes = Uint8Array.from(atob(m[1].replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
+      const lines = new TextDecoder().decode(await streamed(bytes, new DecompressionStream("deflate-raw"), SHARE_MAX)).split("\n");
+      if (lines.length < 7 || lines.length > SHARE_LINES) return null;
+      const deck = (i) => ({ name: lines[i] || "Deck", source: lines[i + 1], url: deckAddress(lines[i + 2]), commanders: {}, mainboard: {}, sideboard: {} });
+      const deckA = deck(1), deckB = deck(4);
+      let board = null, alone = "";   // alone: "" in both decks, "<" deck 1's, ">" deck 2's
+      for (const l of lines.slice(7)) {
+        if (/^#[cms]$/.test(l)) { board = SHARE_BOARDS[l[1]]; alone = ""; continue; }
+        if (l === "<" || l === ">") { alone = l; continue; }
+        let x, y, name;
+        if (!alone) {
+          const q = /^(\d+):(\d+) (.+)$/.exec(l);
+          [x, y, name] = q ? [+q[1], +q[2], q[3]] : [1, 1, l];
+        } else {
+          const q = /^(\d+) (.+)$/.exec(l);
+          const n = q ? +q[1] : 1;
+          name = q ? q[2] : l;
+          [x, y] = alone === "<" ? [n, 0] : [0, n];
+        }
+        if (!board || x > SHARE_COUNT || y > SHARE_COUNT) return null;
+        if (!name || name.length > SHARE_NAME) continue;   // never written: passed over
+        // hasOwn: a card named "constructor" must not add to Object's own.
+        for (const [d, n] of [[deckA, x], [deckB, y]]) if (n) d[board][name] = (Object.hasOwn(d[board], name) ? d[board][name] : 0) + n;
+      }
+      return { deckA: normalizeDeck(deckA), deckB: normalizeDeck(deckB), day: /^\d{4}-\d{2}-\d{2}$/.test(lines[0]) ? lines[0] : "" };
+    } catch { return null; }
+  }
+
+  // The extension's page on the store of the browser at hand: Chrome's for the other Chromium
+  // browsers, and for Safari until its App Store page opens.
+  function storeUrl() {
+    const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+    if (/Firefox\//.test(ua)) return "https://addons.mozilla.org/firefox/addon/deck-compare-mtg/";
+    if (/Edg\//.test(ua)) return "https://microsoftedge.microsoft.com/addons/detail/deck-compare-%E2%80%93-mtg/akklkakfdidemfbbnjmhiofkhkcnhfbc";
+    return "https://chromewebstore.google.com/detail/deck-compare-%E2%80%93-mtg/miijiappldgijnnokopjfiponelkdhcg";
+  }
+
+  // The Mac App Store refuses a tip to the developer outside in-app purchase (guideline 3.1.1, the
+  // 1.3 build rejected on 2026-10-05), and a link to another store: the Safari build, the one
+  // whose manifest names Safari, takes out the "Buy me a coffee" pill (.bmc) and the "Rate this
+  // extension" link (.store-link). Every other build keeps them.
+  function dropStoreLinks() {
+    let safari = false;
+    try { safari = !!chrome.runtime.getManifest().browser_specific_settings.safari; } catch { /* no manifest: a web page, a test */ }
+    if (safari) for (const el of document.querySelectorAll(".bmc, .store-link")) el.remove();
+  }
+
   const api = {
+    shareLink, readShareLink, SHARE_HASH, storeUrl, dropStoreLinks,
     fixCommanderHeuristic, sumBoard, normalizeName, normalizeDeck, cacheRead, cacheMerge, CARD_TYPE_TTL, cachedCardTypes, plural,
     setDocumentLang, OPTIONAL_SCRIPTS, originMatchesHost, isOptionalHost, requestManaBoxAccess, INJECT_KEY, injectEnabled, injectResetOnUpdate,
     SUPPORTED_SITES, getOpenDeckTabs, deckTabTitle, sameDeckPage,

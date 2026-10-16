@@ -82,3 +82,12 @@ test("enrichCards falls back on /cards/named for the names of a batch that faile
     assert.equal(enrichmentFor(map, "Solo Card").type_line, "Sorcery");
   } finally { global.fetch = prev; }
 });
+
+test("a name written without its accents finds the card Scryfall spells with them", () => {
+  // mtgtop8's MTGO export writes "Lorien Revealed"; Scryfall answers "Lórien Revealed".
+  assert.deepEqual(nameKeys("Lórien Revealed"), ["lórien revealed", "lorien revealed"]);
+  const map = new Map();
+  const lorien = { name: "Lórien Revealed", type_line: "Sorcery" };
+  for (const k of nameKeys(lorien.name)) map.set(k, lorien);
+  assert.equal(enrichmentFor(map, "Lorien Revealed"), lorien);
+});

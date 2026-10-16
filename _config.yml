@@ -1,0 +1,4 @@
+# GitHub Pages builds this repository with Jekyll, which leaves out every folder starting with "_".
+# A shared link's page (share/, then src/compare.html) reads its strings from src/_locales.
+include:
+  - _locales

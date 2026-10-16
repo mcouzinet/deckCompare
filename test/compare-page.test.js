@@ -17,11 +17,11 @@ const cardCache = () => Object.fromEntries(Object.entries(TYPES).map(([name, t])
 const opened = [];
 after(() => { for (const w of opened) w.close(); });
 
-async function openPage(compareData, extra = {}, patch = () => {}) {   // compareData undefined: the no-pair page
+async function openPage(compareData, extra = {}, patch = () => {}, hash = "") {   // compareData undefined: the no-pair page
   const html = fs.readFileSync(path.join(ROOT, "compare.html"), "utf8")
     .replace(/<script src="[^"]+"><\/script>/g, "")
     .replace(/<link[^>]+(fonts\.googleapis|preload)[^>]*>/g, "");
-  const { window } = new JSDOM(html, { runScripts: "outside-only", pretendToBeVisual: true, url: "chrome-extension://test/compare.html" });
+  const { window } = new JSDOM(html, { runScripts: "outside-only", pretendToBeVisual: true, url: `chrome-extension://test/compare.html${hash}` });
   opened.push(window);
   const store = { compareData, cardTypeCache: cardCache(), ...extra };
   const messages = JSON.parse(fs.readFileSync(path.join(ROOT, "_locales/en/messages.json"), "utf8"));
@@ -50,8 +50,10 @@ async function openPage(compareData, extra = {}, patch = () => {}) {   // compar
   };
   window.IntersectionObserver = class { observe() {} unobserve() {} disconnect() {} };   // no image loads in jsdom
   window.matchMedia = () => ({ matches: false });                                        // a wide window
+  window.Element.prototype.scrollIntoView = function () { window.scrolledTo = this.id; };   // jsdom has none
   patch(window.chrome, store);
   Object.defineProperty(window.navigator, "clipboard", { value: { writeText: async (t) => { clipboard.push(t); } } });
+  Object.assign(window, { CompressionStream, DecompressionStream, TextEncoder, TextDecoder });   // share links (Node's)
   for (const f of ["shared.js", "compare.js"]) window.eval(fs.readFileSync(path.join(ROOT, f), "utf8"));
   const $ = (s) => window.document.querySelector(s);
   // settled: the figure is drawn, or (no pair) the actions that need one are hidden
@@ -162,4 +164,62 @@ test("a card hovered before Scryfall answers is not called imageless, and shows 
   for (let i = 0; i < 100 && $("#preview-name").textContent !== "Goblin Guide"; i++) await new Promise((r) => setTimeout(r, 20));
   assert.equal($("#preview-name").textContent, "Goblin Guide");
   assert.equal($("#preview-img").getAttribute("src"), url);
+});
+
+test("Share copies a link that opens the same pair, and says so for a beat", async () => {
+  const { readShareLink } = require("../src/shared.js");
+  const { $, clipboard, window } = await openPage({ deckA: A, deckB: B });
+  assert.ok(!window.document.body.classList.contains("shared-view"));
+  $("#share-btn").click();
+  for (let i = 0; i < 50 && !clipboard.length; i++) await tick();
+  assert.match(clipboard[0], /^https:\/\/mcouzinet\.github\.io\/deckCompare\/share\/#[\w-]+\.1$/);
+  const back = await readShareLink(new URL(clipboard[0]).hash);
+  assert.equal(back.deckA.name, "Red Deck Wins");
+  assert.deepEqual(back.deckA.mainboard, A.mainboard);
+  assert.deepEqual(back.deckA.sideboard, A.sideboard);
+  assert.deepEqual(back.deckB.mainboard, B.mainboard);
+  assert.equal($("#share-text").textContent, "Link copied");
+  assert.ok($("#share-btn").classList.contains("copied"));
+});
+
+test("a shared link opens its pair with nothing stored, says when it was shared, and keeps its address", async () => {
+  const { shareLink, readShareLink } = require("../src/shared.js");
+  const hash = new URL(await shareLink(A, B, new Date(2026, 8, 30))).hash;
+  const { $, window, clipboard } = await openPage(undefined, {}, () => {}, hash);
+  assert.equal($("#ring-num").textContent, "70%");
+  assert.ok(window.document.body.classList.contains("shared-view"));
+  assert.equal($("#shared-tag").textContent, "Comparison shared on September 30, 2026");
+  assert.equal($("#rate-link").textContent, "Get Deck Compare");
+  assert.match($("#get-btn").href, /^https:\/\/chromewebstore\.google\.com\/detail\//);
+  // A legend entry scrolls to its zone and leaves the pair in the address; a hash typed over it
+  // is undone, for a reload or a copy.
+  $("a.lg.a").click();
+  assert.equal(window.scrolledTo, "zone-a");
+  assert.equal(window.location.hash, hash);
+  window.location.hash = "#zone-b";
+  for (let i = 0; i < 20 && window.location.hash !== hash; i++) await tick();
+  assert.equal(window.location.hash, hash);
+  // Shared on, it keeps the day it was first shared: the decks are that day's.
+  $("#share-btn").click();
+  for (let i = 0; i < 50 && !clipboard.length; i++) await tick();
+  assert.equal((await readShareLink(new URL(clipboard[0]).hash)).day, "2026-09-30");
+});
+
+test("a damaged shared link says so, rather than an empty comparison", async () => {
+  const { $ } = await openPage(undefined, {}, () => {}, "#AAAAAAAA.1");
+  assert.equal($("#loading").textContent, "This shared link is incomplete or damaged. Ask whoever sent it for it again.");
+  assert.ok($(".edge-actions").classList.contains("hide"));
+});
+
+test("the Safari build offers no tip and no other store (Mac App Store, guideline 3.1.1); the others keep both", async () => {
+  const chromeBuild = await openPage({ deckA: A, deckB: B });
+  assert.ok(chromeBuild.$(".bmc"));
+  assert.ok(chromeBuild.$("#rate-link"));
+  const safari = await openPage({ deckA: A, deckB: B }, {}, (chrome) => {
+    chrome.runtime.getManifest = () => ({ version: "test", browser_specific_settings: { safari: { strict_min_version: "16.4" } } });
+  });
+  assert.equal(safari.$(".bmc"), null);
+  assert.equal(safari.$("#rate-link"), null);
+  assert.equal(safari.$$(".store-link").length, 0);   // the "·" before it goes too
+  assert.equal(safari.$("#ring-num").textContent, "70%");   // the page itself is whole
 });

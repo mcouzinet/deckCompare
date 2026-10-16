@@ -78,11 +78,14 @@ changements de permissions le font.)
   (définitif), l'équipe `6DTUA72PA3`, macOS 12 minimum, la catégorie Divertissement et le chiffrement
   exempté. À chaque release, `MARKETING_VERSION` et `CURRENT_PROJECT_VERSION` montent dans les deux
   cibles, app et extension ; le numéro de build ne repart jamais à 1 : le Mac App Store refuse un
-  build inférieur au dernier envoyé, toutes versions confondues (1.2 est allée au build 3, 1.3 est
-  le build 4). Modifier ce projet plutôt que le régénérer : le convertisseur d'Apple en
+  build inférieur au dernier envoyé, toutes versions confondues (1.2 est allée au build 3, 1.3 au
+  build 5, renvoyé après le refus 3.1.1). Modifier ce projet plutôt que le régénérer : le convertisseur d'Apple en
   mode macOS ignore l'identifiant demandé pour l'app, met la version 1.0, cible la version de macOS
   du SDK et omet la catégorie. L'envoi valide chaque `messages.json` : `appDescription` fait
-  **112 caractères au plus** dans chaque langue (test à l'appui).
+  **112 caractères au plus** dans chaque langue (test à l'appui). **Aucun pourboire ni lien vers un
+  autre store dans le build Safari** (refus 3.1.1 du 2026-10-05) : `Shared.dropStoreLinks()`, appelé
+  par le popup et la page de résultats, retire `.bmc` et `.store-link` quand le manifest porte
+  `browser_specific_settings.safari` ; tout nouveau lien de don ou de store prend l'une de ces classes.
   Les avertissements `UNSAFE_VAR_ASSIGNMENT` du linter Mozilla sont les `innerHTML` échappés via
   `esc()`. Test réel sur Firefox : `web-ext run --args=-headless --args=--remote-debugging-port=9333`
   puis puppeteer en WebDriver BiDi (`installExtension` échoue sur Firefox 134).
@@ -198,6 +201,23 @@ changements de permissions le font.)
   500 ms sur la carte. Le cache `cardTypeCache` (30 jours, 1 jour pour un nom introuvable, `nf`)
   et, à défaut, `poolEnrichCache` se lisent par `Shared.cachedCardTypes`, côté page (images dès
   le premier affichage) comme côté background.
+- **Liens de partage** (1.3.1) : « Partager » copie `…/deckCompare/share/#<paire>.1`, la paire
+  compressée dans le fragment (jamais envoyé au serveur) par `Shared.shareLink`, relue par
+  `Shared.readShareLink` (format 1 décrit dans `shared.js`, numéro en dernier pour que le lien
+  finisse sur un chiffre, que les linkifieurs ne coupent pas). **Un lien publié vit pour
+  toujours**, dans les historiques de chat : le format 1 ne change plus, un nouveau format prend un
+  nouveau numéro et les anciens restent lisibles. L'écriture et la lecture partagent leurs limites
+  (`SHARE_LINES`, `SHARE_COUNT`, `SHARE_NAME`) : jamais un lien « copié » que la page refuse. Deux
+  decks Commander qui partagent un tiers de leurs cartes tiennent sous les 2 000 caractères d'un
+  message Discord (test à l'appui) : ne pas grossir le format. `share/index.html` (racine, GitHub
+  Pages sert `main`) renvoie vers `src/compare.html` : **la page publique est le code de `main`**,
+  sans build. Hors de l'extension, `web-host.js` (chargé en premier, inerte dans l'extension) tient
+  lieu de `chrome.*` : textes de `src/_locales` (servis grâce à `_config.yml`, Jekyll écartant les
+  dossiers en `_`), stockage en mémoire, types et images par `enrich.js`. Tout nouvel appel
+  `chrome.*` de `compare.js` doit y trouver son pendant, et toute nouvelle ressource de la page sa
+  place dans la CSP en `<meta>` de `compare.html` (elle vaut aussi dans l'extension, en plus de
+  celle du manifest). `Shared.storeUrl` lit l'user agent : c'est la seule exception assumée au code
+  neutre, une page web n'ayant pas d'autre moyen de savoir quel store proposer.
 - **Aucune police chargée du réseau** : Archivo (latin et latin étendu), Bricolage Grotesque et
   Geist Mono (latin) sont les sous-ensembles variables de Google Fonts, embarqués dans `src/fonts/`
   avec leur licence OFL (`OFL-*.txt`, qui doivent partir avec eux : `scripts/build.js` les liste),

@@ -269,6 +269,7 @@ Pills for anything you press or select (999px). Sheets are rounded like paper: 1
 
 ### Navigation
 - The top edge: wordmark left, actions right as pills, one Hairline under it. Opaque paper; sticky on the pool page.
+- On the results page the actions are Swap, Share and the teal Compare another. Share copies the pair's link and reads "Link copied" in Action Teal for a beat, a state; below 760px Swap and Share keep their icons alone (their names stay for screen readers and in their titles). A pair opened from a shared link carries a Paper Well pill after the wordmark saying the day it was shared, and the teal pill becomes Get Deck Compare, the extension's store page.
 
 ### The Overlap Bar
 An 8px pill track in Paper Well with three segments (side A, shared, side B) and a legend of swatch, name and mono count; the surplus copies of shared cards (10 Forests against 6) sit beside the shared segment in their side's ink at 42%, with an "Extra copies" legend entry shown only when there are some, so each side's segments add up to its deck. Each legend entry is a link to its zone (the shared table sits under both grids; the surplus entry opens it on its mismatches alone): its label darkens to Ink and underlines on hover. It is the page's one authored motion: the segments draw in once, left to right (`scaleX` from 0, 0.9s, `cubic-bezier(.22,1,.36,1)`, staggered 120ms), the instant the result is revealed.

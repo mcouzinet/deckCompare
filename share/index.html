@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Deck Compare</title>
+  <!-- What a chat's link preview shows: it fetches this page without the # (browsers never send
+       it), so it knows the product, not the decks. -->
+  <meta property="og:title" content="Deck Compare: a shared deck comparison">
+  <meta property="og:description" content="Two Magic: The Gathering decklists side by side: the cards each one plays alone, the cards in common, and how similar they are.">
+  <meta property="og:image" content="https://mcouzinet.github.io/deckCompare/store/promo-marquee-1400x560.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <style>html{background-color:#f8f5f2}</style>
+  <!-- A shared comparison's lasting address (Shared.shareLink in src/shared.js): the pair rides in
+       the #, and this page only sends it on to the results page, so links outlive the files moving. -->
+  <script>location.replace("../src/compare.html" + location.hash);</script>
+</head>
+<body></body>
+</html>

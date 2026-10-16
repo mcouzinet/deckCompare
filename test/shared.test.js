@@ -1,7 +1,7 @@
 "use strict";
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const { fixCommanderHeuristic, sumBoard, normalizeName, SUPPORTED_SITES } = require("../src/shared.js");
+const { fixCommanderHeuristic, sumBoard, normalizeName, normalizeDeck, SUPPORTED_SITES } = require("../src/shared.js");
 
 const siteMatch = (url) => (SUPPORTED_SITES.find((s) => s.deckRe.test(url)) || {}).label;
 
@@ -313,4 +313,72 @@ test("getOpenDeckTabs lists the caller's window first and never crosses the priv
     const priv = await getOpenDeckTabs("https://archidekt.com/decks/9", { windowId: 3, incognito: true });
     assert.deepEqual(priv.map((t) => t.url), ["https://archidekt.com/decks/2"]);
   } finally { global.chrome = prev; }
+});
+
+// ---- share links ----
+const { shareLink, readShareLink } = require("../src/shared.js");
+const pairDeck = (name, url, cmd, main, side = {}) => ({ name, source: "Moxfield", url, commanders: cmd, mainboard: main, sideboard: side });
+
+test("a share link carries the pair whole: names, sources, addresses, every board and every count", async () => {
+  // Names that could read as a count or a mark keep an explicit count; the rest go bare.
+  const a = pairDeck("Bzzzzzzzt", "https://moxfield.com/decks/a1", { "Niv-Mizzet, Parun": 1 },
+    { "Sol Ring": 1, "Island": 12, "12 Angry Men": 1, "#Hashtag": 1, "<Arrow": 1, "1:1 Odd": 2 }, { "Negate": 2 });
+  const b = pairDeck("zzet Guildmage", "https://archidekt.com/decks/2", { "Niv-Mizzet, Parun": 1 },
+    { "Sol Ring": 1, "Island": 10, "Counterspell": 1, "12 Angry Men": 3 });
+  const link = await shareLink(a, b, new Date(2026, 8, 30));
+  assert.match(link, /^https:\/\/mcouzinet\.github\.io\/deckCompare\/share\/#[\w-]+\.1$/);   // ends on a digit
+  const back = await readShareLink(new URL(link).hash);
+  assert.equal(back.day, "2026-09-30");
+  for (const [mine, theirs] of [[a, back.deckA], [b, back.deckB]]) {
+    for (const k of ["name", "source", "url"]) assert.equal(theirs[k], mine[k]);
+    for (const board of ["commanders", "mainboard", "sideboard"]) assert.deepEqual(theirs[board], mine[board]);
+  }
+});
+
+test("a share link links a deck's name only to a deck site, and refuses what is not one of its own", async () => {
+  const a = pairDeck("A", "javascript:alert(1)", {}, { "Sol Ring": 1 });
+  const b = pairDeck("B", "https://evil.example/decks/1", {}, { "Sol Ring": 1 });
+  const back = await readShareLink(new URL(await shareLink(a, b)).hash);
+  assert.equal(back.deckA.url, "");
+  assert.equal(back.deckB.url, "");
+  const fine = await readShareLink(new URL(await shareLink(pairDeck("A", "https://www.moxfield.com/decks/x", {}, {}), b)).hash);
+  assert.equal(fine.deckA.url, "https://www.moxfield.com/decks/x");
+  for (const hash of ["", "#zone-a", "#.1", "#AAAA.1", "#@@@@.1", "#AAAAAAAAAA.2", "#1.AAAAAAAAAA"]) assert.equal(await readShareLink(hash), null, hash);
+  // A forged link that inflates past 256 KB is refused rather than read.
+  const cs = new CompressionStream("deflate-raw");
+  const w = cs.writable.getWriter(); w.write(new TextEncoder().encode("2026-09-30\n" + "x".repeat(300 * 1024))); w.close();
+  const bomb = Buffer.from(await new Response(cs.readable).arrayBuffer()).toString("base64url");
+  assert.equal(await readShareLink(`#${bomb}.1`), null);
+});
+
+test("a share link leaves out what it could not carry, and refuses a pair past its limits", async () => {
+  // An export's decorations can empty a name ("[Ramp]"); a forged "constructor" must stay a card.
+  const a = pairDeck("A", "", {}, { "": 1, "Sol Ring": 1, "constructor": 2, ["x".repeat(201)]: 1 });
+  const b = pairDeck("B", "", {}, { "Sol Ring": 1, "toString": 1 });
+  const back = await readShareLink(new URL(await shareLink(a, b)).hash);
+  assert.deepEqual({ ...back.deckA.mainboard }, { "Sol Ring": 1, "Constructor": 2 });   // capitalised, counted right
+  assert.deepEqual({ ...back.deckB.mainboard }, { "Sol Ring": 1, "toString": 1 });
+  await assert.rejects(shareLink(pairDeck("A", "", {}, { "Relentless Rats": 10000 }), b));
+  const many = Object.fromEntries(Array.from({ length: 2000 }, (_, i) => [`Card ${i}`, 1]));
+  await assert.rejects(shareLink(pairDeck("A", "", {}, many), b));
+});
+
+test("two Commander decks sharing a third of their cards fit a Discord message (2,000 characters)", async () => {
+  const fs = require("fs");
+  const path = require("path");
+  const { parseArchidekt } = require("../src/parsers.js");
+  const a = normalizeDeck(parseArchidekt(JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/archidekt.json"), "utf8"))));
+  const staples = ["Sol Ring", "Arcane Signet", "Command Tower", "Counterspell", "Swords to Plowshares", "Path to Exile",
+    "Rhystic Study", "Mystic Remora", "Smothering Tithe", "Cyclonic Rift", "Demonic Tutor", "Vampiric Tutor", "Mana Crypt",
+    "Chrome Mox", "Mox Diamond", "Force of Will", "Fierce Guardianship", "Deflecting Swat", "Dockside Extortionist",
+    "Thassa's Oracle", "Underworld Breach", "Lion's Eye Diamond", "Brain Freeze", "Ad Nauseam", "Necropotence",
+    "Bolas's Citadel", "Grim Monolith", "Basalt Monolith", "Rings of Brighthearth", "Mana Vault", "Jeweled Lotus",
+    "Lotus Petal", "Gemstone Caverns", "Ancient Tomb", "City of Traitors", "Polluted Delta", "Scalding Tarn",
+    "Misty Rainforest", "Flooded Strand", "Verdant Catacombs", "Bloodstained Mire", "Wooded Foothills",
+    "Windswept Heath", "Marsh Flats", "Arid Mesa"];
+  const b = pairDeck("zzet Guildmage", "https://moxfield.com/decks/AbCdEfGhIjKlMnOpQrStUv", { "Niv-Mizzet, Parun": 1 }, {});
+  for (const n of Object.keys(a.mainboard).slice(0, 34)) b.mainboard[n] = a.mainboard[n];
+  for (const n of staples) b.mainboard[n] = 1;
+  const link = await shareLink({ ...a, name: "Bzzzzzzzt", url: "https://moxfield.com/decks/ZyXwVuTsRqPoNmLkJiHgFe" }, b);
+  assert.ok(link.length < 2000, `${link.length} characters`);
 });

@@ -43,35 +43,81 @@
   // Deck identity is not enough: Swap twice restores the exact same objects, and
   // an old late apply must still lose to the newer render's result.
   let RENDER_GEN = 0;
+  // The link to the pair on screen, made as it renders (Shared.shareLink): Share then writes it
+  // to the clipboard within the click itself, which Safari requires (an await in between loses it).
+  let SHARE_LINK = null;
+  // The day a shared pair was first shared: sharing it on keeps that day, the decks' own.
+  let SHARE_DAY;
 
   document.addEventListener("DOMContentLoaded", async () => {
+    if (window.webHost) await window.webHost.ready;   // outside the extension, its strings first (web-host.js)
     Shared.setDocumentLang();
+    Shared.dropStoreLinks();   // none in the Safari build (Mac App Store, guideline 3.1.1)
     document.getElementById("loading").textContent = chrome.i18n.getMessage("loading");
     translateStaticUI();
 
+    // A shared link carries its pair in the address; otherwise it is the one the popup or the
+    // injected button stored.
+    const link = await Shared.readShareLink(location.hash);
     const { compareData, compareView } = await chrome.storage.local.get(["compareData", "compareView"]);
     // The saved view is set before the first paint: applied after it, grid view flashed first.
     setView(compareView || "grid", false);
-    if (!compareData) {
-      document.getElementById("loading").textContent = chrome.i18n.getMessage("noData");
+    const pair = link || compareData;
+    if (!pair) {
+      // Outside the extension this page only ever opens from a link, which a browser too old to
+      // decompress it cannot read either.
+      const fromLink = window.webHost || Shared.SHARE_HASH.test(location.hash);
+      document.getElementById("loading").textContent = chrome.i18n.getMessage(!fromLink ? "noData"
+        : typeof DecompressionStream === "undefined" ? "shareOldBrowser" : "shareUnreadable");
+      if (window.webHost) document.getElementById("rate-link").textContent = chrome.i18n.getMessage("getExtension");
       // Swap and Compare another act on a pair: with none, they would be dead buttons.
       document.querySelector(".edge-actions").classList.add("hide");
       document.title = "Deck Compare";
       return;
     }
+    if (link) showShared(link);
 
     // Delegated listeners and topbar wiring are page-level, not per-comparison.
     initPreview();
     initControls();
     initTopbar();
 
-    await render(compareData.deckA, compareData.deckB);
+    await render(pair.deckA, pair.deckB);
   });
+
+  // A pair opened from a shared link says when it was shared (the decks may have moved on since),
+  // and offers the extension where Compare another stood, which needs it (compare.html). Its
+  // address keeps the pair, for a reload or to be copied on: a legend entry scrolls to its zone
+  // without writing #zone there, and any other change is undone, but another shared pair opens.
+  function showShared(link) {
+    document.body.classList.add("shared-view");
+    const when = link.day ? new Date(`${link.day}T12:00:00`) : null;
+    if (when && !isNaN(when)) SHARE_DAY = when;
+    const day = SHARE_DAY && SHARE_DAY.toLocaleDateString(chrome.i18n.getUILanguage(), { day: "numeric", month: "long", year: "numeric" });
+    document.getElementById("shared-tag").textContent =
+      day ? chrome.i18n.getMessage("sharedOn", [day]) : chrome.i18n.getMessage("sharedComparison");
+    const rate = document.getElementById("rate-link");
+    if (rate) rate.textContent = chrome.i18n.getMessage("getExtension");
+    document.querySelector(".seam-legend").addEventListener("click", e => {
+      const entry = e.target.closest('a[href^="#zone-"]');
+      if (!entry) return;
+      e.preventDefault();
+      document.getElementById(entry.getAttribute("href").slice(1)).scrollIntoView();
+    });
+    const address = location.hash;
+    window.addEventListener("hashchange", () => {
+      if (location.hash === address) return;
+      if (Shared.SHARE_HASH.test(location.hash)) location.reload();
+      else history.replaceState(null, "", address);
+    });
+  }
 
   async function render(deckA, deckB) {
     const gen = ++RENDER_GEN;
     const cmp = buildComparison(deckA, deckB);
     CURRENT = { deckA, deckB, cmp };
+    SHARE_LINK = null;
+    Shared.shareLink(deckA, deckB, SHARE_DAY).then(l => { if (gen === RENDER_GEN) SHARE_LINK = l; }, () => {});
     resetPreview();
 
     const allNames = [...new Set([
@@ -222,14 +268,17 @@
       ["qty-diff-off", "showAllRows"],
       ["filter-all", "filterAll"], ["filter-commanders", "filterCommanders"],
       ["filter-mainboard", "filterMainboard"], ["filter-sideboard", "filterSideboard"],
-      ["swap-text", "swapDecks"], ["another-text", "compareAnother"], ["another-go", "compare"]
+      ["swap-text", "swapDecks"], ["another-text", "compareAnother"], ["another-go", "compare"],
+      ["share-text", "shareComparison"], ["get-text", "getExtension"]
     ];
     for (const [id, key] of texts) set(id, el => { el.textContent = msg(key); });
 
-    set("rate-link", el => {
-      el.textContent = msg("rateExtension");
-      el.href = `https://chromewebstore.google.com/detail/${chrome.runtime.id}`;
-    });
+    set("share-btn", el => { el.title = msg("shareHint"); });
+    set("swap-btn", el => { el.title = msg("swapDecks"); });   // its only name in sight below 760px
+    // The store of the browser at hand: the Chrome Web Store's address with this browser's own
+    // extension id was a dead page on Edge and Firefox.
+    for (const id of ["rate-link", "get-btn"]) set(id, el => { el.href = Shared.storeUrl(); });
+    set("rate-link", el => { el.textContent = msg("rateExtension"); });
     set("bmc-link", el => { el.title = msg("buyMeCoffee"); el.setAttribute("aria-label", msg("buyMeCoffee")); });
     set("another-url", el => { el.placeholder = msg("pasteADeckUrl"); });
     set("another-saved", el => { el.setAttribute("aria-label", msg("selectDeck")); });
@@ -717,6 +766,35 @@
 
     document.querySelectorAll("[data-view]").forEach(btn => {
       btn.addEventListener("click", () => setView(btn.dataset.view, true));
+    });
+
+    // Share copies a link that opens this pair for anyone, with or without the extension
+    // (Shared.shareLink). Where the clipboard refuses, the link is offered to copy by hand; where
+    // no link can be made (a browser without CompressionStream, a pair past the format's limits),
+    // the button says so.
+    const shareBtn = document.getElementById("share-btn");
+    const shareText = document.getElementById("share-text");
+    let shareTimer = null;
+    const shareSays = (key, state) => {
+      shareBtn.classList.remove("copied", "failed");
+      shareBtn.classList.add(state);
+      shareText.textContent = chrome.i18n.getMessage(key);
+      const status = document.getElementById("copy-status");
+      status.textContent = "";
+      setTimeout(() => { status.textContent = chrome.i18n.getMessage(key); }, 50);
+      clearTimeout(shareTimer);
+      shareTimer = setTimeout(() => {
+        shareBtn.classList.remove(state);
+        shareText.textContent = chrome.i18n.getMessage("shareComparison");
+      }, 1600);
+    };
+    shareBtn.addEventListener("click", async () => {
+      if (!CURRENT) return;
+      const link = SHARE_LINK || await Shared.shareLink(CURRENT.deckA, CURRENT.deckB, SHARE_DAY).catch(() => null);
+      if (!link) { shareSays("shareFailed", "failed"); return; }
+      const ok = await navigator.clipboard.writeText(link).then(() => true, () => false);
+      if (ok) { shareSays("shareCopied", "copied"); return; }
+      try { window.prompt(chrome.i18n.getMessage("shareHint"), link); } catch { /* a page without dialogs */ }
     });
   }
 

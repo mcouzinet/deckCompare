@@ -38,6 +38,7 @@ const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 
 // --- Translate static UI ---
 document.getElementById('bmc-text').textContent = chrome.i18n.getMessage('buyMeCoffee');
+Shared.dropStoreLinks();   // none in the Safari build (Mac App Store, guideline 3.1.1)
 document.getElementById('lbl-deck1').textContent = `Deck 1 · ${chrome.i18n.getMessage('activeTab')}`;
 document.getElementById('lbl-deck2').textContent = `Deck 2 · ${chrome.i18n.getMessage('compareAgainst')}`;
 document.getElementById('vs-text').textContent = chrome.i18n.getMessage('versus');
