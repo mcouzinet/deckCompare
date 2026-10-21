@@ -15,11 +15,11 @@ extension and in the README.
 - Chrome Web Store: https://chromewebstore.google.com/detail/deck-compare-%E2%80%93-mtg/miijiappldgijnnokopjfiponelkdhcg
 - Edge Add-ons: https://microsoftedge.microsoft.com/addons/detail/deck-compare-%E2%80%93-mtg/akklkakfdidemfbbnjmhiofkhkcnhfbc
 - addons.mozilla.org: https://addons.mozilla.org/firefox/addon/deck-compare-mtg/
-- Mac App Store: app `io.github.mcouzinet.deckcompare`, not on sale yet.
+- Mac App Store: app `io.github.mcouzinet.deckcompare`, on sale since 1.3 (build 5); store link still to add.
 
 | Version | Chrome Web Store | Edge Add-ons | addons.mozilla.org | Mac App Store |
 |---|---|---|---|---|
-| 1.3 | sent 2026-09-29 | sent 2026-09-29 | sent 2026-09-29 | build 4, sent 2026-09-29, rejected 2026-10-05 (3.1.1, see *App Store*); build 5 sent 2026-10-05 (branch `safari-1.3-build5`) |
+| 1.3 | sent 2026-09-29 | sent 2026-09-29 | sent 2026-09-29 | build 4, sent 2026-09-29, rejected 2026-10-05 (3.1.1, see *App Store*); build 5 sent 2026-10-05 (branch `safari-1.3-build5`), first listing, live |
 | 1.2 | live 2026-09-25 | first listing, live 2026-09-25 | first listing, live 2026-09-27 | first listing, build 2, sent 2026-09-25 |
 | 1.1 | cut 2026-09-08 | | | |
 | 1.0.13 | live 2026-09-05 | | | |
@@ -80,7 +80,7 @@ Compare two Magic: The Gathering decklists side by side, without copying or past
 
 Open a deck page, click the extension, and choose the second deck: from another deck tab you already have open, from your own saved decks, or from a pasted link. You get a full visual breakdown in a new tab — cards unique to each deck shown as image grids, shared cards listed with their quantity differences highlighted, and a similarity figure.
 
-Because it reads the decklist straight from the page you are already on, a deck hosted on one site can be compared against a deck hosted on another. Nine deck sites are supported, Moxfield, Archidekt and ManaBox among them; the extension shows the full list under its settings.
+Because it reads the decklist straight from the page you are already on, a deck hosted on one site can be compared against a deck hosted on another. Eleven deck sites are supported, Moxfield, Archidekt and ManaBox among them; the extension shows the full list under its settings.
 
 Also included:
 
@@ -100,7 +100,7 @@ Comparez deux listes de cartes Magic: The Gathering côte à côte, sans rien co
 
 Ouvrez une page de deck, cliquez sur l'extension, et choisissez le second deck : parmi les autres onglets de deck déjà ouverts, parmi vos decks enregistrés, ou à partir d'un lien collé. Vous obtenez une comparaison visuelle complète dans un nouvel onglet — les cartes propres à chaque deck en grilles d'images, les cartes communes en liste avec les écarts de quantité mis en évidence, et un score de similarité.
 
-Comme la liste est lue directement depuis la page où vous êtes, un deck hébergé sur un site peut être comparé à un deck hébergé sur un autre. Neuf sites de decks sont pris en charge, dont Moxfield, Archidekt et ManaBox ; l'extension affiche la liste complète dans ses réglages.
+Comme la liste est lue directement depuis la page où vous êtes, un deck hébergé sur un site peut être comparé à un deck hébergé sur un autre. Onze sites de decks sont pris en charge, dont Moxfield, Archidekt et ManaBox ; l'extension affiche la liste complète dans ses réglages.
 
 Également inclus :
 
@@ -117,9 +117,13 @@ Aucun compte, aucune connexion, aucune donnée personnelle collectée : tout s'e
 ## Patch notes
 
 Shown under the detailed description in both listings, newest first, one short paragraph per
-version. Newest first: **v1.3**, **v1.2**, **v1.1**, then **v1.0.13**.
+version. Newest first: **v1.4**, **v1.3**, **v1.2**, **v1.1**, then **v1.0.13**.
 
 ### Français
+
+**v1.4**
+
+Deux sites de plus : Pauper Duel Commander et Endstep (tes decks, lus depuis l'onglet où tu es connecté), sur autorisation en un clic. Partage une comparaison : « Partager » copie un lien qui l'ouvre chez n'importe qui, même sans l'extension ; les deux decks voyagent dans le lien lui-même, rien n'est stocké nulle part. « Note cette extension » mène désormais au bon store, et la comparaison croisée retrouve l'image des cartes écrites sans accent. Nouveau : des statistiques d'usage anonymes (installation, mise à jour, un signal par jour) aident à savoir combien de joueurs utilisent l'extension ; aucun deck ni aucune page visitée n'est envoyé, et elles se coupent dans les réglages. Aucune permission requise en plus.
 
 **v1.3**
 
@@ -138,6 +142,10 @@ Le bouton « Comparer » est désormais présent d'office sur les sites de decks
 Le bouton « Comparer » arrive sur les sites de decks eux-mêmes (opt-in dans les Réglages) ; le deuxième deck se choisit en un clic parmi tes onglets ouverts ; la page de résultats gagne « Comparer un autre » et l'inversion des decks. L'analyse de pool devient la « Comparaison croisée » : elle se lance en un clic depuis une page d'archétype mtgtop8, filtre les decks par carte et fonctionne sans commandant. Les cartes recto-verso sont reconnues d'un site à l'autre et Magic-Ville se charge de nouveau. L'identité visuelle est entièrement remplacée — un mémo sur papier crème, en Beleren. Aucune permission supplémentaire n'est exigée à la mise à jour.
 
 ### English
+
+**v1.4**
+
+Two more sites: Pauper Duel Commander and Endstep (your own decks, read from the tab where you are signed in), allowed in one click. Share a comparison: "Share" copies a link that opens it for anyone, even without the extension; both decks travel inside the link itself, nothing is stored anywhere. "Rate this extension" now leads to the right store, and cross-compare finds the image of cards written without their accents. New: anonymous usage statistics (install, update, one signal a day) tell how many players use the extension; no deck or page visited is ever sent, and they can be switched off in the settings. No new required permission.
 
 **v1.3**
 
@@ -204,10 +212,11 @@ asks the same thing (Edge, Opera, an AMO reviewer).
 > www.magic-ville.com, mtgdecks.net, melee.gg and getpaird.io (deck pages the extension reads and
 > adds its Compare button to); api.scryfall.com and cards.scryfall.io (card types and images).
 > Requests are made only to fetch a deck the user chose to compare and the cards on screen. The
-> optional hosts (moxfield.com pages, manabox.app, www / non-www twins) are requested at runtime,
-> only from a click: in the popup, for the in-page button, and for manabox.app also from the click
-> that reads a ManaBox deck link; ManaBox decks are read from the deck page in a tab, never fetched
-> by the extension. The popup, the in-page panel and the results page list the open tabs on these
+> optional hosts (moxfield.com pages, manabox.app, pauperduelcommander.fr, endstep.cc, www / non-www
+> twins) are requested at runtime, only from a click: in the popup, for the in-page button, and for
+> the last three also from the click that reads one of their deck links. ManaBox decks are read from
+> the deck page in a tab, never fetched by the extension; Endstep decks, which belong to an account,
+> from the site's own deck service in the signed-in tab, with that tab's session. The popup, the in-page panel and the results page list the open tabs on these
 > sites (address and title) to offer them as the second deck.
 
 **Are you using remote code?** No.

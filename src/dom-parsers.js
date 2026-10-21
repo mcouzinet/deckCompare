@@ -273,6 +273,52 @@
     return deck;
   }
 
+  // --- Pauper Duel Commander: read over HTTP (parsers.js), the page itself is that export ---
+  function parsePauperDuelCommander() {
+    return { mainboard: {}, sideboard: {}, commanders: {}, source: 'pdc', _needsApiFetch: true };
+  }
+
+  // --- Endstep: an account's deck, behind its sign-in ---
+  // The page is a single-page app: the deck comes from the site's own API, with the session of
+  // the signed-in user (content.js, readEndstepDeck). Read synchronously, a deck page only says so.
+  const ENDSTEP_DECK = /^\/decks\/([0-9a-f-]{36})\/?$/;
+  function parseEndstep(doc, url) {
+    let path = '';
+    try { path = new URL(url).pathname; } catch (_) { /* not a page */ }
+    if (!ENDSTEP_DECK.test(path)) return null;
+    return { mainboard: {}, sideboard: {}, commanders: {}, source: 'endstep', _needsApiFetch: true };
+  }
+  // GET /api/decks/<id>: { name, format, cards, sideboard, commanders }, each list of names or of
+  // { name, quantity }. A commander also listed among the cards is counted once, as commander.
+  function endstepDeckFromApi(data) {
+    const deck = { mainboard: {}, sideboard: {}, commanders: {}, source: 'endstep' };
+    const add = (board, list) => {
+      for (const x of Array.isArray(list) ? list : []) {
+        const name = typeof x === 'string' ? x : x && x.name;
+        if (!name) continue;
+        const qty = typeof x === 'string' ? 1 : x.quantity || x.count || 1;
+        deck[board][name] = (deck[board][name] || 0) + qty;
+      }
+    };
+    add('commanders', data.commanders);
+    add('mainboard', data.cards);
+    add('sideboard', data.sideboard);
+    for (const name of Object.keys(deck.commanders)) {
+      if (deck.mainboard[name] > 1) deck.mainboard[name] -= 1;
+      else delete deck.mainboard[name];
+    }
+    deck.name = String(data.name || '').trim() || 'Endstep Deck';
+    if (data.format) deck.format = String(data.format);
+    return deck;
+  }
+  async function readEndstepDeck(url, fetchFn = fetch) {
+    const m = ENDSTEP_DECK.exec(new URL(url).pathname);
+    if (!m) return null;
+    const res = await fetchFn(`/api/decks/${m[1]}`, { credentials: 'include' });
+    if (!res.ok) return null;
+    return endstepDeckFromApi(await res.json());
+  }
+
   function parseDeckFromCurrentSite(doc, url) {
     if (url.includes('moxfield.com')) return parseMoxfield(doc);
     if (url.includes('mtggoldfish.com')) return parseMtgGoldfish(doc);
@@ -283,6 +329,8 @@
     if (url.includes('melee.gg')) return parseMelee(doc);
     if (url.includes('getpaird.io')) return parseGetpaird(doc);
     if (url.includes('manabox.app')) return parseManaBox(doc);
+    if (url.includes('pauperduelcommander.fr')) return parsePauperDuelCommander(doc);
+    if (url.includes('endstep.cc')) return parseEndstep(doc, url);
     return null;
   }
 
@@ -339,7 +387,15 @@
     // the button follows Download, the bar's last <button>, which stays true once our host sits
     // after it. Tailwind classes are the only hooks, but this combination is unique on the page
     // (verified live).
-    { host: 'manabox.app', sel: 'div.ml-auto.flex.items-center.gap-2 > button:last-of-type' }
+    { host: 'manabox.app', sel: 'div.ml-auto.flex.items-center.gap-2 > button:last-of-type' },
+    // Pauper Duel Commander: under the Exporter / Valider row, the site's own data-deck-validate
+    // hook stepped up to that row (a phone header and a desktop sidebar each have one; the
+    // visible one wins). In the sidebar's column the button takes the column's width.
+    { host: 'pauperduelcommander.fr', sel: '[data-deck-validate]', up: 1 },
+    // Endstep's deck editor toolbar (Stacks / by mana value / card size / Import / Export): after
+    // Import / Export, its last button. The es-ed-* classes are the editor's own names, not build
+    // hashes (seen signed in, 2026-10-21); the page renders late, which mountWhenReady waits for.
+    { host: 'endstep.cc', sel: '.es-ed-right > button:last-of-type' }
   ];
 
   // `isVisible` is supplied by the content script (getBoundingClientRect); tests and
@@ -394,7 +450,7 @@
     return decks;
   }
 
-  const api = { parseMoxfield, parseMtgGoldfish, parseMtgTop8, parseArchidekt, parseMagicVille, parseMtgDecks, parseMelee, parseGetpaird, parseManaBox, parseDeckFromCurrentSite, findActionBarAnchor, parseArchetypeDecks, parseArchetypeTitle, ANCHORS };
+  const api = { parseMoxfield, parseMtgGoldfish, parseMtgTop8, parseArchidekt, parseMagicVille, parseMtgDecks, parseMelee, parseGetpaird, parseManaBox, parsePauperDuelCommander, parseEndstep, endstepDeckFromApi, readEndstepDeck, parseDeckFromCurrentSite, findActionBarAnchor, parseArchetypeDecks, parseArchetypeTitle, ANCHORS };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else global.DomParsers = api;
 })(typeof self !== 'undefined' ? self : globalThis);

@@ -235,3 +235,38 @@ test("ManaBox (DOM): command zone, maybeboard left out, foil and normal copies s
   assert.deepEqual(d.sideboard, { Duress: 2 });
   assert.equal(D.parseManaBox(new JSDOM("<html><body><astro-island props='{\"slot\":[0,\"x\"]}'></astro-island></body></html>").window.document), null);
 });
+
+test("Pauper Duel Commander (DOM): read over HTTP, button after the visible « Copier la liste »", () => {
+  const html = fs.readFileSync(path.join(__dirname, "fixtures", "pauperduelcommander.html"), "utf8");
+  const doc = new JSDOM(html).window.document;
+  const url = "https://pauperduelcommander.fr/fr/decklist/diamond-weapon-endstep-3-7eme/";
+  assert.equal(D.parseDeckFromCurrentSite(doc, url)._needsApiFetch, true);
+  const desktopOnly = (el) => !!el.closest("aside");
+  const anchor = D.findActionBarAnchor(doc, url, desktopOnly);
+  assert.ok(anchor.closest("aside"));
+  assert.ok(anchor.querySelector("[data-export-toggle]") && anchor.querySelector("[data-deck-validate]"));   // the Exporter / Valider row
+});
+
+test("Endstep: a deck page asks for its API read; the API's lists become boards, commander counted once", async () => {
+  const doc = new JSDOM("<html></html>").window.document;
+  const id = "1930b985-25ea-4d0b-90ef-a2d9a512de49";
+  assert.equal(D.parseDeckFromCurrentSite(doc, `https://endstep.cc/decks/${id}`)._needsApiFetch, true);
+  assert.equal(D.parseDeckFromCurrentSite(doc, "https://endstep.cc/play"), null);
+  const api = { name: " Diamond Weapon ", format: "pdh", commanders: ["Diamond Weapon"],
+    cards: ["Diamond Weapon", { name: "Island", quantity: 9 }, "Ponder", "Ponder"], sideboard: [{ name: "Hydroblast", quantity: 2 }] };
+  const asked = [];
+  const deck = await D.readEndstepDeck(`https://endstep.cc/decks/${id}`, async (u, init) => { asked.push([u, init.credentials]); return { ok: true, json: async () => api }; });
+  assert.deepEqual(asked, [[`/api/decks/${id}`, "include"]]);
+  assert.deepEqual(deck.commanders, { "Diamond Weapon": 1 });
+  assert.deepEqual(deck.mainboard, { Island: 9, Ponder: 2 });
+  assert.deepEqual(deck.sideboard, { Hydroblast: 2 });
+  assert.equal(deck.name, "Diamond Weapon");
+  assert.equal(await D.readEndstepDeck(`https://endstep.cc/decks/${id}`, async () => ({ ok: false })), null);
+});
+
+test("Endstep: the button joins the deck editor's toolbar, after Import / Export", () => {
+  const doc = new JSDOM(`<div class="es-ed-tools"><div class="es-ed-right">
+    <button class="es-lib-mbtn"><b>Stacks</b></button><button class="es-lib-mbtn"><b>by mana value</b></button>
+    <span class="es-range-row"><input type="range"></span><button class="es-lib-mbtn" id="io"><b>Import / Export</b></button></div></div>`).window.document;
+  assert.equal(D.findActionBarAnchor(doc, "https://endstep.cc/decks/1930b985-25ea-4d0b-90ef-a2d9a512de49").id, "io");
+});

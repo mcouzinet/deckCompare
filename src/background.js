@@ -414,6 +414,7 @@ async function listMagicVilleDecks(username) {
 const ALLOWED_DECK_HOSTS = [
   'www.moxfield.com', 'moxfield.com',
   'manabox.app', 'www.manabox.app',
+  'pauperduelcommander.fr', 'endstep.cc',
   'archidekt.com',
   'www.mtgtop8.com', 'mtgtop8.com',
   'www.mtggoldfish.com', 'mtggoldfish.com',
@@ -493,17 +494,21 @@ async function fetchDeckByUrl(url) {
     throw new Error(chrome.i18n.getMessage('errUnsupportedSource'));
   }
 
-  // ManaBox is read through a tab, never fetched: the deck page is what a person opens, and
-  // the content script already reads it there. That needs the optional access to the site,
-  // so fail at once without it rather than open a tab that nothing can read.
+  // ManaBox, Endstep and Pauper Duel Commander are read only with the site's optional access:
+  // fail at once without it. ManaBox and Endstep are read through a tab, never fetched: the
+  // content script reads the page (ManaBox) or the site's API with the user's session (Endstep).
   const host = new URL(url).hostname;
-  if (host === 'manabox.app' || host === 'www.manabox.app') {
+  if (Shared.isOptionalHost(url, Shared.OPTIONAL_SCRIPTS.filter((s) => s.read).map((s) => s.origin))) {
     let granted = false;
     try { granted = await chrome.permissions.contains({ origins: [`https://${host}/*`] }); } catch { /* no permissions API */ }
-    if (!granted) throw new Error(chrome.i18n.getMessage('errManaboxAccess'));
-    const deck = await deckFromTab(url);
-    if (!deck) throw new Error(chrome.i18n.getMessage('errManaboxRead'));
-    return deck;
+    const manabox = host === 'manabox.app' || host === 'www.manabox.app';
+    const site = manabox ? 'ManaBox' : host === 'endstep.cc' ? 'Endstep' : 'Pauper Duel Commander';
+    if (!granted) throw new Error(manabox ? chrome.i18n.getMessage('errManaboxAccess') : chrome.i18n.getMessage('errSiteAccess', [site]));
+    if (host !== 'pauperduelcommander.fr') {
+      const deck = await deckFromTab(url);
+      if (!deck) throw new Error(manabox ? chrome.i18n.getMessage('errManaboxRead') : chrome.i18n.getMessage('errEndstepRead'));
+      return deck;
+    }
   }
 
   try {
@@ -529,6 +534,7 @@ async function fetchDeckOverHttp(url) {
   else if (url.includes('mtgdecks.net')) deck = await fetchMtgDecksDeck(url);
   else if (url.includes('melee.gg')) deck = await fetchMeleeDeck(url);
   else if (url.includes('getpaird.io')) deck = await fetchGetpairdDeck(url);
+  else if (url.includes('pauperduelcommander.fr')) deck = await fetchPauperDuelCommanderDeck(url);
   else throw new Error(chrome.i18n.getMessage('errUnsupportedSource'));
   Shared.normalizeDeck(deck);
 
@@ -539,6 +545,17 @@ async function fetchDeckOverHttp(url) {
     throw new Error(chrome.i18n.getMessage('emptyDeck'));
   }
   return deck;
+}
+
+// --- Pauper Duel Commander ---
+
+async function fetchPauperDuelCommanderDeck(url) {
+  const res = await fetchT(url);
+  if (!res.ok) {
+    if (res.status === 404) throw new Error(chrome.i18n.getMessage('errPdcDeckNotFound'));
+    throw new Error(`${chrome.i18n.getMessage('errPdcStatus')} ${res.status}`);
+  }
+  return Parsers.parsePauperDuelCommander(await res.text());
 }
 
 // --- Moxfield ---

@@ -29,6 +29,23 @@ testée (voir `AGENTS.md`).
   seulement avec l'accord donné à l'installation, et sur Safari seulement une fois la case cochée.
   Politique de confidentialité mise à jour.
 
+- **Deux sites de plus : Pauper Duel Commander et Endstep** (1.3.4). Les decklists de
+  pauperduelcommander.fr (`/<langue>/decklist/<deck>/`) se lisent par une requête, depuis l'export
+  que la page porte déjà (commandant, partenaire, liste) ; Endstep (`endstep.cc/decks/<id>`), où un
+  deck appartient à un compte, se lit dans l'onglet connecté, par l'API du site avec la session de
+  l'onglet. Les deux restent des hôtes facultatifs, demandés sur un clic comme ManaBox (aucune
+  permission requise en plus) ; `Shared.requestManaBoxAccess` devient `requestSiteAccess`. Le bouton
+  « Comparer » se pose après « Copier la liste » sur PDC ; sur Endstep, il flotte, et suit l'adresse
+  (1.3.5) : le site change de page sans recharger, le bouton apparaît ou disparaît avec le deck.
+  Dans le popup, l'accès à demander sur un tel site devient une carte bien visible sous le deck,
+  avec la pilule teal « Autoriser l'accès à ce site » et ce qu'il débloque (1.3.6) : c'était un lien
+  discret en bas, et sans lui, ni bouton ni lecture du deck.
+  Sur PDC, le bouton se cachait derrière « Copier la liste » (1.3.7) : il se centre sur son repère
+  pour les barres en ligne des autres sites, ce qui, dans la colonne de PDC, le remontait sous le
+  bouton orange. Il ne se centre plus que s'il est sur la même ligne que lui. Il se pose désormais sous
+  la ligne « Exporter / Valider », en pleine largeur dans la colonne (1.3.8). Sur Endstep, il se pose
+  dans la barre de l'éditeur, après « Import / Export » (1.3.9).
+
 ### Corrigé
 
 - **Safari : plus de « Offre-moi un café » ni de lien vers le Chrome Web Store** (1.3.2). Apple a

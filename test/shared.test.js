@@ -13,6 +13,8 @@ test("SUPPORTED_SITES matches deck-detail URLs (popup + pool tab pickers)", () =
   assert.equal(siteMatch("https://archidekt.com/decks/12345/krenko"), "Archidekt");
   assert.equal(siteMatch("https://getpaird.io/decklists/abc-def"), "getpaird");
   assert.equal(siteMatch("https://melee.gg/Decklist/View/123e4567-e89b-12d3-a456-426614174000"), "Melee");
+  assert.equal(siteMatch("https://pauperduelcommander.fr/fr/decklist/diamond-weapon-endstep-3-7eme/"), "Pauper Duel Commander");
+  assert.equal(siteMatch("https://endstep.cc/decks/1930b985-25ea-4d0b-90ef-a2d9a512de49"), "Endstep");
 });
 
 test("SUPPORTED_SITES rejects homepages and listings (no false one-click shortcut)", () => {
@@ -230,17 +232,17 @@ test("every locale declares the same message keys", () => {
   for (const loc of rest) assert.deepEqual(keys(loc), keys(first), `${loc} and ${first} differ`);
 });
 
-test("requestManaBoxAccess asks for the ManaBox hosts it is given, and nothing else", async () => {
-  const { requestManaBoxAccess } = require("../src/shared.js");
+test("requestSiteAccess asks for the ManaBox hosts it is given, and nothing else", async () => {
+  const { requestSiteAccess } = require("../src/shared.js");
   const prev = global.chrome;
   const asked = [];
   global.chrome = { permissions: { request: async ({ origins }) => { asked.push(origins); return true; } } };
   try {
-    assert.equal(await requestManaBoxAccess(["https://archidekt.com/decks/1", "not a url"]), false);
-    assert.equal(await requestManaBoxAccess(["https://manabox.app/decks/aaaaaaaaaaaaaaaa", "https://manabox.app/decks/bbbbbbbbbbbbbbbb"]), true);
+    assert.equal(await requestSiteAccess(["https://archidekt.com/decks/1", "not a url"]), false);
+    assert.equal(await requestSiteAccess(["https://manabox.app/decks/aaaaaaaaaaaaaaaa", "https://manabox.app/decks/bbbbbbbbbbbbbbbb"]), true);
     assert.deepEqual(asked, [["https://manabox.app/*"]]);
     global.chrome = {};   // no permissions API (a content script): no request, no throw
-    assert.equal(await requestManaBoxAccess(["https://www.manabox.app/decks/aaaaaaaaaaaaaaaa"]), false);
+    assert.equal(await requestSiteAccess(["https://www.manabox.app/decks/aaaaaaaaaaaaaaaa"]), false);
   } finally { global.chrome = prev; }
 });
 

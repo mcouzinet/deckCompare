@@ -236,12 +236,30 @@
   // /archetype/<slug> renders one full deck; its sidebar "Deck Page" link is the first
   // /deck/<id> href in the markup (the similar-decks list comes later). The download
   // endpoint needs that numeric id.
+  // --- Pauper Duel Commander (pauperduelcommander.fr/<lang>/decklist/<slug>/) ---
+  // The page carries its own export, <script id="deck-export-data">: { commander, partner,
+  // decklist: "1 Name" lines }. The deck's name is the page title before the site's.
+  function parsePauperDuelCommander(html) {
+    const deck = { mainboard: {}, sideboard: {}, commanders: {}, source: 'pdc' };
+    const m = /<script[^>]*id="deck-export-data"[^>]*>([\s\S]*?)<\/script>/.exec(html);
+    if (!m) return deck;
+    const data = JSON.parse(m[1]);
+    for (const c of [data.commander, data.partner]) if (c && c.trim()) deck.commanders[c.trim()] = 1;
+    for (const line of String(data.decklist || '').split('\n')) {
+      const l = /^\s*(\d+)x?\s+(.+?)\s*$/.exec(line);
+      if (l) deck.mainboard[l[2]] = (deck.mainboard[l[2]] || 0) + parseInt(l[1], 10);
+    }
+    const title = /<title>([^<]*)<\/title>/.exec(html);
+    deck.name = title ? decodeEntities(title[1]).replace(/\s*[\u2014\u2013|-]\s*Pauper Duel Commander\s*$/i, '').trim() : '';
+    return deck;
+  }
+
   function mtggoldfishDeckId(html) {
     const m = String(html).match(/href="\/deck\/(\d+)/) || String(html).match(/\/deck\/download\/(\d+)/);
     return m ? m[1] : null;
   }
 
-  const api = { parseMoxfield, parseArchidekt, parseMtgTop8, parseMtgGoldfish, parseMtgDecks, parseMagicVille, parseMelee, parseGetpaird, mtggoldfishDeckId };
+  const api = { parseMoxfield, parseArchidekt, parseMtgTop8, parseMtgGoldfish, parseMtgDecks, parseMagicVille, parseMelee, parseGetpaird, parsePauperDuelCommander, mtggoldfishDeckId };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else global.Parsers = api;
 })(typeof self !== 'undefined' ? self : globalThis);

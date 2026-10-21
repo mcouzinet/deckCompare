@@ -94,6 +94,9 @@
     { pattern: "mtgdecks.net/",                   deckRe: /mtgdecks\.net\/[^/?#]+\/[^/?#]/,                                                                        label: "mtgdecks" },
     { pattern: "melee.gg/Decklist/View",          deckRe: /melee\.gg\/Decklist\/View\/[0-9a-fA-F-]{36}/,                                                          label: "Melee" },
     { pattern: "getpaird.io/decklists/",          deckRe: /getpaird\.io\/decklists\/[^/?#]+/,                                                                     label: "getpaird" },
+    { pattern: "pauperduelcommander.fr/",         deckRe: /pauperduelcommander\.fr\/(?:[a-z]{2}\/)?decklist\/[^/?#]+/,                                         label: "Pauper Duel Commander" },
+    // Endstep decks belong to an account: a deck page opens only signed in, and is read there.
+    { pattern: "endstep.cc/decks/",               deckRe: /endstep\.cc\/decks\/[0-9a-f-]{36}/,                                                                label: "Endstep" },
     { pattern: "manabox.app/decks/",              deckRe: /manabox\.app\/decks\/[A-Za-z0-9_-]{16,}/,                                                         label: "ManaBox" }
   ];
 
@@ -115,7 +118,7 @@
   // "X | Moxfield", "X Deck for Magic: the Gathering" (MTGGoldfish), "X \u2014 mtgdecks.net".
   // The site's name only as the title's last word (a deck called "Isshin - Melee Attack Triggers"
   // keeps its "Melee").
-  const SITE_SUFFIX = /\s*[\u2022|\u00b7@\u2014\u2013-]\s*(Archidekt|Moxfield|MTGGoldfish|mtgtop8|Magic-Ville|mtgdecks|Melee|getpaird|ManaBox)(\.\w+)?\s*$/i;
+  const SITE_SUFFIX = /\s*[\u2022|\u00b7@\u2014\u2013-]\s*(Archidekt|Moxfield|MTGGoldfish|mtgtop8|Magic-Ville|mtgdecks|Melee|getpaird|ManaBox|Pauper Duel Commander|Endstep)(\.\w+)?\s*$/i;
   function deckTabTitle(title) {
     const t = String(title || "")
       .replace(/\s+Deck for Magic: the Gathering\s*$/i, "")
@@ -193,8 +196,13 @@
     { id: "mtgdecks-www",     origin: "https://www.mtgdecks.net/*",  matches: ["https://www.mtgdecks.net/*"] },
     // ManaBox: a site the extension never had access to, so optional from the start (a new
     // required host would disable the extension until every user re-accepts it).
-    { id: "manabox",          origin: "https://manabox.app/*",       matches: ["https://manabox.app/decks/*"] },
-    { id: "manabox-www",      origin: "https://www.manabox.app/*",   matches: ["https://www.manabox.app/decks/*"] }
+    { id: "manabox",          origin: "https://manabox.app/*",       matches: ["https://manabox.app/decks/*"], read: true },
+    { id: "manabox-www",      origin: "https://www.manabox.app/*",   matches: ["https://www.manabox.app/decks/*"], read: true },
+    // Optional from the start too (1.4). `read`: without the access, the extension cannot read a
+    // deck there at all, not just show its button. Endstep is a single-page app: the script
+    // runs on every page of it and acts on the deck page the user is on when asked.
+    { id: "pdc",              origin: "https://pauperduelcommander.fr/*", matches: ["https://pauperduelcommander.fr/*/decklist/*"], read: true },
+    { id: "endstep",          origin: "https://endstep.cc/*",        matches: ["https://endstep.cc/*"], read: true }
   ];
 
   // True when `hostname` is covered by a match-pattern origin such as
@@ -221,13 +229,14 @@
     return origins.some((o) => originMatchesHost(o, host));
   }
 
-  // A ManaBox deck is read in a tab (background.js), which needs the site's optional access. The
-  // background cannot ask for it (no user gesture), so the extension pages do, from the click that
-  // wants such a deck: no prompt once granted, and a decline ends in errManaboxAccess. Call it
-  // before any other await of the handler: Firefox honours a request only there.
-  const MANABOX_ORIGINS = OPTIONAL_SCRIPTS.filter((s) => s.id.startsWith("manabox")).map((s) => s.origin);
-  async function requestManaBoxAccess(urls) {
-    const origins = MANABOX_ORIGINS.filter((o) => urls.some((u) => isOptionalHost(u, [o])));
+  // A deck on a `read` site (ManaBox, Endstep, Pauper Duel Commander) needs the site's optional
+  // access to be read at all (background.js). The background cannot ask for it (no user gesture),
+  // so the extension pages do, from the click that wants such a deck: no prompt once granted, and
+  // a decline ends in an access error. Call it before any other await of the handler: Firefox
+  // honours a request only there.
+  const READ_ORIGINS = OPTIONAL_SCRIPTS.filter((s) => s.read).map((s) => s.origin);
+  async function requestSiteAccess(urls) {
+    const origins = READ_ORIGINS.filter((o) => urls.some((u) => isOptionalHost(u, [o])));
     if (!origins.length) return false;
     try { return await chrome.permissions.request({ origins }); } catch (_) { return false; }
   }
@@ -480,7 +489,7 @@
   const api = {
     shareLink, readShareLink, SHARE_HASH, storeUrl, dropStoreLinks, safariBuild,
     fixCommanderHeuristic, sumBoard, normalizeName, normalizeDeck, cacheRead, cacheMerge, CARD_TYPE_TTL, cachedCardTypes, plural,
-    setDocumentLang, OPTIONAL_SCRIPTS, originMatchesHost, isOptionalHost, requestManaBoxAccess, INJECT_KEY, injectEnabled, injectResetOnUpdate,
+    setDocumentLang, OPTIONAL_SCRIPTS, originMatchesHost, isOptionalHost, requestSiteAccess, INJECT_KEY, injectEnabled, injectResetOnUpdate,
     SUPPORTED_SITES, getOpenDeckTabs, deckTabTitle, sameDeckPage,
     DECK_SOURCE_IDS, getSavedDecks, populateSavedDeckSelect, POOL_DECKS_KEY, POOL_MINE_KEY
   };

@@ -11,7 +11,7 @@ side, across all major deck sites.
 
 - **Visual diff** — cards unique to each deck displayed as image grids, shared cards in a list with quantity deltas highlighted; each zone's count copies its cards as `1 Name` lines, ready to paste into a deck builder
 - **Similarity score** — share of the larger deck the two lists have in common, shown as a headline figure with an overlap bar
-- **9 supported sites**: Moxfield, MTGGoldfish, Archidekt, mtgtop8, Magic-Ville, mtgdecks.net, Melee, getpaird, ManaBox
+- **11 supported sites**: Moxfield, MTGGoldfish, Archidekt, mtgtop8, Magic-Ville, mtgdecks.net, Melee, getpaird, ManaBox, Pauper Duel Commander, Endstep
 - **Cross-site comparison** — compare a Moxfield deck against an mtgtop8 list, etc.
 - **In-page Compare button** *(on by default)* — adds a Compare button to each site's own
   toolbar, so a comparison starts without opening the popup. Switch it off under the gear

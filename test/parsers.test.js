@@ -114,3 +114,15 @@ test("MTGGoldfish archetype page: the deck id is the first /deck/<id> link (Deck
   assert.equal(P.mtggoldfishDeckId('<a href="/deck/download/123?type=arena">Download</a>'), "123");
   assert.equal(P.mtggoldfishDeckId("<p>no deck here</p>"), null);
 });
+
+test("Pauper Duel Commander: commander, the 99 from the page's export data, and the deck's name", () => {
+  const d = P.parsePauperDuelCommander(fx("pauperduelcommander.html"));
+  assert.deepEqual(d.commanders, { "Diamond Weapon": 1 });
+  assert.equal(Object.values(d.mainboard).reduce((a, b) => a + b, 0), 99);
+  assert.equal(d.mainboard["Arbor Elf"], 1);
+  assert.equal(d.name, "Diamond Weapon · Endstep #3 (7eme)");
+  assert.equal(d.source, "pdc");
+  const partner = P.parsePauperDuelCommander('<title>X</title><script id="deck-export-data" type="application/json">{"commander":"A","partner":"B","decklist":"2 Island\\n1 Ponder"}</script>');
+  assert.deepEqual(partner.commanders, { A: 1, B: 1 });
+  assert.deepEqual(partner.mainboard, { Island: 2, Ponder: 1 });
+});

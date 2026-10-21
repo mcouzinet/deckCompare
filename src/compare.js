@@ -886,7 +886,7 @@
       tabsBox.querySelectorAll(".pop-tab").forEach(b => { b.disabled = true; });
       setMsg(chrome.i18n.getMessage("fetchingSecond"));
       try {
-        await Shared.requestManaBoxAccess([url]);   // from this click, before any other await (shared.js)
+        await Shared.requestSiteAccess([url]);   // from this click, before any other await (shared.js)
         const resp = await sendToBackground({ type: "FETCH_DECK", url });
         if (!resp || resp.error) {
           setMsg(`${chrome.i18n.getMessage("error")} ${resp?.error || chrome.i18n.getMessage("fetchFailed")}`, true);

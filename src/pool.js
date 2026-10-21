@@ -185,7 +185,7 @@
     // analysis deck ref (pool-analyze.js copies that name into `label`).
     const t = (d.label || d.name || "").trim();
     if (!t) return d.source;
-    if (/^(moxfield|archidekt|mtgtop8|mtggoldfish|magic-ville|mtgdecks|melee|paird|manabox|text) deck$/i.test(t)) return d.source;
+    if (/^(moxfield|archidekt|mtgtop8|mtggoldfish|magic-ville|mtgdecks|melee|paird|manabox|pdc|endstep|text) deck$/i.test(t)) return d.source;
     if (/^deck \d+$/i.test(t)) return d.source;
     return t;
   }
@@ -248,7 +248,7 @@
       return;
     }
     if (url) {
-      await Shared.requestManaBoxAccess([url]);   // from this click, before any other await (shared.js)
+      await Shared.requestSiteAccess([url]);   // from this click, before any other await (shared.js)
       const res = await sendToBackground({ type: "FETCH_DECKS", urls: [url] });
       deck = (res && res.decks && res.decks[0]) || null;
       if (res && res.errors && res.errors[0]) error = res.errors[0].error;
@@ -291,7 +291,7 @@
     $("loading").textContent = newUrls.length > 1 ? M("poolFetchingDecksN", [String(newUrls.length)]) : M("poolFetchingDecks");
 
     if (newUrls.length) {
-      await Shared.requestManaBoxAccess(newUrls);   // from this click, before any other await (shared.js)
+      await Shared.requestSiteAccess(newUrls);   // from this click, before any other await (shared.js)
       const res = await sendToBackground({ type: "FETCH_DECKS", urls: newUrls });
       if (res && res.decks) {
         // Archetype seed: the MTGO export is nameless, so name each deck by pilot/event.
@@ -490,7 +490,7 @@
       b.textContent = text;
       setTimeout(() => { if (b.isConnected) b.textContent = M("poolMineReload"); }, 2000);
     };
-    await Shared.requestManaBoxAccess([mine.url]);   // from this click, before any other await (shared.js)
+    await Shared.requestSiteAccess([mine.url]);   // from this click, before any other await (shared.js)
     const res = await sendToBackground({ type: "FETCH_DECKS", urls: [mine.url] });
     const deck = res && res.decks && res.decks[0];
     if (!deck) {

@@ -38,7 +38,7 @@ clicks, and can act on it.
 
 It is a browser extension, not a website. That is the mechanism, and it is what a
 competing web tool cannot truthfully copy: the extension reads the deck from the page the
-user is already looking at, holds host permissions for nine deck sites, and therefore
+user is already looking at, holds host permissions for eleven deck sites, and therefore
 needs no copy-paste, no export step, and no CORS proxy. Cross-site comparison follows from
 the same property — a Moxfield list against an mtgtop8 top-8 list is one flow, not two
 exports.
@@ -46,7 +46,8 @@ exports.
 ## Operating Context
 
 - Used inside the browser, alongside the deck sites themselves: Moxfield, MTGGoldfish,
-  Archidekt, mtgtop8, Magic-Ville, mtgdecks.net, Melee, getpaird, ManaBox.
+  Archidekt, mtgtop8, Magic-Ville, mtgdecks.net, Melee, getpaird, ManaBox, Pauper Duel Commander,
+  Endstep.
 - Three surfaces: a 400px-wide toolbar popup, a full-tab comparison page, a full-tab pool
   analysis page. Plus a Compare button injected into each site's own toolbar, on by default.
   A comparison's Share link opens that same comparison page outside the extension, on the
@@ -99,7 +100,7 @@ Store.
 - Live product on the Chrome Web Store since 2026-09-05, on Edge Add-ons and addons.mozilla.org since 1.2, in review on the Mac App Store; versions and
   release history in `CHANGELOG.md`, submissions in `store/listing.md`.
 - Real card data and imagery via the Scryfall API (`image_uris`, type lines).
-- Unit tests over the nine site parsers with fixtures in `test/fixtures/`.
+- Unit tests over the eleven site parsers with fixtures in `test/fixtures/`.
 - Store assets in `store/`: screenshots, `promo-marquee-1400x560.png`, `promo-small-440x280.png`.
 - No user research, no analytics, no install numbers, no testimonials — none exist, and
   future work must not invent them.

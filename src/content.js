@@ -4,8 +4,11 @@
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === 'GET_DECKLIST') {
-    const deck = Shared.normalizeDeck(DomParsers.parseDeckFromCurrentSite(document, window.location.href));
-    sendResponse({ deck });
+    // Endstep's deck comes from its API, signed in as the user on this page.
+    const reading = location.hostname === 'endstep.cc'
+      ? DomParsers.readEndstepDeck(location.href).catch(() => null)
+      : Promise.resolve(DomParsers.parseDeckFromCurrentSite(document, window.location.href));
+    reading.then((deck) => sendResponse({ deck: Shared.normalizeDeck(deck) }));
   }
   return true;
 });

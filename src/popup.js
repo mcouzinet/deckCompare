@@ -57,6 +57,7 @@ document.getElementById('settings-telemetry-hint').textContent = chrome.i18n.get
 document.getElementById('settings-inject-hint').textContent = chrome.i18n.getMessage('settingsInjectHint');
 document.getElementById('inject-grant-text').textContent = chrome.i18n.getMessage('injectGrantMox');
 document.getElementById('inject-grant-main-text').textContent = chrome.i18n.getMessage('injectGrantHere');
+document.getElementById('inject-grant-main-why').textContent = chrome.i18n.getMessage('injectGrantWhy');
 document.getElementById('onboarding-title').textContent = chrome.i18n.getMessage('onboardingTitle');
 document.getElementById('onboarding-step1').textContent = chrome.i18n.getMessage('onboardingStep1');
 document.getElementById('onboarding-step2').textContent = chrome.i18n.getMessage('onboardingStep2');
@@ -415,7 +416,7 @@ async function requestInjectGrant(origins = OPTIONAL_ORIGINS) {
 }
 
 injectGrant.addEventListener('click', () => requestInjectGrant());                    // Settings: every optional host
-injectGrantMain.addEventListener('click', () => requestInjectGrant(currentTabOrigins())); // main view: just this site
+document.getElementById('inject-grant-main-btn').addEventListener('click', () => requestInjectGrant(currentTabOrigins())); // main view: just this site
 
 settingsTelemetry.addEventListener('change', () => chrome.storage.local.set({ telemetry: settingsTelemetry.checked }));
 
@@ -552,7 +553,7 @@ async function runComparison(url) {
 
   try {
     setStatus(`${chrome.i18n.getMessage('readingDeck')} ${detectedSite.label}…`);
-    await Shared.requestManaBoxAccess([url]);   // from this click, before any other await (shared.js)
+    await Shared.requestSiteAccess([url]);   // from this click, before any other await (shared.js)
 
     // Deck B never depends on deck A, so start it now instead of after A resolves —
     // this is the only real wait in the product and it was being paid twice, in series.

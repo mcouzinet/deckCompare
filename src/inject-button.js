@@ -51,6 +51,17 @@
     if (enabled) mountWhenReady();
   });
 
+  // Single-page sites (Endstep) change the address without loading a page, and this script
+  // runs once per load: the button follows the address, on a deck page or off one. A content
+  // script cannot hook the page's history calls, so it checks the address twice a second.
+  let lastHref = location.href;
+  setInterval(() => {
+    if (location.href === lastHref) return;
+    lastHref = location.href;
+    unmount();
+    if (enabled) mountWhenReady();
+  }, 500);
+
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== 'local' || !changes[STORAGE_KEY]) return;
     enabled = Shared.injectEnabled(changes[STORAGE_KEY].newValue);
@@ -196,9 +207,14 @@
     // Line our centre up with the control's, from the rendered positions. This replaces
     // the per-site alignment guesswork: it works whatever the row does, including
     // melee's mb-auto-pinned bar, and needs no special case per site.
+    // Only beside it: in a column (Pauper Duel Commander's sidebar) we sit below the control,
+    // and centring on it pulled us up behind it, out of sight.
     const cRect = control.getBoundingClientRect();
     const hRect = hostEl.getBoundingClientRect();
-    if (cRect.height && hRect.height) {
+    const sameRow = hRect.top < cRect.bottom && hRect.bottom > cRect.top;
+    // Stacked under it, the button joins the column at its full width, as the site's own do.
+    if (!sameRow && parentCs && /column/.test(parentCs.flexDirection)) { hostEl.classList.add('fill'); hostEl.style.alignSelf = 'stretch'; hostEl.style.width = '100%'; }
+    if (sameRow && cRect.height && hRect.height) {
       const delta = (cRect.top + cRect.height / 2) - (hRect.top + hRect.height / 2);
       if (Math.abs(delta) > 0.5) hostEl.style.marginTop = `${Math.round(delta)}px`;
     }
@@ -365,6 +381,7 @@
         border-radius: 3px; padding: 0 7px; font-size: 11px; gap: 5px;
       }
       :host(.compact) .fab svg { width: 12px; height: 12px; }
+      :host(.fill) .fab { width: 100%; justify-content: center; }
 
       /* --- the panel: a sheet of the memo laid over the host page ------------------- */
       .panel {

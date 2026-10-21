@@ -182,6 +182,14 @@
     .hint-configure svg { width: 15px; height: 15px; flex: none; }
     .hint-configure:hover { color: var(--b); border-color: var(--b); background: var(--elev); }
     .hint-configure[hidden] { display: none; }   /* its display:flex would beat the UA's [hidden] rule */
+    /* The access this tab's site still needs: a sheet with the teal pill, right under the deck. */
+    .grant-main {
+      margin-top: calc(var(--unit) * 1.5); padding: calc(var(--unit) * 1.5);
+      background: var(--elev); border: 1px solid var(--b); border-radius: var(--r-md); box-shadow: var(--lift-1);
+    }
+    .grant-main[hidden] { display: none; }
+    .grant-main p { margin: 0 0 var(--unit); font-size: var(--fs-xs); color: var(--ink-2); line-height: 1.45; }
+    .grant-main .mat-btn { width: 100%; }
 
     /* --- pool, a second brief ------------------------------------------------------ */
     /* The two ways into the cross-compare page are one sheet with a hairline between them,
@@ -350,7 +358,15 @@
           <span class="chip">Melee</span>
           <span class="chip">getpaird</span>
           <span class="chip">ManaBox</span>
+          <span class="chip">Pauper Duel Commander</span>
+          <span class="chip">Endstep</span>
         </div>
+      </div>
+      <!-- This tab's site is an optional one not yet allowed: no button on its pages, and on
+           ManaBox, Endstep and Pauper Duel Commander no deck read at all. First thing to see. -->
+      <div class="grant-main" id="inject-grant-main" hidden>
+        <p id="inject-grant-main-why"></p>
+        <button type="button" class="mat-btn mat-btn--go" id="inject-grant-main-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span id="inject-grant-main-text"></span></button>
       </div>
     </div>
 
@@ -377,7 +393,6 @@
         </button>
       </div>
       <button type="button" class="hint" id="mox-hint"></button>
-      <button type="button" class="hint-configure" id="inject-grant-main" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span id="inject-grant-main-text"></span></button>
     </div>
 
     <!-- Outside the deck 2 section: settings and site access report here with no deck detected. -->

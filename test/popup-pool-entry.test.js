@@ -135,3 +135,15 @@ test("the Safari build's popup offers no tip (Mac App Store, guideline 3.1.1); t
   assert.equal(safari.window.document.querySelector(".bmc"), null);
   assert.ok(safari.window.document.getElementById("settings-toggle"));   // the rest of the header stays
 });
+
+test("on a Pauper Duel Commander deck not yet allowed, the popup leads with the access request", async () => {
+  const { window } = await openPopup({}, (chrome) => {
+    chrome.tabs.query = async () => [{ id: 1, url: "https://pauperduelcommander.fr/fr/decklist/diamond-weapon-endstep-3-7eme/", title: "Diamond Weapon", active: true }];
+    chrome.permissions.contains = async ({ origins }) => !origins.some((o) => o.includes("pauperduelcommander"));
+  });
+  const card = window.document.getElementById("inject-grant-main");
+  for (let i = 0; i < 30 && card.hidden; i++) await new Promise((r) => setTimeout(r, 10));
+  assert.equal(card.hidden, false);
+  assert.match(card.textContent, /cannot reach this site yet/);
+  assert.equal(window.document.getElementById("inject-grant-main-btn").textContent.trim(), "Allow access to this site");
+});
