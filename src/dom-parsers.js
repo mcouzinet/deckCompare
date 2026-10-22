@@ -316,7 +316,39 @@
     if (!m) return null;
     const res = await fetchFn(`/api/decks/${m[1]}`, { credentials: 'include' });
     if (!res.ok) return null;
-    return endstepDeckFromApi(await res.json());
+    const deck = endstepDeckFromApi(await res.json());
+    try { await toOracleNames(deck, fetchFn); } catch (_) { /* Scryfall down: the names stay as Endstep wrote them */ }
+    return deck;
+  }
+
+  // Endstep writes a Universes Beyond card under its flavor name ("Answer the Call", Scryfall's
+  // flavor_name of Eladamri's Call), which no other site uses: the same card would not match.
+  // /cards/collection does not know flavor names, /cards/named does: the names the batch reports
+  // unknown are asked one by one, 550 ms apart (Scryfall allows two requests a second).
+  async function toOracleNames(deck, fetchFn) {
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const names = [...new Set(['commanders', 'mainboard', 'sideboard'].flatMap((b) => Object.keys(deck[b])))];
+    const unknown = [];
+    for (let i = 0; i < names.length; i += 75) {
+      if (i) await wait(550);
+      const res = await fetchFn('https://api.scryfall.com/cards/collection', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifiers: names.slice(i, i + 75).map((name) => ({ name })) })
+      });
+      if (!res.ok) return;
+      unknown.push(...((await res.json()).not_found || []).map((nf) => nf.name).filter(Boolean));
+    }
+    for (const name of unknown.slice(0, 20)) {
+      await wait(550);
+      const res = await fetchFn(`https://api.scryfall.com/cards/named?exact=${encodeURIComponent(name)}`);
+      const oracle = res.ok && (await res.json()).name;
+      if (!oracle || oracle === name) continue;
+      for (const board of ['commanders', 'mainboard', 'sideboard']) {
+        if (!(name in deck[board])) continue;
+        deck[board][oracle] = (deck[board][oracle] || 0) + deck[board][name];
+        delete deck[board][name];
+      }
+    }
   }
 
   function parseDeckFromCurrentSite(doc, url) {

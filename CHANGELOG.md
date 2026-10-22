@@ -45,6 +45,9 @@ testée (voir `AGENTS.md`).
   bouton orange. Il ne se centre plus que s'il est sur la même ligne que lui. Il se pose désormais sous
   la ligne « Exporter / Valider », en pleine largeur dans la colonne (1.3.8). Sur Endstep, il se pose
   dans la barre de l'éditeur, après « Import / Export » (1.3.9).
+  Endstep écrit les cartes Universes Beyond sous leur nom alternatif (« Answer the Call » pour
+  Eladamri's Call) : sans image, et jamais en commun avec un autre site. La lecture demande à
+  Scryfall le nom Oracle des noms qu'il ne reconnaît pas (1.3.10).
 
 ### Corrigé
 

@@ -255,8 +255,11 @@ test("Endstep: a deck page asks for its API read; the API's lists become boards,
   const api = { name: " Diamond Weapon ", format: "pdh", commanders: ["Diamond Weapon"],
     cards: ["Diamond Weapon", { name: "Island", quantity: 9 }, "Ponder", "Ponder"], sideboard: [{ name: "Hydroblast", quantity: 2 }] };
   const asked = [];
-  const deck = await D.readEndstepDeck(`https://endstep.cc/decks/${id}`, async (u, init) => { asked.push([u, init.credentials]); return { ok: true, json: async () => api }; });
-  assert.deepEqual(asked, [[`/api/decks/${id}`, "include"]]);
+  const deck = await D.readEndstepDeck(`https://endstep.cc/decks/${id}`, async (u, init) => {
+    asked.push(u);
+    return { ok: true, json: async () => u.startsWith("/api/") ? api : { data: [], not_found: [] } };
+  });
+  assert.deepEqual(asked, [`/api/decks/${id}`, "https://api.scryfall.com/cards/collection"]);
   assert.deepEqual(deck.commanders, { "Diamond Weapon": 1 });
   assert.deepEqual(deck.mainboard, { Island: 9, Ponder: 2 });
   assert.deepEqual(deck.sideboard, { Hydroblast: 2 });
@@ -269,4 +272,15 @@ test("Endstep: the button joins the deck editor's toolbar, after Import / Export
     <button class="es-lib-mbtn"><b>Stacks</b></button><button class="es-lib-mbtn"><b>by mana value</b></button>
     <span class="es-range-row"><input type="range"></span><button class="es-lib-mbtn" id="io"><b>Import / Export</b></button></div></div>`).window.document;
   assert.equal(D.findActionBarAnchor(doc, "https://endstep.cc/decks/1930b985-25ea-4d0b-90ef-a2d9a512de49").id, "io");
+});
+
+test("Endstep: a Universes Beyond flavor name becomes the Oracle name the other sites write", async () => {
+  const api = { name: "Minsc", commanders: [], cards: ["Answer the Call", "Birds of Paradise"], sideboard: [] };
+  const deck = await D.readEndstepDeck("https://endstep.cc/decks/1930b985-25ea-4d0b-90ef-a2d9a512de49", async (u) => ({
+    ok: true,
+    json: async () => u.startsWith("/api/") ? api
+      : u.includes("/cards/collection") ? { data: [{ name: "Birds of Paradise" }], not_found: [{ name: "Answer the Call" }] }
+      : { name: "Eladamri's Call" }
+  }));
+  assert.deepEqual(deck.mainboard, { "Birds of Paradise": 1, "Eladamri's Call": 1 });
 });
