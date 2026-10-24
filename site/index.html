@@ -28,6 +28,12 @@
     .stores .soon { color: var(--ink-3); border-style: dashed; cursor: default; }
     .stores .soon:hover { transform: none; box-shadow: none; border-color: var(--line-strong); }
     .note { margin-top: 14px; font-size: var(--fs-xs); color: var(--ink-3); }
+    .sites { margin: 0 auto 48px; text-align: center; }
+    .sites h2 { margin-bottom: 16px; }
+    .sites ul { list-style: none; padding: 0; margin: 0 auto; max-width: 820px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+    .sites a { display: block; padding: 8px 16px; border: 1px solid var(--line); border-radius: 999px; background: var(--elev); color: var(--ink); font-weight: 600; font-size: var(--fs-sm); text-decoration: none; box-shadow: var(--lift-1); }
+    .sites a:hover, .sites a:focus-visible { border-color: var(--b); color: var(--b); }
+    .sites p { margin: 14px 0 0; font-size: var(--fs-xs); color: var(--ink-3); }
     .video { margin: 24px auto 64px; max-width: 900px; }
     .video video { display: block; width: 100%; border-radius: var(--r-md); border: 1px solid var(--line); box-shadow: var(--lift-2); background: var(--elev); }
     h2 { font-family: var(--font-display); font-weight: 400; color: var(--ink); font-size: clamp(24px, 3vw, 34px); margin: 0 0 24px; text-align: center; }
@@ -50,7 +56,7 @@
 
     <section class="hero">
       <h1>Compare any two MTG decklists, <em>right on the deck page.</em></h1>
-      <p>Shared cards, exclusives, quantity gaps and a similarity score, side by side. Works across nine deck sites, Moxfield, Archidekt and ManaBox among them. Free, no account, no personal data.</p>
+      <p>Shared cards, exclusives, quantity gaps and a similarity score, side by side. Works across eleven deck sites. Free, no account, no personal data.</p>
       <div class="stores">
         <a class="mat-btn mat-btn--go" href="https://chromewebstore.google.com/detail/deck-compare-%E2%80%93-mtg/miijiappldgijnnokopjfiponelkdhcg" data-umami-event="install" data-umami-event-store="chrome">Chrome Web Store</a>
         <a class="mat-btn" href="https://microsoftedge.microsoft.com/addons/detail/deck-compare-%E2%80%93-mtg/akklkakfdidemfbbnjmhiofkhkcnhfbc" data-umami-event="install" data-umami-event-store="edge">Edge Add-ons</a>
@@ -58,6 +64,24 @@
         <span class="mat-btn soon" title="In review on the Mac App Store">Safari · soon</span>
       </div>
       <p class="note">Brave, Opera, Vivaldi and Arc install it from the Chrome Web Store.</p>
+    </section>
+
+    <section class="sites" aria-labelledby="sites-h">
+      <h2 id="sites-h">Works on eleven deck sites</h2>
+      <ul>
+        <li><a href="https://moxfield.com" rel="noopener">Moxfield</a></li>
+        <li><a href="https://archidekt.com" rel="noopener">Archidekt</a></li>
+        <li><a href="https://www.mtggoldfish.com" rel="noopener">MTGGoldfish</a></li>
+        <li><a href="https://www.mtgtop8.com" rel="noopener">mtgtop8</a></li>
+        <li><a href="https://manabox.app" rel="noopener">ManaBox</a></li>
+        <li><a href="https://endstep.cc" rel="noopener">Endstep</a></li>
+        <li><a href="https://melee.gg" rel="noopener">Melee</a></li>
+        <li><a href="https://mtgdecks.net" rel="noopener">mtgdecks.net</a></li>
+        <li><a href="https://www.magic-ville.com" rel="noopener">Magic-Ville</a></li>
+        <li><a href="https://getpaird.io" rel="noopener">getpaird</a></li>
+        <li><a href="https://pauperduelcommander.fr" rel="noopener">Pauper Duel Commander</a></li>
+      </ul>
+      <p>Any pair compares: a Moxfield list against an mtgtop8 top 8, an Archidekt build against a ManaBox one.</p>
     </section>
 
     <div class="video">
