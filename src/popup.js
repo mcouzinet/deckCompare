@@ -65,6 +65,10 @@ document.getElementById('onboarding-step3').textContent = chrome.i18n.getMessage
 document.getElementById('pool-btn').title = chrome.i18n.getMessage('poolEntryTitle');
 document.getElementById('pool-entry-text').textContent = chrome.i18n.getMessage('poolAnalysis');
 document.getElementById('pool-entry-sub').textContent = `· ${chrome.i18n.getMessage('poolEntrySub')}`;
+const feedbackLink = document.getElementById('feedback-link');
+feedbackLink.href = Shared.feedbackUrl('popup');
+feedbackLink.title = chrome.i18n.getMessage('feedback');
+feedbackLink.setAttribute('aria-label', chrome.i18n.getMessage('feedback'));
 document.getElementById('settings-toggle').title = chrome.i18n.getMessage('settingsBtnTitle');
 document.getElementById('settings-toggle').setAttribute('aria-label', chrome.i18n.getMessage('settingsBtnTitle'));
 document.getElementById('tabpick-label').textContent = chrome.i18n.getMessage('openTabsLabel');

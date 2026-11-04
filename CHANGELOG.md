@@ -49,6 +49,10 @@ testée (voir `AGENTS.md`).
   Eladamri's Call) : sans image, et jamais en commun avec un autre site. La lecture demande à
   Scryfall le nom Oracle des noms qu'il ne reconnaît pas (1.3.10).
 
+- **Avis et suggestions** (1.3.11) : un lien vers un court formulaire (Tally), dans la tête du popup
+  (icône bulle) et au pied de la page de résultats. Il dit au formulaire la version, le navigateur et
+  la page d'où vient le clic ; rien d'autre ne part. Aussi sur la page de présentation.
+
 ### Corrigé
 
 - **Safari : plus de « Offre-moi un café » ni de lien vers le Chrome Web Store** (1.3.2). Apple a

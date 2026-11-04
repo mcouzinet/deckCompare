@@ -279,6 +279,7 @@
     // extension id was a dead page on Edge and Firefox.
     for (const id of ["rate-link", "get-btn"]) set(id, el => { el.href = Shared.storeUrl(); });
     set("rate-link", el => { el.textContent = msg("rateExtension"); });
+    set("feedback-link", el => { el.textContent = msg("feedback"); el.href = Shared.feedbackUrl("results"); });
     set("bmc-link", el => { el.title = msg("buyMeCoffee"); el.setAttribute("aria-label", msg("buyMeCoffee")); });
     set("another-url", el => { el.placeholder = msg("pasteADeckUrl"); });
     set("another-saved", el => { el.setAttribute("aria-label", msg("selectDeck")); });

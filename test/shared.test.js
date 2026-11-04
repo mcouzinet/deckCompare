@@ -384,3 +384,11 @@ test("two Commander decks sharing a third of their cards fit a Discord message (
   const link = await shareLink({ ...a, name: "Bzzzzzzzt", url: "https://moxfield.com/decks/ZyXwVuTsRqPoNmLkJiHgFe" }, b);
   assert.ok(link.length < 2000, `${link.length} characters`);
 });
+
+test("feedbackUrl: the Tally form learns the version, the browser and the page of the click", () => {
+  const url = new URL(require("../src/shared.js").feedbackUrl("popup"));
+  assert.equal(url.origin + url.pathname, "https://tally.so/r/vXGlrD");
+  assert.equal(url.searchParams.get("source"), "popup");
+  assert.ok(["chrome", "edge", "firefox", "safari"].includes(url.searchParams.get("browser")));
+  assert.ok(url.searchParams.get("version"));
+});

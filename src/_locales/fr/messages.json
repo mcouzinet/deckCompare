@@ -31,6 +31,7 @@
   "supports":               { "message": "Supporte" },
   "versus":                 { "message": "contre" },
   "buyMeCoffee":            { "message": "Offre-moi un café" },
+  "feedback":               { "message": "Avis et suggestions" },
   "settings":               { "message": "Paramètres" },
   "settingsUser":           { "message": "Nom d’utilisateur" },
   "settingsNotConfigured":  { "message": "Configure ton compte dans les paramètres" },

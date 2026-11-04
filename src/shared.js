@@ -473,6 +473,17 @@
     return "https://chromewebstore.google.com/detail/deck-compare-%E2%80%93-mtg/miijiappldgijnnokopjfiponelkdhcg";
   }
 
+  // The feedback form (Tally), told which build and which page the click comes from: its hidden
+  // fields version, browser and source. Outside the extension (a shared link's page) the version
+  // reads "web".
+  function feedbackUrl(source) {
+    const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+    let version = "web";
+    try { version = chrome.runtime.getManifest().version || "web"; } catch { /* a web page */ }
+    const browser = safariBuild() ? "safari" : /Firefox\//.test(ua) ? "firefox" : /Edg\//.test(ua) ? "edge" : "chrome";
+    return `https://tally.so/r/vXGlrD?${new URLSearchParams({ version, browser, source })}`;
+  }
+
   // The Mac App Store refuses a tip to the developer outside in-app purchase (guideline 3.1.1, the
   // 1.3 build rejected on 2026-10-05), and a link to another store: the Safari build, the one
   // whose manifest names Safari, takes out the "Buy me a coffee" pill (.bmc) and the "Rate this
@@ -487,7 +498,7 @@
   }
 
   const api = {
-    shareLink, readShareLink, SHARE_HASH, storeUrl, dropStoreLinks, safariBuild,
+    shareLink, readShareLink, SHARE_HASH, storeUrl, feedbackUrl, dropStoreLinks, safariBuild,
     fixCommanderHeuristic, sumBoard, normalizeName, normalizeDeck, cacheRead, cacheMerge, CARD_TYPE_TTL, cachedCardTypes, plural,
     setDocumentLang, OPTIONAL_SCRIPTS, originMatchesHost, isOptionalHost, requestSiteAccess, INJECT_KEY, injectEnabled, injectResetOnUpdate,
     SUPPORTED_SITES, getOpenDeckTabs, deckTabTitle, sameDeckPage,
