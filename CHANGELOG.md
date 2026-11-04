@@ -8,6 +8,8 @@ testée (voir `AGENTS.md`).
 
 ## [Non publié]
 
+## [1.4] - 2026-11-04
+
 ### Ajouté
 
 - **Partager une comparaison** (1.3.1). « Partager », en haut de la page de résultats, copie un
@@ -661,7 +663,8 @@ le wordmark sont inchangés ; le monde est construit autour d'eux.
 ### Ajouté
 - Séparation des créatures, vue en liste, cartes plus grandes et nettoyage de code.
 
-[Non publié]: https://github.com/mcouzinet/deckCompare/compare/v1.3...HEAD
+[Non publié]: https://github.com/mcouzinet/deckCompare/compare/v1.4...HEAD
+[1.4]: https://github.com/mcouzinet/deckCompare/compare/v1.3...v1.4
 [1.3]: https://github.com/mcouzinet/deckCompare/compare/v1.2...v1.3
 [1.2]: https://github.com/mcouzinet/deckCompare/compare/v1.1...v1.2
 [1.1]: https://github.com/mcouzinet/deckCompare/compare/v1.0.13...v1.1

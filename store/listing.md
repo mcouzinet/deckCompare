@@ -19,6 +19,7 @@ extension and in the README.
 
 | Version | Chrome Web Store | Edge Add-ons | addons.mozilla.org | Mac App Store |
 |---|---|---|---|---|
+| 1.4 | cut 2026-11-04 | | | build 6, to send |
 | 1.3 | sent 2026-09-29 | sent 2026-09-29 | sent 2026-09-29 | build 4, sent 2026-09-29, rejected 2026-10-05 (3.1.1, see *App Store*); build 5 sent 2026-10-05 (branch `safari-1.3-build5`), first listing, live |
 | 1.2 | live 2026-09-25 | first listing, live 2026-09-25 | first listing, live 2026-09-27 | first listing, build 2, sent 2026-09-25 |
 | 1.1 | cut 2026-09-08 | | | |
@@ -123,7 +124,7 @@ version. Newest first: **v1.4**, **v1.3**, **v1.2**, **v1.1**, then **v1.0.13**.
 
 **v1.4**
 
-Deux sites de plus : Pauper Duel Commander et Endstep (tes decks, lus depuis l'onglet où tu es connecté), sur autorisation en un clic. Partage une comparaison : « Partager » copie un lien qui l'ouvre chez n'importe qui, même sans l'extension ; les deux decks voyagent dans le lien lui-même, rien n'est stocké nulle part. « Note cette extension » mène désormais au bon store, et la comparaison croisée retrouve l'image des cartes écrites sans accent. Nouveau : des statistiques d'usage anonymes (installation, mise à jour, un signal par jour) aident à savoir combien de joueurs utilisent l'extension ; aucun deck ni aucune page visitée n'est envoyé, et elles se coupent dans les réglages. Aucune permission requise en plus.
+Deux sites de plus : Pauper Duel Commander et Endstep (tes decks, lus depuis l'onglet où tu es connecté), sur autorisation en un clic. Partage une comparaison : « Partager » copie un lien qui l'ouvre chez n'importe qui, même sans l'extension ; les deux decks voyagent dans le lien lui-même, rien n'est stocké nulle part. Un lien « Avis et suggestions » permet de signaler un bug ou de proposer une idée. « Note cette extension » mène désormais au bon store, et la comparaison croisée retrouve l'image des cartes écrites sans accent. Nouveau : des statistiques d'usage anonymes (installation, mise à jour, un signal par jour) aident à savoir combien de joueurs utilisent l'extension ; aucun deck ni aucune page visitée n'est envoyé, et elles se coupent dans les réglages. Aucune permission requise en plus.
 
 **v1.3**
 
@@ -145,7 +146,7 @@ Le bouton « Comparer » arrive sur les sites de decks eux-mêmes (opt-in dans l
 
 **v1.4**
 
-Two more sites: Pauper Duel Commander and Endstep (your own decks, read from the tab where you are signed in), allowed in one click. Share a comparison: "Share" copies a link that opens it for anyone, even without the extension; both decks travel inside the link itself, nothing is stored anywhere. "Rate this extension" now leads to the right store, and cross-compare finds the image of cards written without their accents. New: anonymous usage statistics (install, update, one signal a day) tell how many players use the extension; no deck or page visited is ever sent, and they can be switched off in the settings. No new required permission.
+Two more sites: Pauper Duel Commander and Endstep (your own decks, read from the tab where you are signed in), allowed in one click. Share a comparison: "Share" copies a link that opens it for anyone, even without the extension; both decks travel inside the link itself, nothing is stored anywhere. A "Feedback and ideas" link lets you report a bug or suggest an idea. "Rate this extension" now leads to the right store, and cross-compare finds the image of cards written without their accents. New: anonymous usage statistics (install, update, one signal a day) tell how many players use the extension; no deck or page visited is ever sent, and they can be switched off in the settings. No new required permission.
 
 **v1.3**
 
