@@ -19,7 +19,7 @@ extension and in the README.
 
 | Version | Chrome Web Store | Edge Add-ons | addons.mozilla.org | Mac App Store |
 |---|---|---|---|---|
-| 1.4 | cut 2026-11-04 | | | build 6, to send |
+| 1.4 | sent 2026-11-04 | sent 2026-11-04 | sent 2026-11-04 | build 6, to send |
 | 1.3 | sent 2026-09-29 | sent 2026-09-29 | sent 2026-09-29 | build 4, sent 2026-09-29, rejected 2026-10-05 (3.1.1, see *App Store*); build 5 sent 2026-10-05 (branch `safari-1.3-build5`), first listing, live |
 | 1.2 | live 2026-09-25 | first listing, live 2026-09-25 | first listing, live 2026-09-27 | first listing, build 2, sent 2026-09-25 |
 | 1.1 | cut 2026-09-08 | | | |
