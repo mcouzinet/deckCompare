@@ -254,12 +254,35 @@
     return deck;
   }
 
+  // --- Meta DC (meta-dc.tolarianstudio.com, ?deck=<tournament>.<entry>) ---
+  // A list opens in a dialog on any page; its address carries the tournament and the entry. The
+  // tournament's lists are one static file, /data/decks/<tournament>.json: { cards: [[name, …]],
+  // decks: { <entry>: [[card index, qty]] }, commanders: { <entry>: [names] }, name, players }.
+  function metaDcAddress(url) {
+    let v = null;
+    try { v = new URL(url).searchParams.get('deck'); } catch (_) { return null; }
+    const m = /^(\d+)\.(\d+)$/.exec(v || '');
+    return m ? { t: m[1], e: m[2] } : null;
+  }
+  function parseMetaDc(data, entry) {
+    const deck = { mainboard: {}, sideboard: {}, commanders: {}, source: 'metadc' };
+    const cards = (data && data.cards) || [];
+    for (const c of (data && data.commanders && data.commanders[entry]) || []) deck.commanders[c] = 1;
+    for (const [i, qty] of (data && data.decks && data.decks[entry]) || []) {
+      const name = cards[i] && cards[i][0];
+      if (name) deck.mainboard[name] = (deck.mainboard[name] || 0) + qty;
+    }
+    const player = data && data.players && data.players[entry];
+    deck.name = [Object.keys(deck.commanders).join(' & '), player].filter(Boolean).join(' · ');
+    return deck;
+  }
+
   function mtggoldfishDeckId(html) {
     const m = String(html).match(/href="\/deck\/(\d+)/) || String(html).match(/\/deck\/download\/(\d+)/);
     return m ? m[1] : null;
   }
 
-  const api = { parseMoxfield, parseArchidekt, parseMtgTop8, parseMtgGoldfish, parseMtgDecks, parseMagicVille, parseMelee, parseGetpaird, parsePauperDuelCommander, mtggoldfishDeckId };
+  const api = { parseMoxfield, parseArchidekt, parseMtgTop8, parseMtgGoldfish, parseMtgDecks, parseMagicVille, parseMelee, parseGetpaird, parsePauperDuelCommander, metaDcAddress, parseMetaDc, mtggoldfishDeckId };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else global.Parsers = api;
 })(typeof self !== 'undefined' ? self : globalThis);

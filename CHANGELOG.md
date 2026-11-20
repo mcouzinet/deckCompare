@@ -8,6 +8,15 @@ testée (voir `AGENTS.md`).
 
 ## [Non publié]
 
+### Ajouté
+
+- **Meta DC** (1.4.1, meta-dc.tolarianstudio.com) : une liste ouverte dans la fenêtre d'un joueur
+  se compare comme un deck. Meta DC donne à chaque liste une adresse (`?deck=<tournoi>.<entrée>`,
+  posée dans l'URL tant que la fenêtre est ouverte, et qui la rouvre sur n'importe quelle page) ;
+  Deck Compare la lit dans le fichier du tournoi (`/data/decks/<tournoi>.json`), pose son bouton
+  après « Copier la liste », dans la fenêtre, et propose ces onglets comme second deck. Site
+  optionnel, autorisé en un clic, comme Pauper Duel Commander.
+
 ## [1.4] - 2026-11-04
 
 ### Ajouté

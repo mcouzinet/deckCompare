@@ -170,6 +170,14 @@ changements de permissions le font.)
   lignes Normal/Foil/Etched d'une même carte s'additionnent. Ancre : le dernier `<button>` de la
   barre `div.ml-auto.flex.items-center.gap-2` (Download), en `:last-of-type` : notre host se pose
   après lui, un `:last-child` ne le retrouverait plus.
+- **Meta DC** (`meta-dc.tolarianstudio.com`, 1.4.1, site de l'utilisateur, dépôt
+  `~/Developer/dcdb/tournois`) : pas de page de deck, une liste s'ouvre dans un `<dialog>` modal
+  sur n'importe quelle page. Meta DC pose son adresse `?deck=<tournoi>.<entrée>` dans l'URL tant
+  que la fenêtre est ouverte (et la rouvre à l'arrivée, `DeckFromUrl`) : le content-script suit
+  l'adresse comme pour Endstep, et le bouton se pose **dans** la fenêtre (`[data-deck-actions]`,
+  hors d'elle il serait inerte sous le fond modal). Le background lit le fichier du tournoi
+  `/data/decks/<tournoi>.json` (`Parsers.parseMetaDc`). Hôte optionnel `read: true`, lu par fetch
+  comme PDC. Ces attributs et ce format de fichier sont un contrat entre les deux dépôts.
 - **mtgtop8** : la vue « visuelle » (cookie collant `mtgtop8_deck_display=visual`) n'a pas de
   `deck_line`/`L14` → `parseMtgTop8` renvoie vide → on pose `_needsApiFetch` (via la bascule
   « Switch to Text ») pour lire le deck via le fetch `/mtgo?d=` indépendant de la vue.

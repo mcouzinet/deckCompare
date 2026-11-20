@@ -414,7 +414,7 @@ async function listMagicVilleDecks(username) {
 const ALLOWED_DECK_HOSTS = [
   'www.moxfield.com', 'moxfield.com',
   'manabox.app', 'www.manabox.app',
-  'pauperduelcommander.fr', 'endstep.cc',
+  'pauperduelcommander.fr', 'endstep.cc', 'meta-dc.tolarianstudio.com',
   'archidekt.com',
   'www.mtgtop8.com', 'mtgtop8.com',
   'www.mtggoldfish.com', 'mtggoldfish.com',
@@ -502,9 +502,9 @@ async function fetchDeckByUrl(url) {
     let granted = false;
     try { granted = await chrome.permissions.contains({ origins: [`https://${host}/*`] }); } catch { /* no permissions API */ }
     const manabox = host === 'manabox.app' || host === 'www.manabox.app';
-    const site = manabox ? 'ManaBox' : host === 'endstep.cc' ? 'Endstep' : 'Pauper Duel Commander';
+    const site = manabox ? 'ManaBox' : host === 'endstep.cc' ? 'Endstep' : host === 'meta-dc.tolarianstudio.com' ? 'Meta DC' : 'Pauper Duel Commander';
     if (!granted) throw new Error(manabox ? chrome.i18n.getMessage('errManaboxAccess') : chrome.i18n.getMessage('errSiteAccess', [site]));
-    if (host !== 'pauperduelcommander.fr') {
+    if (manabox || host === 'endstep.cc') {
       const deck = await deckFromTab(url);
       if (!deck) throw new Error(manabox ? chrome.i18n.getMessage('errManaboxRead') : chrome.i18n.getMessage('errEndstepRead'));
       return deck;
@@ -535,6 +535,7 @@ async function fetchDeckOverHttp(url) {
   else if (url.includes('melee.gg')) deck = await fetchMeleeDeck(url);
   else if (url.includes('getpaird.io')) deck = await fetchGetpairdDeck(url);
   else if (url.includes('pauperduelcommander.fr')) deck = await fetchPauperDuelCommanderDeck(url);
+  else if (url.includes('meta-dc.tolarianstudio.com')) deck = await fetchMetaDcDeck(url);
   else throw new Error(chrome.i18n.getMessage('errUnsupportedSource'));
   Shared.normalizeDeck(deck);
 
@@ -545,6 +546,19 @@ async function fetchDeckOverHttp(url) {
     throw new Error(chrome.i18n.getMessage('emptyDeck'));
   }
   return deck;
+}
+
+// --- Meta DC ---
+
+async function fetchMetaDcDeck(url) {
+  const at = Parsers.metaDcAddress(url);
+  if (!at) throw new Error(chrome.i18n.getMessage('errMetaDcDeckNotFound'));
+  const res = await fetchT(`https://meta-dc.tolarianstudio.com/data/decks/${at.t}.json`);
+  if (!res.ok) {
+    if (res.status === 404) throw new Error(chrome.i18n.getMessage('errMetaDcDeckNotFound'));
+    throw new Error(`${chrome.i18n.getMessage('errMetaDcStatus')} ${res.status}`);
+  }
+  return Parsers.parseMetaDc(await res.json(), at.e);
 }
 
 // --- Pauper Duel Commander ---

@@ -282,6 +282,13 @@
   // The page is a single-page app: the deck comes from the site's own API, with the session of
   // the signed-in user (content.js, readEndstepDeck). Read synchronously, a deck page only says so.
   const ENDSTEP_DECK = /^\/decks\/([0-9a-f-]{36})\/?$/;
+  // Meta DC: a list is a dialog over any page, with its address (?deck=) in the URL while open.
+  // The background reads it from the tournament's file (Parsers.parseMetaDc).
+  function parseMetaDc(doc, url) {
+    if (!/[?&]deck=\d+\.\d+(?:&|#|$)/.test(url)) return null;
+    return { mainboard: {}, sideboard: {}, commanders: {}, source: 'metadc', _needsApiFetch: true };
+  }
+
   function parseEndstep(doc, url) {
     let path = '';
     try { path = new URL(url).pathname; } catch (_) { /* not a page */ }
@@ -363,6 +370,7 @@
     if (url.includes('manabox.app')) return parseManaBox(doc);
     if (url.includes('pauperduelcommander.fr')) return parsePauperDuelCommander(doc);
     if (url.includes('endstep.cc')) return parseEndstep(doc, url);
+    if (url.includes('meta-dc.tolarianstudio.com')) return parseMetaDc(doc, url);
     return null;
   }
 
@@ -424,6 +432,8 @@
     // hook stepped up to that row (a phone header and a desktop sidebar each have one; the
     // visible one wins). In the sidebar's column the button takes the column's width.
     { host: 'pauperduelcommander.fr', sel: '[data-deck-validate]', up: 1 },
+    // Inside the list's modal dialog (the page behind it is inert): after « Copier la liste ».
+    { host: 'meta-dc.tolarianstudio.com', sel: 'dialog[open] [data-deck-actions] > button:last-of-type' },
     // Endstep's deck editor toolbar (Stacks / by mana value / card size / Import / Export): after
     // Import / Export, its last button. The es-ed-* classes are the editor's own names, not build
     // hashes (seen signed in, 2026-10-21); the page renders late, which mountWhenReady waits for.
@@ -482,7 +492,7 @@
     return decks;
   }
 
-  const api = { parseMoxfield, parseMtgGoldfish, parseMtgTop8, parseArchidekt, parseMagicVille, parseMtgDecks, parseMelee, parseGetpaird, parseManaBox, parsePauperDuelCommander, parseEndstep, endstepDeckFromApi, readEndstepDeck, parseDeckFromCurrentSite, findActionBarAnchor, parseArchetypeDecks, parseArchetypeTitle, ANCHORS };
+  const api = { parseMoxfield, parseMtgGoldfish, parseMtgTop8, parseArchidekt, parseMagicVille, parseMtgDecks, parseMelee, parseGetpaird, parseManaBox, parsePauperDuelCommander, parseMetaDc, parseEndstep, endstepDeckFromApi, readEndstepDeck, parseDeckFromCurrentSite, findActionBarAnchor, parseArchetypeDecks, parseArchetypeTitle, ANCHORS };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else global.DomParsers = api;
 })(typeof self !== 'undefined' ? self : globalThis);

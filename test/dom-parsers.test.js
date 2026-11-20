@@ -284,3 +284,13 @@ test("Endstep: a Universes Beyond flavor name becomes the Oracle name the other 
   }));
   assert.deepEqual(deck.mainboard, { "Birds of Paradise": 1, "Eladamri's Call": 1 });
 });
+
+test("Meta DC (DOM): a deck page only while a list's dialog is open; button after « Copier la liste »", () => {
+  const html = `<main></main><dialog open data-deck="12.4567"><header><div data-deck-actions>
+    <a href="https://melee.gg">Liste d'origine</a><button type="button">Copier la liste</button></div></header></dialog>`;
+  const doc = new JSDOM(html).window.document;
+  const url = "https://meta-dc.tolarianstudio.com/tournoi/relic/?t=12&deck=12.4567";
+  assert.equal(D.parseDeckFromCurrentSite(doc, url)._needsApiFetch, true);
+  assert.equal(D.parseDeckFromCurrentSite(doc, "https://meta-dc.tolarianstudio.com/tournoi/relic/?t=12"), null);
+  assert.equal(D.findActionBarAnchor(doc, url, () => true).textContent, "Copier la liste");
+});

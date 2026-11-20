@@ -185,7 +185,7 @@
     // analysis deck ref (pool-analyze.js copies that name into `label`).
     const t = (d.label || d.name || "").trim();
     if (!t) return d.source;
-    if (/^(moxfield|archidekt|mtgtop8|mtggoldfish|magic-ville|mtgdecks|melee|paird|manabox|pdc|endstep|text) deck$/i.test(t)) return d.source;
+    if (/^(moxfield|archidekt|mtgtop8|mtggoldfish|magic-ville|mtgdecks|melee|paird|manabox|pdc|endstep|metadc|text) deck$/i.test(t)) return d.source;
     if (/^deck \d+$/i.test(t)) return d.source;
     return t;
   }

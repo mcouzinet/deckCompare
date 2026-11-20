@@ -126,3 +126,16 @@ test("Pauper Duel Commander: commander, the 99 from the page's export data, and 
   assert.deepEqual(partner.commanders, { A: 1, B: 1 });
   assert.deepEqual(partner.mainboard, { Island: 2, Ponder: 1 });
 });
+
+test("Meta DC: one player's list from the tournament file, named after commander and player", () => {
+  assert.deepEqual(P.metaDcAddress("https://meta-dc.tolarianstudio.com/commander/x/?p=ban&deck=12.4567"), { t: "12", e: "4567" });
+  assert.equal(P.metaDcAddress("https://meta-dc.tolarianstudio.com/commander/x/?tab=info"), null);
+  const data = { name: "Relic Fest", cards: [["Island", null, 0, 7, null, null], ["Ponder", "{U}", 1, 4, null, "ponder"]],
+    decks: { 4567: [[0, 9], [1, 1]], 8: [[1, 1]] }, commanders: { 4567: ["Ironheart, Clever Champion"] }, players: { 4567: "Alice" } };
+  const d = P.parseMetaDc(data, "4567");
+  assert.deepEqual(d.commanders, { "Ironheart, Clever Champion": 1 });
+  assert.deepEqual(d.mainboard, { Island: 9, Ponder: 1 });
+  assert.equal(d.name, "Ironheart, Clever Champion · Alice");
+  assert.equal(d.source, "metadc");
+  assert.equal(sum(P.parseMetaDc(data, "99").mainboard), 0);   // unknown entry: empty, the background reports it
+});

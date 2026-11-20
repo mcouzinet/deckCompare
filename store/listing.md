@@ -19,7 +19,7 @@ extension and in the README.
 
 | Version | Chrome Web Store | Edge Add-ons | addons.mozilla.org | Mac App Store |
 |---|---|---|---|---|
-| 1.4 | sent 2026-11-04 | sent 2026-11-04 | sent 2026-11-04 | build 6, to send |
+| 1.4 | sent 2026-11-04 | sent 2026-11-04 | sent 2026-11-04 | build 6, sent 2026-11-05 |
 | 1.3 | sent 2026-09-29 | sent 2026-09-29 | sent 2026-09-29 | build 4, sent 2026-09-29, rejected 2026-10-05 (3.1.1, see *App Store*); build 5 sent 2026-10-05 (branch `safari-1.3-build5`), first listing, live |
 | 1.2 | live 2026-09-25 | first listing, live 2026-09-25 | first listing, live 2026-09-27 | first listing, build 2, sent 2026-09-25 |
 | 1.1 | cut 2026-09-08 | | | |
@@ -213,9 +213,9 @@ asks the same thing (Edge, Opera, an AMO reviewer).
 > www.magic-ville.com, mtgdecks.net, melee.gg and getpaird.io (deck pages the extension reads and
 > adds its Compare button to); api.scryfall.com and cards.scryfall.io (card types and images).
 > Requests are made only to fetch a deck the user chose to compare and the cards on screen. The
-> optional hosts (moxfield.com pages, manabox.app, pauperduelcommander.fr, endstep.cc, www / non-www
-> twins) are requested at runtime, only from a click: in the popup, for the in-page button, and for
-> the last three also from the click that reads one of their deck links. ManaBox decks are read from
+> optional hosts (moxfield.com pages, manabox.app, pauperduelcommander.fr, endstep.cc, meta-dc.tolarianstudio.com,
+> www / non-www twins) are requested at runtime, only from a click: in the popup, for the in-page button, and for
+> the last four also from the click that reads one of their deck links. ManaBox decks are read from
 > the deck page in a tab, never fetched by the extension; Endstep decks, which belong to an account,
 > from the site's own deck service in the signed-in tab, with that tab's session. The popup, the in-page panel and the results page list the open tabs on these
 > sites (address and title) to offer them as the second deck.

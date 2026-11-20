@@ -97,6 +97,8 @@
     { pattern: "pauperduelcommander.fr/",         deckRe: /pauperduelcommander\.fr\/(?:[a-z]{2}\/)?decklist\/[^/?#]+/,                                         label: "Pauper Duel Commander" },
     // Endstep decks belong to an account: a deck page opens only signed in, and is read there.
     { pattern: "endstep.cc/decks/",               deckRe: /endstep\.cc\/decks\/[0-9a-f-]{36}/,                                                                label: "Endstep" },
+    // Meta DC: a list's address is that of the page it opened over, plus ?deck=<tournament>.<entry>.
+    { pattern: "meta-dc.tolarianstudio.com/",     deckRe: /meta-dc\.tolarianstudio\.com\/[^#]*[?&]deck=\d+\.\d+/,                                       label: "Meta DC" },
     { pattern: "manabox.app/decks/",              deckRe: /manabox\.app\/decks\/[A-Za-z0-9_-]{16,}/,                                                         label: "ManaBox" }
   ];
 
@@ -118,7 +120,7 @@
   // "X | Moxfield", "X Deck for Magic: the Gathering" (MTGGoldfish), "X \u2014 mtgdecks.net".
   // The site's name only as the title's last word (a deck called "Isshin - Melee Attack Triggers"
   // keeps its "Melee").
-  const SITE_SUFFIX = /\s*[\u2022|\u00b7@\u2014\u2013-]\s*(Archidekt|Moxfield|MTGGoldfish|mtgtop8|Magic-Ville|mtgdecks|Melee|getpaird|ManaBox|Pauper Duel Commander|Endstep)(\.\w+)?\s*$/i;
+  const SITE_SUFFIX = /\s*[\u2022|\u00b7@\u2014\u2013-]\s*(Archidekt|Moxfield|MTGGoldfish|mtgtop8|Magic-Ville|mtgdecks|Melee|getpaird|ManaBox|Pauper Duel Commander|Endstep|Meta DC)(\.\w+)?\s*$/i;
   function deckTabTitle(title) {
     const t = String(title || "")
       .replace(/\s+Deck for Magic: the Gathering\s*$/i, "")
@@ -202,7 +204,9 @@
     // deck there at all, not just show its button. Endstep is a single-page app: the script
     // runs on every page of it and acts on the deck page the user is on when asked.
     { id: "pdc",              origin: "https://pauperduelcommander.fr/*", matches: ["https://pauperduelcommander.fr/*/decklist/*"], read: true },
-    { id: "endstep",          origin: "https://endstep.cc/*",        matches: ["https://endstep.cc/*"], read: true }
+    { id: "endstep",          origin: "https://endstep.cc/*",        matches: ["https://endstep.cc/*"], read: true },
+    // Meta DC (1.4.1): lists open in a dialog on any page, so the script runs on all of them.
+    { id: "metadc",           origin: "https://meta-dc.tolarianstudio.com/*", matches: ["https://meta-dc.tolarianstudio.com/*"], read: true }
   ];
 
   // True when `hostname` is covered by a match-pattern origin such as

@@ -15,6 +15,8 @@ test("SUPPORTED_SITES matches deck-detail URLs (popup + pool tab pickers)", () =
   assert.equal(siteMatch("https://melee.gg/Decklist/View/123e4567-e89b-12d3-a456-426614174000"), "Melee");
   assert.equal(siteMatch("https://pauperduelcommander.fr/fr/decklist/diamond-weapon-endstep-3-7eme/"), "Pauper Duel Commander");
   assert.equal(siteMatch("https://endstep.cc/decks/1930b985-25ea-4d0b-90ef-a2d9a512de49"), "Endstep");
+  assert.equal(siteMatch("https://meta-dc.tolarianstudio.com/tournoi/relic-fest-2026/?t=12&deck=12.4567"), "Meta DC");
+  assert.equal(siteMatch("https://meta-dc.tolarianstudio.com/commander/ironheart-clever-champion/?p=ban&tab=info"), undefined);  // no list open
 });
 
 test("SUPPORTED_SITES rejects homepages and listings (no false one-click shortcut)", () => {
