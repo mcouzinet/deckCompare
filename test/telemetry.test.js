@@ -51,6 +51,7 @@ async function run({ ua = 'Mozilla/5.0 Chrome/140.0 Safari/537.36', stored = {},
   assert.equal(r.sent[0].b, 'firefox');
   // Edge and Safari are told apart from Chrome.
   assert.equal((await run({ ua: 'Mozilla/5.0 Chrome/140.0 Safari/537.36 Edg/140.0' })).sent[0].b, 'edge');
+  assert.equal((await run({ ua: 'Mozilla/5.0 Chrome/140.0 Safari/537.36 OPR/125.0' })).sent[0].b, 'opera');
   const safari = { ua: 'Mozilla/5.0 (Macintosh) Version/18.4 Safari/605.1.15', manifest: { browser_specific_settings: { safari: {} } } };
   // The Safari build waits for the setting to be ticked (Mac App Store, guideline 5.1.1).
   r = await run(safari);

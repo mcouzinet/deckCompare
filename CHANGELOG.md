@@ -17,6 +17,10 @@ testée (voir `AGENTS.md`).
   après « Copier la liste », dans la fenêtre, et propose ces onglets comme second deck. Site
   optionnel, autorisé en un clic, comme Pauper Duel Commander.
 
+### Modifié
+
+- Opera est compté à part dans les statistiques anonymes (1.4.2) : il passait pour Chrome.
+
 ## [1.4] - 2026-11-04
 
 ### Ajouté

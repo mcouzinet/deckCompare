@@ -14,7 +14,7 @@
   const VERSION = MANIFEST.version;
   const SAFARI = !!(MANIFEST.browser_specific_settings && MANIFEST.browser_specific_settings.safari);
   const ua = navigator.userAgent;
-  const NAV = /Edg\//.test(ua) ? 'edge' : /Firefox\//.test(ua) ? 'firefox'
+  const NAV = /OPR\//.test(ua) ? 'opera' : /Edg\//.test(ua) ? 'edge' : /Firefox\//.test(ua) ? 'firefox'
     : /Safari\//.test(ua) && !/Chrom(e|ium)\//.test(ua) ? 'safari' : 'chrome';
 
   async function allowed() {
